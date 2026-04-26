@@ -1,0 +1,158 @@
+{
+  "passed": 32,
+  "failed": 19,
+  "issues": [
+    {
+      "fid": "FR01-01",
+      "label": "池刷新(admin)",
+      "detail": "got 422, expected 200",
+      "http": 422,
+      "expect": 200,
+      "preview": "{\"success\": false, \"message\": \"error\", \"data\": null, \"request_id\": \"8f21ddd5-2971-4736-80da-47bdd7f3ead8\", \"error\": \"INVALID_PAYLOAD\", \"error_code\": \""
+    },
+    {
+      "fid": "FR02-02",
+      "label": "DAG 重触",
+      "detail": "got 422, expected 200",
+      "http": 422,
+      "expect": 200,
+      "preview": "{\"success\": false, \"message\": \"error\", \"data\": null, \"request_id\": \"34ce853e-055a-47ee-8c40-7e6d17af9475\", \"error\": \"INVALID_PAYLOAD\", \"error_code\": \""
+    },
+    {
+      "fid": "FR03-02",
+      "label": "Cookie 健康",
+      "detail": "got 422, expected 200",
+      "http": 422,
+      "expect": 200,
+      "preview": "{\"success\": false, \"message\": \"error\", \"data\": null, \"request_id\": \"4410b7a9-f10b-47c3-b118-6d6887c710c9\", \"error\": \"INVALID_PAYLOAD\", \"error_code\": \""
+    },
+    {
+      "fid": "FR04-01",
+      "label": "热点健康",
+      "detail": "got 401, expected 200",
+      "http": 401,
+      "expect": 200,
+      "preview": "{\"success\": false, \"message\": \"error\", \"data\": null, \"request_id\": \"702b8b6c-084a-4e5e-8b97-4b48a0e910e2\", \"error\": \"UNAUTHORIZED\", \"error_code\": \"UNA"
+    },
+    {
+      "fid": "FR05-01",
+      "label": "市场状态",
+      "detail": "DEGRADED",
+      "http": 200,
+      "expect": 200,
+      "preview": "{\"success\": true, \"message\": \"ok\", \"data\": {\"trade_date\": \"2026-04-13\", \"market_state_date\": \"2026-04-13\", \"market_state\": \"NEUTRAL\", \"reference_date\""
+    },
+    {
+      "fid": "FR06-01",
+      "label": "LLM 健康",
+      "detail": "got 401, expected 200",
+      "http": 401,
+      "expect": 200,
+      "preview": "{\"success\": false, \"message\": \"error\", \"data\": null, \"request_id\": \"2fb490f8-0fec-4575-b55d-3c4a4649e995\", \"error\": \"UNAUTHORIZED\", \"error_code\": \"UNA"
+    },
+    {
+      "fid": "FR06-02",
+      "label": "LLM 版本",
+      "detail": "got 401, expected 200",
+      "http": 401,
+      "expect": 200,
+      "preview": "{\"success\": false, \"message\": \"error\", \"data\": null, \"request_id\": \"ad7d367f-5a7e-424d-b31c-e5019a968435\", \"error\": \"UNAUTHORIZED\", \"error_code\": \"UNA"
+    },
+    {
+      "fid": "FR06-03",
+      "label": "运行时门禁",
+      "detail": "got 401, expected 200",
+      "http": 401,
+      "expect": 200,
+      "preview": "{\"success\": false, \"message\": \"error\", \"data\": null, \"request_id\": \"8d0c2447-e78f-4dc8-8808-5d673a4ff5c2\", \"error\": \"UNAUTHORIZED\", \"error_code\": \"UNA"
+    },
+    {
+      "fid": "FR06-04",
+      "label": "数据源降级状态",
+      "detail": "got 401, expected 200",
+      "http": 401,
+      "expect": 200,
+      "preview": "{\"success\": false, \"message\": \"error\", \"data\": null, \"request_id\": \"cdc9b281-990d-482c-b55e-32b7e3cc10d5\", \"error\": \"UNAUTHORIZED\", \"error_code\": \"UNA"
+    },
+    {
+      "fid": "FR06-05",
+      "label": "指标汇总",
+      "detail": "got 401, expected 200",
+      "http": 401,
+      "expect": 200,
+      "preview": "{\"success\": false, \"message\": \"error\", \"data\": null, \"request_id\": \"18f3cca1-386d-4083-9b4b-2f6a6e8349fd\", \"error\": \"UNAUTHORIZED\", \"error_code\": \"UNA"
+    },
+    {
+      "fid": "FR07-01",
+      "label": "看板统计(含结算)",
+      "detail": "settled_only_12",
+      "http": 200,
+      "expect": 200,
+      "preview": "{\"success\": true, \"message\": \"ok\", \"data\": {\"window_days\": 30, \"total_reports\": 1380, \"total_settled\": 12, \"overall_win_rate\": null, \"overall_profit_l"
+    },
+    {
+      "fid": "FR09-03",
+      "label": "会员状态",
+      "detail": "got 410, expected 200",
+      "http": 410,
+      "expect": 200,
+      "preview": "{\"success\": false, \"message\": \"error\", \"data\": null, \"request_id\": \"11248319-ea4f-4227-bc74-af04f9799dcb\", \"error\": \"ROUTE_RETIRED\", \"error_code\": \"RO"
+    },
+    {
+      "fid": "FR09b-01",
+      "label": "清理报告(dry)",
+      "detail": "got 401, expected 200",
+      "http": 401,
+      "expect": 200,
+      "preview": "{\"success\": false, \"message\": \"error\", \"data\": null, \"request_id\": \"37e68103-8a5b-48c9-bb51-fb28a73f30f7\", \"error\": \"UNAUTHORIZED\", \"error_code\": \"UNA"
+    },
+    {
+      "fid": "FR09b-02",
+      "label": "清理统计(dry)",
+      "detail": "got 401, expected 200",
+      "http": 401,
+      "expect": 200,
+      "preview": "{\"success\": false, \"message\": \"error\", \"data\": null, \"request_id\": \"156e5b7f-fab4-422a-9737-13669ee7e528\", \"error\": \"UNAUTHORIZED\", \"error_code\": \"UNA"
+    },
+    {
+      "fid": "FR11-01",
+      "label": "反馈提交(路径)",
+      "detail": "got 422, expected 200",
+      "http": 422,
+      "expect": 200,
+      "preview": "{\"success\": false, \"message\": \"error\", \"data\": null, \"request_id\": \"fbc67976-e766-4415-a6b7-e8f192c837dc\", \"error\": \"INVALID_PAYLOAD\", \"error_code\": \""
+    },
+    {
+      "fid": "FR11-02",
+      "label": "反馈提交(全局)",
+      "detail": "got 422, expected 200",
+      "http": 422,
+      "expect": 200,
+      "preview": "{\"success\": false, \"message\": \"error\", \"data\": null, \"request_id\": \"6e5f8799-7465-4580-9a52-276547ff6783\", \"error\": \"INVALID_PAYLOAD\", \"error_code\": \""
+    },
+    {
+      "fid": "FR12-05",
+      "label": "审计上下文",
+      "detail": "got 401, expected 200",
+      "http": 401,
+      "expect": 200,
+      "preview": "{\"success\": false, \"message\": \"error\", \"data\": null, \"request_id\": \"9bf30a60-ed6c-44be-ad88-4042b5107143\", \"error\": \"UNAUTHORIZED\", \"error_code\": \"UNA"
+    },
+    {
+      "fid": "FR13-01",
+      "label": "自主循环状态",
+      "detail": "got 401, expected 200",
+      "http": 401,
+      "expect": 200,
+      "preview": "{\"success\": false, \"message\": \"error\", \"data\": null, \"request_id\": \"e3530eb5-f52c-46f0-b05f-59e936eb70a4\", \"error\": \"UNAUTHORIZED\", \"error_code\": \"UNA"
+    },
+    {
+      "fid": "FR13-02",
+      "label": "自主循环state",
+      "detail": "got 401, expected 200",
+      "http": 401,
+      "expect": 200,
+      "preview": "{\"success\": false, \"message\": \"error\", \"data\": null, \"request_id\": \"ddb46ea2-6e50-44da-ad44-274bef957152\", \"error\": \"UNAUTHORIZED\", \"error_code\": \"UNA"
+    }
+  ]
+}

@@ -1,0 +1,17 @@
+{
+  "app_base_url": "http://host.docker.internal:18100",
+  "internal_token": "replace-me",
+  "new_api_base_url": "http://192.168.232.141:3000",
+  "new_api_token": "replace-me",
+  "mesh_runner_base_url": "http://host.docker.internal:18193",
+  "mesh_runner_token": "replace-me",
+  "promote_prep_base_url": "http://host.docker.internal:18194",
+  "promote_prep_token": "replace-me",
+  "run_id": "issue-mesh-20260327-001",
+  "run_label": "issue-mesh-formal-monitor",
+  "benchmark_label": "issue-mesh-readonly",
+  "audit_scope": "current-layer",
+  "shard_strategy": "family-view-ssot",
+  "control_state_snapshot": "Recovery-Rearm",
+  "max_workers": 12
+}

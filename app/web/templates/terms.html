@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>服务条款 - A股研报平台</title>
+  <link rel="stylesheet" href="/static/demo.css">
+  <style>
+    .legal-page { max-width: 800px; margin: 0 auto; padding: 48px 24px; }
+    .legal-page h1 { font-family: var(--font-display); font-size: var(--fs-2xl); margin-bottom: 24px; }
+    .legal-page h2 { font-size: var(--fs-lg); margin-top: 32px; margin-bottom: 12px; }
+    .legal-page p, .legal-page li { font-size: var(--fs-base); line-height: 1.8; color: var(--ink-secondary, #555); }
+    .legal-page ul { padding-left: 20px; }
+  </style>
+</head>
+<body>
+  {% set nav_class = 'site-nav nav-links' %}
+  {% include "_site_nav.html" %}
+  <main class="legal-page">
+    <h1>服务条款</h1>
+    <p><strong>生效日期：</strong>2026年3月1日</p>
+
+    <h2>1. 服务说明</h2>
+    <p>本平台（以下简称"平台"）为用户提供基于人工智能的A股个股研究报告服务。所有研报内容仅供参考，不构成任何投资建议或承诺。</p>
+
+    <h2>2. 用户责任</h2>
+    <ul>
+      <li>用户应提供真实、准确的注册信息。</li>
+      <li>用户应妥善保管账户凭证，因账户泄露导致的损失由用户自行承担。</li>
+      <li>禁止利用平台进行任何违法活动，包括但不限于操纵市场、内幕交易、传播虚假信息。</li>
+    </ul>
+
+    <h2>3. 免责声明</h2>
+    <ul>
+      <li>平台提供的所有研报、预测、信号均为AI模型计算结果，不代表对未来市场走势的保证。</li>
+      <li>用户基于平台信息做出的投资决策，风险自负。</li>
+      <li>平台不对因数据延迟、系统故障或第三方数据源问题导致的信息不准确承担责任。</li>
+    </ul>
+
+    <h2>4. 知识产权</h2>
+    <p>平台所有内容（包括但不限于研报、算法模型、界面设计）的知识产权归平台所有。未经书面授权，禁止任何形式的复制、转载或商业使用。</p>
+
+    <h2>5. 会员服务</h2>
+    <ul>
+      <li>Pro/Enterprise 会员享有更多功能权限，具体见订阅页面说明。</li>
+      <li>会员费用一经支付不予退还，特殊情况除外。</li>
+      <li>平台保留调整定价和服务内容的权利，调整前会提前通知用户。</li>
+    </ul>
+
+    <h2>6. 条款变更</h2>
+    <p>平台有权随时修改本服务条款。修改后的条款将在平台公布，继续使用平台即视为同意修改后的条款。</p>
+
+    <div style="margin-top:48px">
+      <a href="/register" class="btn-outline">返回注册</a>
+    </div>
+  </main>
+  {% include "_footer_disclaimer.html" %}
+</body>
+</html>

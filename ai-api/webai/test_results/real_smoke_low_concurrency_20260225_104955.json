@@ -1,0 +1,65 @@
+{
+  "started_at": "2026-02-25T10:49:36.272473",
+  "mode": "real_smoke_low_concurrency",
+  "constraints": {
+    "sequential": true,
+    "providers": [
+      "deepseek"
+    ],
+    "calls_per_provider": 1,
+    "inter_call_sleep_s": 1.0,
+    "timeout_s": 120,
+    "retry": 0
+  },
+  "providers": {
+    "deepseek": {
+      "pass_count": 0,
+      "total": 1,
+      "results": [
+        {
+          "attempt": 1,
+          "status_code": 503,
+          "code": 503,
+          "elapsed_wall_s": 17.46,
+          "expected": "CASE-REAL_DEEPSEEK_1771987776|OK|OK",
+          "response_preview": "",
+          "match_expected": false,
+          "error": "DeepSeek session is not logged in. Please log in at https://chat.deepseek.com/ and retry.",
+          "raw": {
+            "code": 503,
+            "message": "error",
+            "data": {
+              "error_code": 3001
+            },
+            "request_id": "29e3ae04-faa5-426e-99a8-0563bf768b6d",
+            "error": "DeepSeek session is not logged in. Please log in at https://chat.deepseek.com/ and retry."
+          },
+          "pass": false
+        }
+      ]
+    }
+  },
+  "close_all": {
+    "status_code": 200,
+    "body": {
+      "code": 0,
+      "message": "ok",
+      "data": {
+        "closed": true,
+        "providers": [
+          "chatgpt",
+          "deepseek",
+          "gemini",
+          "qwen"
+        ]
+      },
+      "request_id": "fae0b0e8-d6e6-4837-a5ce-c9d8cd32cd3f",
+      "error": null
+    }
+  },
+  "finished_at": "2026-02-25T10:49:55.447305",
+  "summary": {
+    "total": 1,
+    "passed": 0
+  }
+}

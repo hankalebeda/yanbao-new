@@ -1,0 +1,29 @@
+[
+  {
+    "report_id": "5f5f794c-9d82-4537-a5f7-6d687b740702",
+    "stock_code": "000001.SZ",
+    "trade_date": "2026-04-03",
+    "quality_flag": "degraded",
+    "llm_fallback_level": "failed",
+    "published": 0,
+    "status_reason": "LLM_FALLBACK"
+  },
+  {
+    "report_id": "8e970996-97fd-4cd7-ad63-a842fc205455",
+    "stock_code": "000333.SZ",
+    "trade_date": "2026-04-03",
+    "quality_flag": "degraded",
+    "llm_fallback_level": "failed",
+    "published": 0,
+    "status_reason": "LLM_FALLBACK"
+  },
+  {
+    "report_id": "89d5c907-8482-4689-a6d1-baabd25f4110",
+    "stock_code": "000425.SZ",
+    "trade_date": "2026-04-03",
+    "quality_flag": "degraded",
+    "llm_fallback_level": "failed",
+    "published": 0,
+    "status_reason": "LLM_FALLBACK"
+  }
+]

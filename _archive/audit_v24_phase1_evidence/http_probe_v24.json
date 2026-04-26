@@ -1,0 +1,113 @@
+[
+  {
+    "method": "GET",
+    "path": "/api/v1/health",
+    "status": 200
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/home",
+    "status": 200
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/reports?limit=5",
+    "status": 200
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/dashboard/stats?window_days=1",
+    "status": 200
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/dashboard/stats?window_days=7",
+    "status": 200
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/dashboard/stats?window_days=30",
+    "status": 200
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/hot-stocks",
+    "status": 200
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/market-overview",
+    "status": 200
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/stocks/autocomplete?q=601888",
+    "status": 200
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/stocks?limit=5",
+    "status": 200
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/user/favorites",
+    "status": 401,
+    "err": "HTTP Error 401: Unauthorized"
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/reports/featured",
+    "status": 200
+  },
+  {
+    "method": "GET",
+    "path": "/openapi.json",
+    "status": 200
+  },
+  {
+    "method": "GET",
+    "path": "/",
+    "status": 200
+  },
+  {
+    "method": "GET",
+    "path": "/reports",
+    "status": 200
+  },
+  {
+    "method": "GET",
+    "path": "/dashboard",
+    "status": 200
+  },
+  {
+    "method": "GET",
+    "path": "/subscribe",
+    "status": 200
+  },
+  {
+    "method": "GET",
+    "path": "/login",
+    "status": 200
+  },
+  {
+    "method": "GET",
+    "path": "/register",
+    "status": 200
+  },
+  {
+    "method": "GET",
+    "path": "/admin",
+    "status": 200
+  },
+  {
+    "method": "GET",
+    "path": "/profile",
+    "status": 200
+  },
+  {
+    "method": "GET",
+    "path": "/portfolio/sim-dashboard",
+    "status": 200
+  }
+]

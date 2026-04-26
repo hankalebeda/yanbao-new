@@ -1,0 +1,9 @@
+{
+  "name": "freeapi.dgbmc.top",
+  "endpoint": "https://freeapi.dgbmc.top/v1",
+  "model": "gpt-5.4",
+  "homepage": "https://freeapi.dgbmc.top",
+  "enabled": true,
+  "resource": "provider",
+  "app": "codex"
+}

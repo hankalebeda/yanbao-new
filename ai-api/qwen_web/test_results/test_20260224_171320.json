@@ -1,0 +1,15 @@
+{
+  "passed": 0,
+  "total": 3,
+  "results": {
+    "single": {
+      "error": "BrowserContext.new_page: Target page, context or browser has been closed"
+    },
+    "batch": {
+      "error": "Kweichow Moutai failed: BrowserContext.new_page: Target page, context or browser has been closed"
+    },
+    "reconnect": {
+      "error": "[WinError 10054] 远程主机强迫关闭了一个现有的连接。"
+    }
+  }
+}

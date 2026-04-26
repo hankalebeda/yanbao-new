@@ -1,0 +1,15 @@
+{
+  "passed": 0,
+  "total": 3,
+  "results": {
+    "single": {
+      "error": "Qwen input box not found. The page structure may have changed."
+    },
+    "batch": {
+      "error": "Kweichow Moutai failed: Qwen input box not found. The page structure may have changed."
+    },
+    "reconnect": {
+      "error": "Qwen input box not found. The page structure may have changed."
+    }
+  }
+}

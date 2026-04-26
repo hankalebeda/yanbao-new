@@ -1,0 +1,335 @@
+[
+  {
+    "report_id": "58c0c150-8887-446b-a18f-3286cf4bf861",
+    "stock_code": "000568.SZ",
+    "trade_date": "2026-04-03",
+    "quality_flag": "degraded",
+    "llm_fallback_level": "failed",
+    "published": 0,
+    "status_reason": "LLM_FALLBACK"
+  },
+  {
+    "report_id": "abf4980e-48d1-4b30-a0d1-be36128afd36",
+    "stock_code": "000625.SZ",
+    "trade_date": "2026-04-03",
+    "quality_flag": "degraded",
+    "llm_fallback_level": "failed",
+    "published": 0,
+    "status_reason": "LLM_FALLBACK"
+  },
+  {
+    "report_id": "740e42c0-806a-47f9-a1b8-8ca8e4f12156",
+    "stock_code": "000858.SZ",
+    "trade_date": "2026-04-03",
+    "quality_flag": "degraded",
+    "llm_fallback_level": "failed",
+    "published": 0,
+    "status_reason": "LLM_FALLBACK"
+  },
+  {
+    "report_id": "fe12af72-0904-4d7f-93f6-7f55fee288d3",
+    "stock_code": "002032.SZ",
+    "trade_date": "2026-04-03",
+    "quality_flag": "degraded",
+    "llm_fallback_level": "failed",
+    "published": 0,
+    "status_reason": "LLM_FALLBACK"
+  },
+  {
+    "report_id": "c3e61459-b276-4bd2-8efb-155306a9d3be",
+    "stock_code": "002050.SZ",
+    "trade_date": "2026-04-03",
+    "quality_flag": "degraded",
+    "llm_fallback_level": "failed",
+    "published": 0,
+    "status_reason": "LLM_FALLBACK"
+  },
+  {
+    "report_id": "b028fb13-4601-4d3b-9550-760be84b4aa2",
+    "stock_code": "002244.SZ",
+    "trade_date": "2026-04-03",
+    "quality_flag": "degraded",
+    "llm_fallback_level": "failed",
+    "published": 0,
+    "status_reason": "LLM_FALLBACK"
+  },
+  {
+    "report_id": "e37a849a-2a2d-430b-afc3-9c9c26d2173a",
+    "stock_code": "002594.SZ",
+    "trade_date": "2026-04-03",
+    "quality_flag": "degraded",
+    "llm_fallback_level": "failed",
+    "published": 0,
+    "status_reason": "LLM_FALLBACK"
+  },
+  {
+    "report_id": "f4b30f58-0ee3-4845-94fd-144961d3a526",
+    "stock_code": "300750.SZ",
+    "trade_date": "2026-04-03",
+    "quality_flag": "degraded",
+    "llm_fallback_level": "failed",
+    "published": 0,
+    "status_reason": "LLM_FALLBACK"
+  },
+  {
+    "report_id": "00ae26fc-3666-40cc-ae0d-b69dad00957b",
+    "stock_code": "600036.SH",
+    "trade_date": "2026-04-03",
+    "quality_flag": "degraded",
+    "llm_fallback_level": "failed",
+    "published": 0,
+    "status_reason": "LLM_FALLBACK"
+  },
+  {
+    "report_id": "71047dd5-43ee-42f2-8e6e-748d557b7c0e",
+    "stock_code": "600104.SH",
+    "trade_date": "2026-04-03",
+    "quality_flag": "degraded",
+    "llm_fallback_level": "failed",
+    "published": 0,
+    "status_reason": "LLM_FALLBACK"
+  },
+  {
+    "report_id": "c17c3f16-8084-42e2-89ab-e0152a3755f6",
+    "stock_code": "600177.SH",
+    "trade_date": "2026-04-03",
+    "quality_flag": "degraded",
+    "llm_fallback_level": "failed",
+    "published": 0,
+    "status_reason": "LLM_FALLBACK"
+  },
+  {
+    "report_id": "8a3a6ca1-dd06-4350-9383-7b2c1596c97b",
+    "stock_code": "600256.SH",
+    "trade_date": "2026-04-03",
+    "quality_flag": "degraded",
+    "llm_fallback_level": "failed",
+    "published": 0,
+    "status_reason": "LLM_FALLBACK"
+  },
+  {
+    "report_id": "13b760b2-c132-45c5-81a1-f7603b2e1d69",
+    "stock_code": "600276.SH",
+    "trade_date": "2026-04-03",
+    "quality_flag": "degraded",
+    "llm_fallback_level": "failed",
+    "published": 0,
+    "status_reason": "LLM_FALLBACK"
+  },
+  {
+    "report_id": "7ee01cd1-9564-471d-91ea-fd2e9c379028",
+    "stock_code": "600406.SH",
+    "trade_date": "2026-04-03",
+    "quality_flag": "degraded",
+    "llm_fallback_level": "failed",
+    "published": 0,
+    "status_reason": "LLM_FALLBACK"
+  },
+  {
+    "report_id": "f93d1f44-0823-4478-99d9-929c4149f8d2",
+    "stock_code": "600519.SH",
+    "trade_date": "2026-04-03",
+    "quality_flag": "degraded",
+    "llm_fallback_level": "failed",
+    "published": 0,
+    "status_reason": "LLM_FALLBACK"
+  },
+  {
+    "report_id": "2d29a3d4-4ba9-470a-95ee-4743518f1dfd",
+    "stock_code": "600547.SH",
+    "trade_date": "2026-04-03",
+    "quality_flag": "degraded",
+    "llm_fallback_level": "failed",
+    "published": 0,
+    "status_reason": "LLM_FALLBACK"
+  },
+  {
+    "report_id": "be7a6a76-d0ee-4139-888e-a93c9856da75",
+    "stock_code": "600600.SH",
+    "trade_date": "2026-04-03",
+    "quality_flag": "degraded",
+    "llm_fallback_level": "failed",
+    "published": 0,
+    "status_reason": "LLM_FALLBACK"
+  },
+  {
+    "report_id": "422ebb37-584a-45ae-8a63-a0487967ebf0",
+    "stock_code": "600918.SH",
+    "trade_date": "2026-04-03",
+    "quality_flag": "degraded",
+    "llm_fallback_level": "failed",
+    "published": 0,
+    "status_reason": "LLM_FALLBACK"
+  },
+  {
+    "report_id": "b893989e-1c89-419a-853f-04fbe1ffc848",
+    "stock_code": "600926.SH",
+    "trade_date": "2026-04-03",
+    "quality_flag": "degraded",
+    "llm_fallback_level": "failed",
+    "published": 0,
+    "status_reason": "LLM_FALLBACK"
+  },
+  {
+    "report_id": "21f11095-65d0-459a-b949-12d8d22316d7",
+    "stock_code": "601009.SH",
+    "trade_date": "2026-04-03",
+    "quality_flag": "degraded",
+    "llm_fallback_level": "failed",
+    "published": 0,
+    "status_reason": "LLM_FALLBACK"
+  },
+  {
+    "report_id": "2f9958ed-a2bb-42c7-99e7-b888d725c4d8",
+    "stock_code": "601088.SH",
+    "trade_date": "2026-04-03",
+    "quality_flag": "degraded",
+    "llm_fallback_level": "failed",
+    "published": 0,
+    "status_reason": "LLM_FALLBACK"
+  },
+  {
+    "report_id": "05bfd67f-dd5c-443b-833c-3d3e04dfc498",
+    "stock_code": "601166.SH",
+    "trade_date": "2026-04-03",
+    "quality_flag": "degraded",
+    "llm_fallback_level": "failed",
+    "published": 0,
+    "status_reason": "LLM_FALLBACK"
+  },
+  {
+    "report_id": "e95f2f9e-b402-4b3c-a1c7-501950bdc7a0",
+    "stock_code": "601169.SH",
+    "trade_date": "2026-04-03",
+    "quality_flag": "degraded",
+    "llm_fallback_level": "failed",
+    "published": 0,
+    "status_reason": "LLM_FALLBACK"
+  },
+  {
+    "report_id": "72b4c16f-d51c-4ebb-9f3d-c91820bb6acc",
+    "stock_code": "601288.SH",
+    "trade_date": "2026-04-03",
+    "quality_flag": "degraded",
+    "llm_fallback_level": "failed",
+    "published": 0,
+    "status_reason": "LLM_FALLBACK"
+  },
+  {
+    "report_id": "afa64b61-6573-43d8-bedf-ee7081f5d3a7",
+    "stock_code": "601318.SH",
+    "trade_date": "2026-04-03",
+    "quality_flag": "degraded",
+    "llm_fallback_level": "failed",
+    "published": 0,
+    "status_reason": "LLM_FALLBACK"
+  },
+  {
+    "report_id": "127f6502-be7a-43cd-9fb2-359b63805b3d",
+    "stock_code": "601328.SH",
+    "trade_date": "2026-04-03",
+    "quality_flag": "degraded",
+    "llm_fallback_level": "failed",
+    "published": 0,
+    "status_reason": "LLM_FALLBACK"
+  },
+  {
+    "report_id": "8c518eee-809f-45dc-9c4b-13f9c07dcf2e",
+    "stock_code": "601628.SH",
+    "trade_date": "2026-04-03",
+    "quality_flag": "degraded",
+    "llm_fallback_level": "failed",
+    "published": 0,
+    "status_reason": "LLM_FALLBACK"
+  },
+  {
+    "report_id": "cf89403a-1022-4fe5-9686-bb7434013a22",
+    "stock_code": "601728.SH",
+    "trade_date": "2026-04-03",
+    "quality_flag": "degraded",
+    "llm_fallback_level": "failed",
+    "published": 0,
+    "status_reason": "LLM_FALLBACK"
+  },
+  {
+    "report_id": "cc29ec0e-5ed9-44a7-b314-70400bbe9422",
+    "stock_code": "601838.SH",
+    "trade_date": "2026-04-03",
+    "quality_flag": "degraded",
+    "llm_fallback_level": "failed",
+    "published": 0,
+    "status_reason": "LLM_FALLBACK"
+  },
+  {
+    "report_id": "f4a4ff93-8012-4273-ac5b-2a285bd3995c",
+    "stock_code": "601857.SH",
+    "trade_date": "2026-04-03",
+    "quality_flag": "degraded",
+    "llm_fallback_level": "failed",
+    "published": 0,
+    "status_reason": "LLM_FALLBACK"
+  },
+  {
+    "report_id": "55b16dec-b592-4395-b014-668525593712",
+    "stock_code": "601888.SH",
+    "trade_date": "2026-04-03",
+    "quality_flag": "degraded",
+    "llm_fallback_level": "failed",
+    "published": 0,
+    "status_reason": "LLM_FALLBACK"
+  },
+  {
+    "report_id": "da27d901-352e-423f-b6b6-5e71f612f10b",
+    "stock_code": "601898.SH",
+    "trade_date": "2026-04-03",
+    "quality_flag": "degraded",
+    "llm_fallback_level": "failed",
+    "published": 0,
+    "status_reason": "LLM_FALLBACK"
+  },
+  {
+    "report_id": "645fe76d-2938-4048-b8d2-80e640ba0365",
+    "stock_code": "601899.SH",
+    "trade_date": "2026-04-03",
+    "quality_flag": "degraded",
+    "llm_fallback_level": "failed",
+    "published": 0,
+    "status_reason": "LLM_FALLBACK"
+  },
+  {
+    "report_id": "c640c8ea-23d3-4178-84da-4ad2c495761f",
+    "stock_code": "601939.SH",
+    "trade_date": "2026-04-03",
+    "quality_flag": "degraded",
+    "llm_fallback_level": "failed",
+    "published": 0,
+    "status_reason": "LLM_FALLBACK"
+  },
+  {
+    "report_id": "52c2b100-1297-43ba-982c-b2d38639ae56",
+    "stock_code": "601988.SH",
+    "trade_date": "2026-04-03",
+    "quality_flag": "degraded",
+    "llm_fallback_level": "failed",
+    "published": 0,
+    "status_reason": "LLM_FALLBACK"
+  },
+  {
+    "report_id": "f4b191d7-190c-4629-b400-6bf6cb67c144",
+    "stock_code": "603993.SH",
+    "trade_date": "2026-04-03",
+    "quality_flag": "degraded",
+    "llm_fallback_level": "failed",
+    "published": 0,
+    "status_reason": "LLM_FALLBACK"
+  },
+  {
+    "report_id": "dabdf558-cfb7-4081-8a31-5214a19dd387",
+    "stock_code": "688981.SH",
+    "trade_date": "2026-04-03",
+    "quality_flag": "degraded",
+    "llm_fallback_level": "failed",
+    "published": 0,
+    "status_reason": "LLM_FALLBACK"
+  }
+]

@@ -1,0 +1,15 @@
+{
+  "passed": 0,
+  "total": 3,
+  "results": {
+    "single": {
+      "error": "BrowserType.connect_over_cdp: Unexpected status 400 when connecting to http://127.0.0.1:9222/json/version/.\nThis does not look like a DevTools server, try connecting via ws://.\nCall log:\n  - <ws preparing> retrieving websocket url from http://127.0.0.1:9222\n"
+    },
+    "batch": {
+      "error": "BrowserType.connect_over_cdp: Unexpected status 400 when connecting to http://127.0.0.1:9222/json/version/.\nThis does not look like a DevTools server, try connecting via ws://.\nCall log:\n  - <ws preparing> retrieving websocket url from http://127.0.0.1:9222\n"
+    },
+    "reconnect": {
+      "error": "BrowserType.connect_over_cdp: Unexpected status 400 when connecting to http://127.0.0.1:9222/json/version/.\nThis does not look like a DevTools server, try connecting via ws://.\nCall log:\n  - <ws preparing> retrieving websocket url from http://127.0.0.1:9222\n"
+    }
+  }
+}

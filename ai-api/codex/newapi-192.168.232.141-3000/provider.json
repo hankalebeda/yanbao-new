@@ -1,0 +1,15 @@
+{
+  "name": "newapi-192.168.232.141-3000",
+  "endpoint": "http://192.168.232.141:3000/v1",
+  "model": "gpt-5.4",
+  "review_model": "gpt-5.3-codex",
+  "fallback_models": [
+    "gpt-5.4",
+    "gpt-5.3-codex",
+    "gpt-5.2"
+  ],
+  "homepage": "http://192.168.232.141:3000",
+  "enabled": true,
+  "resource": "provider",
+  "app": "codex"
+}

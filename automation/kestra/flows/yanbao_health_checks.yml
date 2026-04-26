@@ -1,0 +1,199 @@
+id: yanbao_health_checks
+namespace: yanbao.ops
+description: >
+  Health check flow for the Yanbao formal Kestra closure.
+  It checks app health/internal endpoints, the formal autonomy control-plane API
+  exposed by the app, remote New API readiness, and all Windows-hosted helper
+  services required before issue-mesh execution.
+  Standardized retry: maxAttempt: 3, interval: PT10S for all services.
+  Adds New API POST /v1/responses smoke test.
+  Reports control_plane_blocked when the app-level autonomy endpoint is
+  unreachable, bridge_blocked when helper bridges are unreachable, and
+  provider_safe_hold when the model gateway is reachable but not safe to use.
+
+inputs:
+  - id: app_base_url
+    type: STRING
+    defaults: "http://host.docker.internal:18100"
+  - id: internal_token
+    type: STRING
+    required: true
+  - id: new_api_base_url
+    type: STRING
+    defaults: "http://192.168.232.141:3000"
+  - id: new_api_token
+    type: STRING
+    required: true
+  - id: mesh_runner_base_url
+    type: STRING
+    defaults: "http://host.docker.internal:18193"
+  - id: promote_prep_base_url
+    type: STRING
+    defaults: "http://host.docker.internal:18194"
+  - id: writeback_a_base_url
+    type: STRING
+    defaults: "http://host.docker.internal:18192"
+  - id: writeback_b_base_url
+    type: STRING
+    defaults: "http://host.docker.internal:18195"
+
+tasks:
+  - id: app_health
+    type: io.kestra.plugin.core.http.Request
+    method: GET
+    uri: "{{ inputs.app_base_url }}/health"
+    retry:
+      type: constant
+      maxAttempt: 3
+      interval: PT10S
+
+  - id: internal_metrics_summary
+    type: io.kestra.plugin.core.http.Request
+    method: GET
+    uri: "{{ inputs.app_base_url }}/api/v1/internal/metrics/summary"
+    headers:
+      X-Internal-Token: "{{ inputs.internal_token }}"
+    retry:
+      type: constant
+      maxAttempt: 3
+      interval: PT10S
+
+  - id: internal_llm_health
+    type: io.kestra.plugin.core.http.Request
+    method: GET
+    uri: "{{ inputs.app_base_url }}/api/v1/internal/llm/health"
+    headers:
+      X-Internal-Token: "{{ inputs.internal_token }}"
+    retry:
+      type: constant
+      maxAttempt: 3
+      interval: PT10S
+
+  - id: internal_source_fallback_status
+    type: io.kestra.plugin.core.http.Request
+    method: GET
+    uri: "{{ inputs.app_base_url }}/api/v1/internal/source/fallback-status"
+    headers:
+      X-Internal-Token: "{{ inputs.internal_token }}"
+    retry:
+      type: constant
+      maxAttempt: 3
+      interval: PT10S
+
+  - id: autonomy_loop_status
+    type: io.kestra.plugin.core.http.Request
+    method: GET
+    uri: "{{ inputs.app_base_url }}/api/v1/internal/autonomy/loop"
+    headers:
+      X-Internal-Token: "{{ inputs.internal_token }}"
+    retry:
+      type: constant
+      maxAttempt: 3
+      interval: PT10S
+
+  - id: new_api_models
+    type: io.kestra.plugin.core.http.Request
+    method: GET
+    uri: "{{ inputs.new_api_base_url }}/v1/models"
+    headers:
+      Authorization: "Bearer {{ inputs.new_api_token }}"
+    retry:
+      type: constant
+      maxAttempt: 3
+      interval: PT10S
+
+  - id: new_api_responses_smoke
+    type: io.kestra.plugin.core.http.Request
+    method: POST
+    uri: "{{ inputs.new_api_base_url }}/v1/responses"
+    headers:
+      Authorization: "Bearer {{ inputs.new_api_token }}"
+      Content-Type: application/json
+    body: |
+      {
+        "model": "{{ outputs.new_api_models.body | jq('.data[0].id') | first }}",
+        "input": "ping",
+        "max_output_tokens": 1
+      }
+    allowFailed: true
+    retry:
+      type: constant
+      maxAttempt: 2
+      interval: PT10S
+
+  - id: mesh_runner_health
+    type: io.kestra.plugin.core.http.Request
+    method: GET
+    uri: "{{ inputs.mesh_runner_base_url }}/health"
+    retry:
+      type: constant
+      maxAttempt: 3
+      interval: PT10S
+
+  - id: promote_prep_health
+    type: io.kestra.plugin.core.http.Request
+    method: GET
+    uri: "{{ inputs.promote_prep_base_url }}/health"
+    retry:
+      type: constant
+      maxAttempt: 3
+      interval: PT10S
+
+  - id: writeback_a_health
+    type: io.kestra.plugin.core.http.Request
+    method: GET
+    uri: "{{ inputs.writeback_a_base_url }}/health"
+    retry:
+      type: constant
+      maxAttempt: 3
+      interval: PT10S
+
+  - id: writeback_b_health
+    type: io.kestra.plugin.core.http.Request
+    method: GET
+    uri: "{{ inputs.writeback_b_base_url }}/health"
+    retry:
+      type: constant
+      maxAttempt: 3
+      interval: PT10S
+
+  - id: health_summary
+    type: io.kestra.plugin.core.log.Log
+    message: |
+      health_checks_completed=true
+      app_health_code={{ outputs.app_health.code }}
+      internal_metrics_code={{ outputs.internal_metrics_summary.code }}
+      internal_llm_code={{ outputs.internal_llm_health.code }}
+      internal_source_code={{ outputs.internal_source_fallback_status.code }}
+      autonomy_loop_code={{ outputs.autonomy_loop_status.code }}
+      new_api_models_code={{ outputs.new_api_models.code }}
+      new_api_responses_smoke_code={{ outputs.new_api_responses_smoke.code }}
+      mesh_runner_code={{ outputs.mesh_runner_health.code }}
+      promote_prep_code={{ outputs.promote_prep_health.code }}
+      writeback_a_code={{ outputs.writeback_a_health.code }}
+      writeback_b_code={{ outputs.writeback_b_health.code }}
+
+  - id: health_gate_result
+    type: io.kestra.plugin.core.log.Log
+    message: |
+      {% set bridge_codes = [outputs.mesh_runner_health.code, outputs.promote_prep_health.code, outputs.writeback_a_health.code, outputs.writeback_b_health.code] %}
+      {% set bridge_ok = bridge_codes | filter(c -> c == 200) | length == 4 %}
+      {% set control_plane_ok = outputs.autonomy_loop_status.code == 200 %}
+      {% set models_ok = outputs.new_api_models.code == 200 %}
+      {% set responses_ok = outputs.new_api_responses_smoke.code == 200 %}
+      {% if not control_plane_ok %}
+      gate_status=control_plane_blocked
+      gate_reason=Formal autonomy control plane endpoint is unreachable
+      {% elif not bridge_ok %}
+      gate_status=bridge_blocked
+      gate_reason=One or more Windows bridge services are unreachable
+      {% elif models_ok and not responses_ok %}
+      gate_status=provider_safe_hold
+      gate_reason=New API models endpoint OK but responses smoke test failed
+      {% elif not models_ok %}
+      gate_status=provider_safe_hold
+      gate_reason=New API models endpoint unavailable
+      {% else %}
+      gate_status=ready
+      gate_reason=All formal health checks passed
+      {% endif %}

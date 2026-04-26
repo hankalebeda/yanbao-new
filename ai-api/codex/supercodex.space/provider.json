@@ -1,0 +1,9 @@
+{
+    "resource":  "provider",
+    "name":  "supercodex.space",
+    "homepage":  "https://supercodex.space/v1",
+    "app":  "codex",
+    "model":  "gpt-5.4",
+    "endpoint":  "https://supercodex.space/v1",
+    "enabled":  true
+}

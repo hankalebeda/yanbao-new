@@ -1,0 +1,1383 @@
+{
+  "ts": "20260418_021449",
+  "count": 172,
+  "usage_rows": 860,
+  "targets": [
+    {
+      "report_id": "3cb39d97-27ae-4828-84dc-b1b0a8df9d72",
+      "stock_code": "000069.SZ",
+      "trade_date": "2026-04-08",
+      "status_reason": "BEAR_MARKET_FILTERED",
+      "quality_flag": "degraded",
+      "rc_len": 20
+    },
+    {
+      "report_id": "375efd48-09bf-41fe-890d-cd28c916a9a9",
+      "stock_code": "000100.SZ",
+      "trade_date": "2026-04-08",
+      "status_reason": "BEAR_MARKET_FILTERED",
+      "quality_flag": "degraded",
+      "rc_len": 20
+    },
+    {
+      "report_id": "45161f31-e651-4f85-8438-976c6450c831",
+      "stock_code": "000157.SZ",
+      "trade_date": "2026-04-08",
+      "status_reason": "BEAR_MARKET_FILTERED",
+      "quality_flag": "degraded",
+      "rc_len": 20
+    },
+    {
+      "report_id": "bebc7e1e-fcd1-48e0-b55e-75bb128dd54a",
+      "stock_code": "000301.SZ",
+      "trade_date": "2026-04-08",
+      "status_reason": "BEAR_MARKET_FILTERED",
+      "quality_flag": "degraded",
+      "rc_len": 20
+    },
+    {
+      "report_id": "f65b56b0-c814-4aac-9815-dc18310ef10c",
+      "stock_code": "000400.SZ",
+      "trade_date": "2026-04-08",
+      "status_reason": "BEAR_MARKET_FILTERED",
+      "quality_flag": "degraded",
+      "rc_len": 20
+    },
+    {
+      "report_id": "3d584373-6cd3-4bcf-8be9-08355c257758",
+      "stock_code": "000423.SZ",
+      "trade_date": "2026-04-08",
+      "status_reason": "BEAR_MARKET_FILTERED",
+      "quality_flag": "degraded",
+      "rc_len": 20
+    },
+    {
+      "report_id": "35bb5050-d35b-4197-aef8-9fe129d9b065",
+      "stock_code": "000425.SZ",
+      "trade_date": "2026-04-08",
+      "status_reason": "BEAR_MARKET_FILTERED",
+      "quality_flag": "degraded",
+      "rc_len": 20
+    },
+    {
+      "report_id": "0c121d2f-6d86-47fb-8c55-04a6102f688d",
+      "stock_code": "000519.SZ",
+      "trade_date": "2026-04-08",
+      "status_reason": "BEAR_MARKET_FILTERED",
+      "quality_flag": "degraded",
+      "rc_len": 20
+    },
+    {
+      "report_id": "77496281-5be5-44fc-844c-6a8ab82afb6c",
+      "stock_code": "000596.SZ",
+      "trade_date": "2026-04-08",
+      "status_reason": "BEAR_MARKET_FILTERED",
+      "quality_flag": "degraded",
+      "rc_len": 20
+    },
+    {
+      "report_id": "3bed7fe1-f555-4055-bb14-811106851bea",
+      "stock_code": "000538.SZ",
+      "trade_date": "2026-04-08",
+      "status_reason": "BEAR_MARKET_FILTERED",
+      "quality_flag": "degraded",
+      "rc_len": 20
+    },
+    {
+      "report_id": "6abd98cd-4318-46e3-a282-c6d847a5f96e",
+      "stock_code": "000625.SZ",
+      "trade_date": "2026-04-08",
+      "status_reason": "BEAR_MARKET_FILTERED",
+      "quality_flag": "degraded",
+      "rc_len": 20
+    },
+    {
+      "report_id": "ce17484f-412a-45d8-b884-25e2b20cc22e",
+      "stock_code": "000661.SZ",
+      "trade_date": "2026-04-08",
+      "status_reason": "BEAR_MARKET_FILTERED",
+      "quality_flag": "degraded",
+      "rc_len": 20
+    },
+    {
+      "report_id": "8cd118de-4c0f-44ca-84ec-05a0a4fc9ec4",
+      "stock_code": "000708.SZ",
+      "trade_date": "2026-04-08",
+      "status_reason": "BEAR_MARKET_FILTERED",
+      "quality_flag": "degraded",
+      "rc_len": 20
+    },
+    {
+      "report_id": "1cc9db1b-9a3b-492d-afa6-bb7e550df1c7",
+      "stock_code": "000709.SZ",
+      "trade_date": "2026-04-08",
+      "status_reason": "BEAR_MARKET_FILTERED",
+      "quality_flag": "degraded",
+      "rc_len": 20
+    },
+    {
+      "report_id": "a2e87d9a-ed74-4cc4-b8a2-1291901c7ab9",
+      "stock_code": "000728.SZ",
+      "trade_date": "2026-04-08",
+      "status_reason": "BEAR_MARKET_FILTERED",
+      "quality_flag": "degraded",
+      "rc_len": 20
+    },
+    {
+      "report_id": "e0973673-dec3-44e5-902e-6062e359769b",
+      "stock_code": "000768.SZ",
+      "trade_date": "2026-04-08",
+      "status_reason": "BEAR_MARKET_FILTERED",
+      "quality_flag": "degraded",
+      "rc_len": 20
+    },
+    {
+      "report_id": "a1e050c4-1da7-4c06-ad96-88d233ca8660",
+      "stock_code": "000776.SZ",
+      "trade_date": "2026-04-08",
+      "status_reason": "BEAR_MARKET_FILTERED",
+      "quality_flag": "degraded",
+      "rc_len": 20
+    },
+    {
+      "report_id": "767e7583-80be-4764-899c-bcda752c77c3",
+      "stock_code": "000786.SZ",
+      "trade_date": "2026-04-08",
+      "status_reason": "BEAR_MARKET_FILTERED",
+      "quality_flag": "degraded",
+      "rc_len": 20
+    },
+    {
+      "report_id": "fffb90a5-effe-450f-9798-9809c8d5aedd",
+      "stock_code": "000878.SZ",
+      "trade_date": "2026-04-08",
+      "status_reason": "BEAR_MARKET_FILTERED",
+      "quality_flag": "degraded",
+      "rc_len": 20
+    },
+    {
+      "report_id": "906dab23-be8e-4345-9991-d260db66d82e",
+      "stock_code": "000963.SZ",
+      "trade_date": "2026-04-08",
+      "status_reason": "BEAR_MARKET_FILTERED",
+      "quality_flag": "degraded",
+      "rc_len": 20
+    },
+    {
+      "report_id": "ea5e9e98-f217-4fe7-882e-fe936955976e",
+      "stock_code": "000977.SZ",
+      "trade_date": "2026-04-08",
+      "status_reason": "BEAR_MARKET_FILTERED",
+      "quality_flag": "degraded",
+      "rc_len": 20
+    },
+    {
+      "report_id": "0c3ee988-80a6-475d-ac6c-1b8e896b107a",
+      "stock_code": "001979.SZ",
+      "trade_date": "2026-04-08",
+      "status_reason": "BEAR_MARKET_FILTERED",
+      "quality_flag": "degraded",
+      "rc_len": 20
+    },
+    {
+      "report_id": "b5bf841d-0be3-4fdd-9674-508861489225",
+      "stock_code": "002007.SZ",
+      "trade_date": "2026-04-08",
+      "status_reason": "BEAR_MARKET_FILTERED",
+      "quality_flag": "degraded",
+      "rc_len": 20
+    },
+    {
+      "report_id": "891390f3-bc95-4b7f-903f-45c9f608c0fb",
+      "stock_code": "002008.SZ",
+      "trade_date": "2026-04-08",
+      "status_reason": "BEAR_MARKET_FILTERED",
+      "quality_flag": "degraded",
+      "rc_len": 20
+    },
+    {
+      "report_id": "92b55499-a425-4484-8178-345180a8e2dd",
+      "stock_code": "002027.SZ",
+      "trade_date": "2026-04-08",
+      "status_reason": "BEAR_MARKET_FILTERED",
+      "quality_flag": "degraded",
+      "rc_len": 20
+    },
+    {
+      "report_id": "bbef8ade-6c4c-4c91-a904-1388bcd5eade",
+      "stock_code": "002032.SZ",
+      "trade_date": "2026-04-08",
+      "status_reason": "BEAR_MARKET_FILTERED",
+      "quality_flag": "degraded",
+      "rc_len": 20
+    },
+    {
+      "report_id": "dda72b0c-afc9-4cf4-a2db-d9392d8133e4",
+      "stock_code": "002049.SZ",
+      "trade_date": "2026-04-08",
+      "status_reason": "BEAR_MARKET_FILTERED",
+      "quality_flag": "degraded",
+      "rc_len": 20
+    },
+    {
+      "report_id": "664aa9bd-3c8e-46f9-b0c2-1fc316f175b6",
+      "stock_code": "002050.SZ",
+      "trade_date": "2026-04-08",
+      "status_reason": "BEAR_MARKET_FILTERED",
+      "quality_flag": "degraded",
+      "rc_len": 20
+    },
+    {
+      "report_id": "1bf08f7c-e90d-44be-8cd4-08aa49f37e36",
+      "stock_code": "002129.SZ",
+      "trade_date": "2026-04-08",
+      "status_reason": "BEAR_MARKET_FILTERED",
+      "quality_flag": "degraded",
+      "rc_len": 20
+    },
+    {
+      "report_id": "80291b1c-9447-47d9-9b04-7f0eccee36b9",
+      "stock_code": "002142.SZ",
+      "trade_date": "2026-04-08",
+      "status_reason": "BEAR_MARKET_FILTERED",
+      "quality_flag": "degraded",
+      "rc_len": 20
+    },
+    {
+      "report_id": "2972eafb-ea2f-401c-96a4-b37c99617463",
+      "stock_code": "002179.SZ",
+      "trade_date": "2026-04-08",
+      "status_reason": "BEAR_MARKET_FILTERED",
+      "quality_flag": "degraded",
+      "rc_len": 20
+    },
+    {
+      "report_id": "5328f19e-ae2d-406a-a245-85cd5f24b485",
+      "stock_code": "002230.SZ",
+      "trade_date": "2026-04-08",
+      "status_reason": "BEAR_MARKET_FILTERED",
+      "quality_flag": "degraded",
+      "rc_len": 20
+    },
+    {
+      "report_id": "5cb26ee4-a0c1-4d09-a5af-daf8e3c08b82",
+      "stock_code": "002236.SZ",
+      "trade_date": "2026-04-08",
+      "status_reason": "BEAR_MARKET_FILTERED",
+      "quality_flag": "degraded",
+      "rc_len": 20
+    },
+    {
+      "report_id": "73ced791-552e-4131-9c0c-ec90e12d7668",
+      "stock_code": "002241.SZ",
+      "trade_date": "2026-04-08",
+      "status_reason": "BEAR_MARKET_FILTERED",
+      "quality_flag": "degraded",
+      "rc_len": 20
+    },
+    {
+      "report_id": "974b16e0-2603-4547-ace6-6b530aa60fd7",
+      "stock_code": "002244.SZ",
+      "trade_date": "2026-04-08",
+      "status_reason": "BEAR_MARKET_FILTERED",
+      "quality_flag": "degraded",
+      "rc_len": 20
+    },
+    {
+      "report_id": "cb89a8d7-e683-404d-9fde-f6d1380992c7",
+      "stock_code": "002371.SZ",
+      "trade_date": "2026-04-08",
+      "status_reason": "BEAR_MARKET_FILTERED",
+      "quality_flag": "degraded",
+      "rc_len": 20
+    },
+    {
+      "report_id": "18e48cf6-401c-4841-8f22-6da3ede38c70",
+      "stock_code": "002396.SZ",
+      "trade_date": "2026-04-08",
+      "status_reason": "BEAR_MARKET_FILTERED",
+      "quality_flag": "degraded",
+      "rc_len": 20
+    },
+    {
+      "report_id": "4e7706d7-a8bf-4b9d-9716-ef8677a375a9",
+      "stock_code": "002410.SZ",
+      "trade_date": "2026-04-08",
+      "status_reason": "BEAR_MARKET_FILTERED",
+      "quality_flag": "degraded",
+      "rc_len": 20
+    },
+    {
+      "report_id": "a09a37ed-4019-409a-baaf-8a979eb38e81",
+      "stock_code": "002459.SZ",
+      "trade_date": "2026-04-08",
+      "status_reason": "BEAR_MARKET_FILTERED",
+      "quality_flag": "degraded",
+      "rc_len": 20
+    },
+    {
+      "report_id": "9e370cd0-315c-4a10-9941-dbc8eac14477",
+      "stock_code": "002460.SZ",
+      "trade_date": "2026-04-08",
+      "status_reason": "BEAR_MARKET_FILTERED",
+      "quality_flag": "degraded",
+      "rc_len": 20
+    },
+    {
+      "report_id": "cb51ff3b-0f7a-4197-af68-6c9f816e381e",
+      "stock_code": "002466.SZ",
+      "trade_date": "2026-04-08",
+      "status_reason": "BEAR_MARKET_FILTERED",
+      "quality_flag": "degraded",
+      "rc_len": 20
+    },
+    {
+      "report_id": "7c5cef55-35ea-4a82-b364-b08134dab154",
+      "stock_code": "002475.SZ",
+      "trade_date": "2026-04-08",
+      "status_reason": "BEAR_MARKET_FILTERED",
+      "quality_flag": "degraded",
+      "rc_len": 20
+    },
+    {
+      "report_id": "bef0aab0-01db-48f8-a013-683a4d7d441b",
+      "stock_code": "002507.SZ",
+      "trade_date": "2026-04-08",
+      "status_reason": "BEAR_MARKET_FILTERED",
+      "quality_flag": "degraded",
+      "rc_len": 20
+    },
+    {
+      "report_id": "3f62eb33-fa21-426a-8174-0d6845b3f660",
+      "stock_code": "002601.SZ",
+      "trade_date": "2026-04-08",
+      "status_reason": "BEAR_MARKET_FILTERED",
+      "quality_flag": "degraded",
+      "rc_len": 20
+    },
+    {
+      "report_id": "3f3adcab-f257-4e97-8ea8-41224fa03984",
+      "stock_code": "002709.SZ",
+      "trade_date": "2026-04-08",
+      "status_reason": "BEAR_MARKET_FILTERED",
+      "quality_flag": "degraded",
+      "rc_len": 20
+    },
+    {
+      "report_id": "d2b609fa-a06a-4803-98f2-8cd0638577fa",
+      "stock_code": "002756.SZ",
+      "trade_date": "2026-04-08",
+      "status_reason": "BEAR_MARKET_FILTERED",
+      "quality_flag": "degraded",
+      "rc_len": 20
+    },
+    {
+      "report_id": "f048dfce-49a8-45b8-9d5d-90e7c0596780",
+      "stock_code": "002812.SZ",
+      "trade_date": "2026-04-08",
+      "status_reason": "BEAR_MARKET_FILTERED",
+      "quality_flag": "degraded",
+      "rc_len": 20
+    },
+    {
+      "report_id": "7a80bc92-ffc1-4f7c-8145-a4544c86df82",
+      "stock_code": "003816.SZ",
+      "trade_date": "2026-04-08",
+      "status_reason": "BEAR_MARKET_FILTERED",
+      "quality_flag": "degraded",
+      "rc_len": 20
+    },
+    {
+      "report_id": "c19a6870-d85e-4bde-845f-e4732e7814fe",
+      "stock_code": "300003.SZ",
+      "trade_date": "2026-04-08",
+      "status_reason": "BEAR_MARKET_FILTERED",
+      "quality_flag": "degraded",
+      "rc_len": 20
+    },
+    {
+      "report_id": "18ab7aa4-f840-4bc0-80a9-515d1bce4576",
+      "stock_code": "300014.SZ",
+      "trade_date": "2026-04-08",
+      "status_reason": "BEAR_MARKET_FILTERED",
+      "quality_flag": "degraded",
+      "rc_len": 20
+    },
+    {
+      "report_id": "64b5df47-9111-46a4-bff5-4ee231b6656c",
+      "stock_code": "300015.SZ",
+      "trade_date": "2026-04-08",
+      "status_reason": "BEAR_MARKET_FILTERED",
+      "quality_flag": "degraded",
+      "rc_len": 20
+    },
+    {
+      "report_id": "d57db359-4820-4d5e-a6e6-3e4f30517b1c",
+      "stock_code": "300122.SZ",
+      "trade_date": "2026-04-08",
+      "status_reason": "BEAR_MARKET_FILTERED",
+      "quality_flag": "degraded",
+      "rc_len": 20
+    },
+    {
+      "report_id": "d9e65e2d-4fbf-429f-aca2-301d187ff27d",
+      "stock_code": "300274.SZ",
+      "trade_date": "2026-04-08",
+      "status_reason": "BEAR_MARKET_FILTERED",
+      "quality_flag": "degraded",
+      "rc_len": 20
+    },
+    {
+      "report_id": "f778b89b-77a1-4ce9-b0a8-8d12f9aac615",
+      "stock_code": "300308.SZ",
+      "trade_date": "2026-04-08",
+      "status_reason": "BEAR_MARKET_FILTERED",
+      "quality_flag": "degraded",
+      "rc_len": 20
+    },
+    {
+      "report_id": "0733814c-211e-4b05-b053-e8fb61accdac",
+      "stock_code": "300347.SZ",
+      "trade_date": "2026-04-08",
+      "status_reason": "BEAR_MARKET_FILTERED",
+      "quality_flag": "degraded",
+      "rc_len": 20
+    },
+    {
+      "report_id": "840b49a0-7888-4a0e-8392-2b677b3f5a03",
+      "stock_code": "300408.SZ",
+      "trade_date": "2026-04-08",
+      "status_reason": "BEAR_MARKET_FILTERED",
+      "quality_flag": "degraded",
+      "rc_len": 20
+    },
+    {
+      "report_id": "45c40f9f-25c4-4e23-8102-5b8cb8a9db27",
+      "stock_code": "300124.SZ",
+      "trade_date": "2026-04-08",
+      "status_reason": "BEAR_MARKET_FILTERED",
+      "quality_flag": "degraded",
+      "rc_len": 20
+    },
+    {
+      "report_id": "5bf827c3-9aa6-4297-87f9-547ea738e5b0",
+      "stock_code": "300496.SZ",
+      "trade_date": "2026-04-08",
+      "status_reason": "BEAR_MARKET_FILTERED",
+      "quality_flag": "degraded",
+      "rc_len": 20
+    },
+    {
+      "report_id": "780d9804-392c-47af-b46b-aa0312dca473",
+      "stock_code": "300502.SZ",
+      "trade_date": "2026-04-08",
+      "status_reason": "BEAR_MARKET_FILTERED",
+      "quality_flag": "degraded",
+      "rc_len": 20
+    },
+    {
+      "report_id": "b041101f-75a2-44a3-a533-969d5f7be9a0",
+      "stock_code": "300661.SZ",
+      "trade_date": "2026-04-08",
+      "status_reason": "BEAR_MARKET_FILTERED",
+      "quality_flag": "degraded",
+      "rc_len": 20
+    },
+    {
+      "report_id": "39f16495-80b5-40b3-b09b-ed23fb0eb9ae",
+      "stock_code": "300450.SZ",
+      "trade_date": "2026-04-08",
+      "status_reason": "BEAR_MARKET_FILTERED",
+      "quality_flag": "degraded",
+      "rc_len": 20
+    },
+    {
+      "report_id": "e9cf85fa-dc00-469a-a188-2e34d1cbdb6f",
+      "stock_code": "300760.SZ",
+      "trade_date": "2026-04-08",
+      "status_reason": "BEAR_MARKET_FILTERED",
+      "quality_flag": "degraded",
+      "rc_len": 20
+    },
+    {
+      "report_id": "422f630b-a1ac-4c22-91be-4dd0fd275b94",
+      "stock_code": "300769.SZ",
+      "trade_date": "2026-04-08",
+      "status_reason": "BEAR_MARKET_FILTERED",
+      "quality_flag": "degraded",
+      "rc_len": 20
+    },
+    {
+      "report_id": "ba741880-f157-4b86-944a-ac478467edad",
+      "stock_code": "300782.SZ",
+      "trade_date": "2026-04-08",
+      "status_reason": "BEAR_MARKET_FILTERED",
+      "quality_flag": "degraded",
+      "rc_len": 20
+    },
+    {
+      "report_id": "f42000a4-baf3-4097-abf9-0a5a4a675677",
+      "stock_code": "600000.SH",
+      "trade_date": "2026-04-08",
+      "status_reason": "BEAR_MARKET_FILTERED",
+      "quality_flag": "degraded",
+      "rc_len": 20
+    },
+    {
+      "report_id": "ce3326c6-3e92-4ef7-8094-c315be869818",
+      "stock_code": "600009.SH",
+      "trade_date": "2026-04-08",
+      "status_reason": "BEAR_MARKET_FILTERED",
+      "quality_flag": "degraded",
+      "rc_len": 20
+    },
+    {
+      "report_id": "32fa03f6-0f8b-4bb9-bc0d-329dccf6b46c",
+      "stock_code": "600010.SH",
+      "trade_date": "2026-04-08",
+      "status_reason": "BEAR_MARKET_FILTERED",
+      "quality_flag": "degraded",
+      "rc_len": 20
+    },
+    {
+      "report_id": "ab5966ca-e0c1-4c76-935c-c18e192e864f",
+      "stock_code": "600015.SH",
+      "trade_date": "2026-04-08",
+      "status_reason": "BEAR_MARKET_FILTERED",
+      "quality_flag": "degraded",
+      "rc_len": 20
+    },
+    {
+      "report_id": "880c374c-c00a-4456-9abe-bcd6a4dd52f0",
+      "stock_code": "600016.SH",
+      "trade_date": "2026-04-08",
+      "status_reason": "BEAR_MARKET_FILTERED",
+      "quality_flag": "degraded",
+      "rc_len": 20
+    },
+    {
+      "report_id": "790dcd20-1765-4d86-a23d-ba37a9f771c1",
+      "stock_code": "600019.SH",
+      "trade_date": "2026-04-08",
+      "status_reason": "BEAR_MARKET_FILTERED",
+      "quality_flag": "degraded",
+      "rc_len": 20
+    },
+    {
+      "report_id": "83118242-8727-4b3f-b51f-b30c205c9e89",
+      "stock_code": "600025.SH",
+      "trade_date": "2026-04-08",
+      "status_reason": "BEAR_MARKET_FILTERED",
+      "quality_flag": "degraded",
+      "rc_len": 20
+    },
+    {
+      "report_id": "5bd6ddef-bd87-435b-b75c-50bb9aaff0a9",
+      "stock_code": "600028.SH",
+      "trade_date": "2026-04-08",
+      "status_reason": "BEAR_MARKET_FILTERED",
+      "quality_flag": "degraded",
+      "rc_len": 20
+    },
+    {
+      "report_id": "1780f1fb-a678-40a5-aee9-131cfe9d2f06",
+      "stock_code": "600029.SH",
+      "trade_date": "2026-04-08",
+      "status_reason": "BEAR_MARKET_FILTERED",
+      "quality_flag": "degraded",
+      "rc_len": 20
+    },
+    {
+      "report_id": "89383f02-9567-4a25-b9e8-db067b7d55ec",
+      "stock_code": "600030.SH",
+      "trade_date": "2026-04-08",
+      "status_reason": "BEAR_MARKET_FILTERED",
+      "quality_flag": "degraded",
+      "rc_len": 20
+    },
+    {
+      "report_id": "45c25edb-3a74-4a46-8e57-0b17dfd70d3e",
+      "stock_code": "600031.SH",
+      "trade_date": "2026-04-08",
+      "status_reason": "BEAR_MARKET_FILTERED",
+      "quality_flag": "degraded",
+      "rc_len": 20
+    },
+    {
+      "report_id": "5b48285f-dfca-481f-9b0b-8f1b1a46c4c1",
+      "stock_code": "600048.SH",
+      "trade_date": "2026-04-08",
+      "status_reason": "BEAR_MARKET_FILTERED",
+      "quality_flag": "degraded",
+      "rc_len": 20
+    },
+    {
+      "report_id": "698444aa-c21a-4690-96fc-13d1546bfc1e",
+      "stock_code": "600050.SH",
+      "trade_date": "2026-04-08",
+      "status_reason": "BEAR_MARKET_FILTERED",
+      "quality_flag": "degraded",
+      "rc_len": 20
+    },
+    {
+      "report_id": "aba63501-6741-4978-8fdb-f821fb26c160",
+      "stock_code": "600085.SH",
+      "trade_date": "2026-04-08",
+      "status_reason": "BEAR_MARKET_FILTERED",
+      "quality_flag": "degraded",
+      "rc_len": 20
+    },
+    {
+      "report_id": "023a0e3c-32bb-4dc0-aca9-bbc85749d387",
+      "stock_code": "600104.SH",
+      "trade_date": "2026-04-08",
+      "status_reason": "BEAR_MARKET_FILTERED",
+      "quality_flag": "degraded",
+      "rc_len": 20
+    },
+    {
+      "report_id": "6c5547a2-1ef9-47b7-abcf-644fb399b467",
+      "stock_code": "600115.SH",
+      "trade_date": "2026-04-08",
+      "status_reason": "BEAR_MARKET_FILTERED",
+      "quality_flag": "degraded",
+      "rc_len": 20
+    },
+    {
+      "report_id": "1d362a77-072f-427f-9f30-d74957db07ff",
+      "stock_code": "600118.SH",
+      "trade_date": "2026-04-08",
+      "status_reason": "BEAR_MARKET_FILTERED",
+      "quality_flag": "degraded",
+      "rc_len": 20
+    },
+    {
+      "report_id": "039d18b9-67b3-48e7-ab42-6f4fdd849966",
+      "stock_code": "600132.SH",
+      "trade_date": "2026-04-08",
+      "status_reason": "BEAR_MARKET_FILTERED",
+      "quality_flag": "degraded",
+      "rc_len": 20
+    },
+    {
+      "report_id": "24d397aa-f7b1-4022-ba32-846144f1057f",
+      "stock_code": "600150.SH",
+      "trade_date": "2026-04-08",
+      "status_reason": "BEAR_MARKET_FILTERED",
+      "quality_flag": "degraded",
+      "rc_len": 20
+    },
+    {
+      "report_id": "a6c035c3-c78a-4fb5-93b0-c5541e84c411",
+      "stock_code": "600177.SH",
+      "trade_date": "2026-04-08",
+      "status_reason": "BEAR_MARKET_FILTERED",
+      "quality_flag": "degraded",
+      "rc_len": 20
+    },
+    {
+      "report_id": "a7b140ce-8ef9-43c7-8d13-96a601d8ef1d",
+      "stock_code": "600183.SH",
+      "trade_date": "2026-04-08",
+      "status_reason": "BEAR_MARKET_FILTERED",
+      "quality_flag": "degraded",
+      "rc_len": 20
+    },
+    {
+      "report_id": "6877ff98-8ee1-4329-946b-1dff5ba2feed",
+      "stock_code": "600188.SH",
+      "trade_date": "2026-04-08",
+      "status_reason": "BEAR_MARKET_FILTERED",
+      "quality_flag": "degraded",
+      "rc_len": 20
+    },
+    {
+      "report_id": "f6f1ec84-dc5b-4dc8-84a5-28970bf33f08",
+      "stock_code": "600196.SH",
+      "trade_date": "2026-04-08",
+      "status_reason": "BEAR_MARKET_FILTERED",
+      "quality_flag": "degraded",
+      "rc_len": 20
+    },
+    {
+      "report_id": "738d92a5-618e-4e06-8214-1694f9422d20",
+      "stock_code": "600219.SH",
+      "trade_date": "2026-04-08",
+      "status_reason": "BEAR_MARKET_FILTERED",
+      "quality_flag": "degraded",
+      "rc_len": 20
+    },
+    {
+      "report_id": "81f2e37c-7692-496a-8d9e-4597580610fd",
+      "stock_code": "600256.SH",
+      "trade_date": "2026-04-08",
+      "status_reason": "BEAR_MARKET_FILTERED",
+      "quality_flag": "degraded",
+      "rc_len": 20
+    },
+    {
+      "report_id": "8ca465b1-0dbf-406d-a715-683fcd140aad",
+      "stock_code": "600309.SH",
+      "trade_date": "2026-04-08",
+      "status_reason": "BEAR_MARKET_FILTERED",
+      "quality_flag": "degraded",
+      "rc_len": 20
+    },
+    {
+      "report_id": "7f676061-7a6d-4f9f-a2df-68b8aced826c",
+      "stock_code": "600332.SH",
+      "trade_date": "2026-04-08",
+      "status_reason": "BEAR_MARKET_FILTERED",
+      "quality_flag": "degraded",
+      "rc_len": 20
+    },
+    {
+      "report_id": "1d53de4b-1d61-4f89-a737-7539cc027e38",
+      "stock_code": "600406.SH",
+      "trade_date": "2026-04-08",
+      "status_reason": "BEAR_MARKET_FILTERED",
+      "quality_flag": "degraded",
+      "rc_len": 20
+    },
+    {
+      "report_id": "d41e73aa-c3e7-4c64-be8e-d1fab58ad5e2",
+      "stock_code": "600438.SH",
+      "trade_date": "2026-04-08",
+      "status_reason": "BEAR_MARKET_FILTERED",
+      "quality_flag": "degraded",
+      "rc_len": 20
+    },
+    {
+      "report_id": "0623edc3-3f12-48d7-8199-30018dceb46f",
+      "stock_code": "600516.SH",
+      "trade_date": "2026-04-08",
+      "status_reason": "BEAR_MARKET_FILTERED",
+      "quality_flag": "degraded",
+      "rc_len": 20
+    },
+    {
+      "report_id": "9a0d798d-a2c4-417a-ae74-7f16168fbac6",
+      "stock_code": "600547.SH",
+      "trade_date": "2026-04-08",
+      "status_reason": "BEAR_MARKET_FILTERED",
+      "quality_flag": "degraded",
+      "rc_len": 20
+    },
+    {
+      "report_id": "f84c7e6a-c87d-49ec-957a-b9d43d39cf9e",
+      "stock_code": "600584.SH",
+      "trade_date": "2026-04-08",
+      "status_reason": "BEAR_MARKET_FILTERED",
+      "quality_flag": "degraded",
+      "rc_len": 20
+    },
+    {
+      "report_id": "4c66c8bb-06cb-4d62-a6c5-3f0f1a53337f",
+      "stock_code": "600570.SH",
+      "trade_date": "2026-04-08",
+      "status_reason": "BEAR_MARKET_FILTERED",
+      "quality_flag": "degraded",
+      "rc_len": 20
+    },
+    {
+      "report_id": "9d3e1998-d37d-4a53-8e88-e8ba7408e0fc",
+      "stock_code": "600588.SH",
+      "trade_date": "2026-04-08",
+      "status_reason": "BEAR_MARKET_FILTERED",
+      "quality_flag": "degraded",
+      "rc_len": 20
+    },
+    {
+      "report_id": "e10679a0-c089-415e-ac11-5ac6bc1a358c",
+      "stock_code": "600600.SH",
+      "trade_date": "2026-04-08",
+      "status_reason": "BEAR_MARKET_FILTERED",
+      "quality_flag": "degraded",
+      "rc_len": 20
+    },
+    {
+      "report_id": "f62483e6-6da0-43f5-9df3-b895d7a360fb",
+      "stock_code": "600606.SH",
+      "trade_date": "2026-04-08",
+      "status_reason": "BEAR_MARKET_FILTERED",
+      "quality_flag": "degraded",
+      "rc_len": 20
+    },
+    {
+      "report_id": "4a1d0dae-2408-4de4-af7a-532b11dc4247",
+      "stock_code": "600660.SH",
+      "trade_date": "2026-04-08",
+      "status_reason": "BEAR_MARKET_FILTERED",
+      "quality_flag": "degraded",
+      "rc_len": 20
+    },
+    {
+      "report_id": "76f76928-17ac-4c5d-a684-5c79bf153d2d",
+      "stock_code": "600690.SH",
+      "trade_date": "2026-04-08",
+      "status_reason": "BEAR_MARKET_FILTERED",
+      "quality_flag": "degraded",
+      "rc_len": 20
+    },
+    {
+      "report_id": "4a7a64aa-bcf4-4a65-9de5-4b828df8b771",
+      "stock_code": "600703.SH",
+      "trade_date": "2026-04-08",
+      "status_reason": "BEAR_MARKET_FILTERED",
+      "quality_flag": "degraded",
+      "rc_len": 20
+    },
+    {
+      "report_id": "bcbe16c8-bf42-4ba5-a371-fafd362c26fe",
+      "stock_code": "600741.SH",
+      "trade_date": "2026-04-08",
+      "status_reason": "BEAR_MARKET_FILTERED",
+      "quality_flag": "degraded",
+      "rc_len": 20
+    },
+    {
+      "report_id": "ad190491-a189-46df-8601-f1cd0d4bd234",
+      "stock_code": "600754.SH",
+      "trade_date": "2026-04-08",
+      "status_reason": "BEAR_MARKET_FILTERED",
+      "quality_flag": "degraded",
+      "rc_len": 20
+    },
+    {
+      "report_id": "39135808-e698-4ba8-b307-e7d0f22c12ce",
+      "stock_code": "600760.SH",
+      "trade_date": "2026-04-08",
+      "status_reason": "BEAR_MARKET_FILTERED",
+      "quality_flag": "degraded",
+      "rc_len": 20
+    },
+    {
+      "report_id": "bfe1ae9b-0d36-4e20-af7a-2e29d5568765",
+      "stock_code": "600809.SH",
+      "trade_date": "2026-04-08",
+      "status_reason": "BEAR_MARKET_FILTERED",
+      "quality_flag": "degraded",
+      "rc_len": 20
+    },
+    {
+      "report_id": "5835a99e-1730-47b7-9a4e-f9f4d6dc837d",
+      "stock_code": "600886.SH",
+      "trade_date": "2026-04-08",
+      "status_reason": "BEAR_MARKET_FILTERED",
+      "quality_flag": "degraded",
+      "rc_len": 20
+    },
+    {
+      "report_id": "3c22dd6e-3802-4e90-bedb-a8d13fa896d7",
+      "stock_code": "600893.SH",
+      "trade_date": "2026-04-08",
+      "status_reason": "BEAR_MARKET_FILTERED",
+      "quality_flag": "degraded",
+      "rc_len": 20
+    },
+    {
+      "report_id": "ad531ff5-eba2-4797-b4fa-f3c71d0aed7c",
+      "stock_code": "600918.SH",
+      "trade_date": "2026-04-08",
+      "status_reason": "BEAR_MARKET_FILTERED",
+      "quality_flag": "degraded",
+      "rc_len": 20
+    },
+    {
+      "report_id": "f9add645-6e86-41e6-91d7-d880fbf15f3a",
+      "stock_code": "600926.SH",
+      "trade_date": "2026-04-08",
+      "status_reason": "BEAR_MARKET_FILTERED",
+      "quality_flag": "degraded",
+      "rc_len": 20
+    },
+    {
+      "report_id": "aa7f1664-8d19-4bc0-82c6-98db68f9edea",
+      "stock_code": "600941.SH",
+      "trade_date": "2026-04-08",
+      "status_reason": "BEAR_MARKET_FILTERED",
+      "quality_flag": "degraded",
+      "rc_len": 20
+    },
+    {
+      "report_id": "d0d0d777-2008-43df-a644-e0013580495a",
+      "stock_code": "600989.SH",
+      "trade_date": "2026-04-08",
+      "status_reason": "BEAR_MARKET_FILTERED",
+      "quality_flag": "degraded",
+      "rc_len": 20
+    },
+    {
+      "report_id": "864f3d84-538a-4d95-905b-e396c15a055d",
+      "stock_code": "600999.SH",
+      "trade_date": "2026-04-08",
+      "status_reason": "BEAR_MARKET_FILTERED",
+      "quality_flag": "degraded",
+      "rc_len": 20
+    },
+    {
+      "report_id": "0f02b44d-9ab1-4031-943b-994724a01ef0",
+      "stock_code": "601006.SH",
+      "trade_date": "2026-04-08",
+      "status_reason": "BEAR_MARKET_FILTERED",
+      "quality_flag": "degraded",
+      "rc_len": 20
+    },
+    {
+      "report_id": "3e6d75af-5a31-42d8-b3ff-0744a7fe58f2",
+      "stock_code": "601009.SH",
+      "trade_date": "2026-04-08",
+      "status_reason": "BEAR_MARKET_FILTERED",
+      "quality_flag": "degraded",
+      "rc_len": 20
+    },
+    {
+      "report_id": "0b1f6dc6-f702-4927-9c93-55437f0338f1",
+      "stock_code": "601016.SH",
+      "trade_date": "2026-04-08",
+      "status_reason": "BEAR_MARKET_FILTERED",
+      "quality_flag": "degraded",
+      "rc_len": 20
+    },
+    {
+      "report_id": "b9fc4f39-005a-4213-81c0-bd551551baae",
+      "stock_code": "601021.SH",
+      "trade_date": "2026-04-08",
+      "status_reason": "BEAR_MARKET_FILTERED",
+      "quality_flag": "degraded",
+      "rc_len": 20
+    },
+    {
+      "report_id": "ec0fd509-6b45-48af-b021-9a976b2b1462",
+      "stock_code": "601088.SH",
+      "trade_date": "2026-04-08",
+      "status_reason": "BEAR_MARKET_FILTERED",
+      "quality_flag": "degraded",
+      "rc_len": 20
+    },
+    {
+      "report_id": "5a6fd59e-aa96-4a78-b045-daddfe769cae",
+      "stock_code": "601100.SH",
+      "trade_date": "2026-04-08",
+      "status_reason": "BEAR_MARKET_FILTERED",
+      "quality_flag": "degraded",
+      "rc_len": 20
+    },
+    {
+      "report_id": "7404128d-d933-4c56-9f83-c0cf4799b3db",
+      "stock_code": "601111.SH",
+      "trade_date": "2026-04-08",
+      "status_reason": "BEAR_MARKET_FILTERED",
+      "quality_flag": "degraded",
+      "rc_len": 20
+    },
+    {
+      "report_id": "bf10ece5-db1e-4521-b8da-9d5f0857bf1e",
+      "stock_code": "601117.SH",
+      "trade_date": "2026-04-08",
+      "status_reason": "BEAR_MARKET_FILTERED",
+      "quality_flag": "degraded",
+      "rc_len": 20
+    },
+    {
+      "report_id": "2c87f799-9f48-41f8-a848-cc750651ddd4",
+      "stock_code": "601138.SH",
+      "trade_date": "2026-04-08",
+      "status_reason": "BEAR_MARKET_FILTERED",
+      "quality_flag": "degraded",
+      "rc_len": 20
+    },
+    {
+      "report_id": "2a99d0af-c4a9-4d1c-8e62-8fcd28088936",
+      "stock_code": "601155.SH",
+      "trade_date": "2026-04-08",
+      "status_reason": "BEAR_MARKET_FILTERED",
+      "quality_flag": "degraded",
+      "rc_len": 20
+    },
+    {
+      "report_id": "2becbf2b-b8db-44cf-b73c-66c5b2a1a6fd",
+      "stock_code": "601169.SH",
+      "trade_date": "2026-04-08",
+      "status_reason": "BEAR_MARKET_FILTERED",
+      "quality_flag": "degraded",
+      "rc_len": 20
+    },
+    {
+      "report_id": "cfc06199-9b9a-4909-bcb8-33c30778d8fd",
+      "stock_code": "601186.SH",
+      "trade_date": "2026-04-08",
+      "status_reason": "BEAR_MARKET_FILTERED",
+      "quality_flag": "degraded",
+      "rc_len": 20
+    },
+    {
+      "report_id": "92f4867e-1c4d-4b29-b088-28a57d064092",
+      "stock_code": "601211.SH",
+      "trade_date": "2026-04-08",
+      "status_reason": "BEAR_MARKET_FILTERED",
+      "quality_flag": "degraded",
+      "rc_len": 20
+    },
+    {
+      "report_id": "f316925c-7b82-420b-a635-91894a905e78",
+      "stock_code": "601212.SH",
+      "trade_date": "2026-04-08",
+      "status_reason": "BEAR_MARKET_FILTERED",
+      "quality_flag": "degraded",
+      "rc_len": 20
+    },
+    {
+      "report_id": "ed7e5502-bd20-44db-8656-52ec99b6e1af",
+      "stock_code": "601225.SH",
+      "trade_date": "2026-04-08",
+      "status_reason": "BEAR_MARKET_FILTERED",
+      "quality_flag": "degraded",
+      "rc_len": 20
+    },
+    {
+      "report_id": "a6259b82-022a-4d4c-8271-bcd6dbf52791",
+      "stock_code": "601229.SH",
+      "trade_date": "2026-04-08",
+      "status_reason": "BEAR_MARKET_FILTERED",
+      "quality_flag": "degraded",
+      "rc_len": 20
+    },
+    {
+      "report_id": "2276563a-b388-466e-bf28-3d8d2c769245",
+      "stock_code": "601238.SH",
+      "trade_date": "2026-04-08",
+      "status_reason": "BEAR_MARKET_FILTERED",
+      "quality_flag": "degraded",
+      "rc_len": 20
+    },
+    {
+      "report_id": "e0b2d918-eb41-4651-b109-cc40e3afb73f",
+      "stock_code": "601288.SH",
+      "trade_date": "2026-04-08",
+      "status_reason": "BEAR_MARKET_FILTERED",
+      "quality_flag": "degraded",
+      "rc_len": 20
+    },
+    {
+      "report_id": "eaf82867-f50f-43ce-a3e2-2197b2df1759",
+      "stock_code": "601328.SH",
+      "trade_date": "2026-04-08",
+      "status_reason": "BEAR_MARKET_FILTERED",
+      "quality_flag": "degraded",
+      "rc_len": 20
+    },
+    {
+      "report_id": "df2129d3-d913-4da1-a65e-24d46ef76b99",
+      "stock_code": "601336.SH",
+      "trade_date": "2026-04-08",
+      "status_reason": "BEAR_MARKET_FILTERED",
+      "quality_flag": "degraded",
+      "rc_len": 20
+    },
+    {
+      "report_id": "31f2e4c3-2408-4ecd-9079-60ee8b391d05",
+      "stock_code": "601390.SH",
+      "trade_date": "2026-04-08",
+      "status_reason": "BEAR_MARKET_FILTERED",
+      "quality_flag": "degraded",
+      "rc_len": 20
+    },
+    {
+      "report_id": "7e681498-bfea-41a1-a9f5-81739e68b4c8",
+      "stock_code": "601398.SH",
+      "trade_date": "2026-04-08",
+      "status_reason": "BEAR_MARKET_FILTERED",
+      "quality_flag": "degraded",
+      "rc_len": 20
+    },
+    {
+      "report_id": "f98ce758-6a37-4cc0-b905-881f5fd03c30",
+      "stock_code": "601628.SH",
+      "trade_date": "2026-04-08",
+      "status_reason": "BEAR_MARKET_FILTERED",
+      "quality_flag": "degraded",
+      "rc_len": 20
+    },
+    {
+      "report_id": "83bbe99d-5082-421c-b37b-7405924142f3",
+      "stock_code": "601633.SH",
+      "trade_date": "2026-04-08",
+      "status_reason": "BEAR_MARKET_FILTERED",
+      "quality_flag": "degraded",
+      "rc_len": 20
+    },
+    {
+      "report_id": "f0587342-cfc5-48d9-bfa6-275a0bafe264",
+      "stock_code": "601669.SH",
+      "trade_date": "2026-04-08",
+      "status_reason": "BEAR_MARKET_FILTERED",
+      "quality_flag": "degraded",
+      "rc_len": 20
+    },
+    {
+      "report_id": "5d6d6ea9-cbc9-4406-af3e-47b17d68da9c",
+      "stock_code": "601688.SH",
+      "trade_date": "2026-04-08",
+      "status_reason": "BEAR_MARKET_FILTERED",
+      "quality_flag": "degraded",
+      "rc_len": 20
+    },
+    {
+      "report_id": "41a84745-7327-4129-bfa4-e9294fa2c2ec",
+      "stock_code": "601668.SH",
+      "trade_date": "2026-04-08",
+      "status_reason": "BEAR_MARKET_FILTERED",
+      "quality_flag": "degraded",
+      "rc_len": 20
+    },
+    {
+      "report_id": "bc058786-b257-449b-86ec-28e7a1fd0f68",
+      "stock_code": "601728.SH",
+      "trade_date": "2026-04-08",
+      "status_reason": "BEAR_MARKET_FILTERED",
+      "quality_flag": "degraded",
+      "rc_len": 20
+    },
+    {
+      "report_id": "94e5505e-f0cc-4683-87f8-1679b2affcfe",
+      "stock_code": "601601.SH",
+      "trade_date": "2026-04-08",
+      "status_reason": "BEAR_MARKET_FILTERED",
+      "quality_flag": "degraded",
+      "rc_len": 20
+    },
+    {
+      "report_id": "c54ba6ad-5897-41c6-8498-3643bb02ef77",
+      "stock_code": "601857.SH",
+      "trade_date": "2026-04-08",
+      "status_reason": "BEAR_MARKET_FILTERED",
+      "quality_flag": "degraded",
+      "rc_len": 20
+    },
+    {
+      "report_id": "c11cd79c-4a38-45b1-9480-82f9bf14e33c",
+      "stock_code": "601872.SH",
+      "trade_date": "2026-04-08",
+      "status_reason": "BEAR_MARKET_FILTERED",
+      "quality_flag": "degraded",
+      "rc_len": 20
+    },
+    {
+      "report_id": "b6f33f8d-3fcc-4d1a-8e8e-bb331833837c",
+      "stock_code": "601888.SH",
+      "trade_date": "2026-04-08",
+      "status_reason": "BEAR_MARKET_FILTERED",
+      "quality_flag": "degraded",
+      "rc_len": 20
+    },
+    {
+      "report_id": "39ce3796-27aa-4288-b506-c6d56de528d8",
+      "stock_code": "601898.SH",
+      "trade_date": "2026-04-08",
+      "status_reason": "BEAR_MARKET_FILTERED",
+      "quality_flag": "degraded",
+      "rc_len": 20
+    },
+    {
+      "report_id": "0d1c7693-b8a4-4716-88a0-5c8bac4d8e5e",
+      "stock_code": "601838.SH",
+      "trade_date": "2026-04-08",
+      "status_reason": "BEAR_MARKET_FILTERED",
+      "quality_flag": "degraded",
+      "rc_len": 20
+    },
+    {
+      "report_id": "ecda1cf1-f1d5-492b-b721-41e789e76e91",
+      "stock_code": "601899.SH",
+      "trade_date": "2026-04-08",
+      "status_reason": "BEAR_MARKET_FILTERED",
+      "quality_flag": "degraded",
+      "rc_len": 20
+    },
+    {
+      "report_id": "4c97b8d8-4a81-41ed-a203-816716cdc480",
+      "stock_code": "601800.SH",
+      "trade_date": "2026-04-08",
+      "status_reason": "BEAR_MARKET_FILTERED",
+      "quality_flag": "degraded",
+      "rc_len": 20
+    },
+    {
+      "report_id": "f79164a6-c87c-40db-af89-bdcebf940393",
+      "stock_code": "601939.SH",
+      "trade_date": "2026-04-08",
+      "status_reason": "BEAR_MARKET_FILTERED",
+      "quality_flag": "degraded",
+      "rc_len": 20
+    },
+    {
+      "report_id": "9c0ea67f-9899-4f70-9d16-586c457e522d",
+      "stock_code": "601988.SH",
+      "trade_date": "2026-04-08",
+      "status_reason": "BEAR_MARKET_FILTERED",
+      "quality_flag": "degraded",
+      "rc_len": 20
+    },
+    {
+      "report_id": "95c6eb67-cc51-4e55-bc9c-3dc70bb5eb5e",
+      "stock_code": "601985.SH",
+      "trade_date": "2026-04-08",
+      "status_reason": "BEAR_MARKET_FILTERED",
+      "quality_flag": "degraded",
+      "rc_len": 20
+    },
+    {
+      "report_id": "2e098a1b-45d9-4500-98a6-a4103e21ba35",
+      "stock_code": "603259.SH",
+      "trade_date": "2026-04-08",
+      "status_reason": "BEAR_MARKET_FILTERED",
+      "quality_flag": "degraded",
+      "rc_len": 20
+    },
+    {
+      "report_id": "e0e5347c-10e8-4473-9890-48766e120354",
+      "stock_code": "603369.SH",
+      "trade_date": "2026-04-08",
+      "status_reason": "BEAR_MARKET_FILTERED",
+      "quality_flag": "degraded",
+      "rc_len": 20
+    },
+    {
+      "report_id": "a81727b3-86bd-4035-8599-23ff5e882c04",
+      "stock_code": "603501.SH",
+      "trade_date": "2026-04-08",
+      "status_reason": "BEAR_MARKET_FILTERED",
+      "quality_flag": "degraded",
+      "rc_len": 20
+    },
+    {
+      "report_id": "dbe70a89-a652-4994-9a77-4b66c75c3d25",
+      "stock_code": "603799.SH",
+      "trade_date": "2026-04-08",
+      "status_reason": "BEAR_MARKET_FILTERED",
+      "quality_flag": "degraded",
+      "rc_len": 20
+    },
+    {
+      "report_id": "78eaecdc-9ab4-40e9-8948-fe04015f1c46",
+      "stock_code": "603986.SH",
+      "trade_date": "2026-04-08",
+      "status_reason": "BEAR_MARKET_FILTERED",
+      "quality_flag": "degraded",
+      "rc_len": 20
+    },
+    {
+      "report_id": "284396e1-df58-4a1f-a9e8-afb83cac1286",
+      "stock_code": "603993.SH",
+      "trade_date": "2026-04-08",
+      "status_reason": "BEAR_MARKET_FILTERED",
+      "quality_flag": "degraded",
+      "rc_len": 20
+    },
+    {
+      "report_id": "33df8c7c-7b47-460b-8206-4e1c11f32dbd",
+      "stock_code": "688002.SH",
+      "trade_date": "2026-04-08",
+      "status_reason": "BEAR_MARKET_FILTERED",
+      "quality_flag": "degraded",
+      "rc_len": 20
+    },
+    {
+      "report_id": "b744295f-6070-4626-afcf-53ec50e2a7b2",
+      "stock_code": "688005.SH",
+      "trade_date": "2026-04-08",
+      "status_reason": "BEAR_MARKET_FILTERED",
+      "quality_flag": "degraded",
+      "rc_len": 20
+    },
+    {
+      "report_id": "ce960c81-811e-4727-b472-d5670241d520",
+      "stock_code": "688008.SH",
+      "trade_date": "2026-04-08",
+      "status_reason": "BEAR_MARKET_FILTERED",
+      "quality_flag": "degraded",
+      "rc_len": 20
+    },
+    {
+      "report_id": "a4147b95-224c-4c88-bd99-d23d32d557bc",
+      "stock_code": "688012.SH",
+      "trade_date": "2026-04-08",
+      "status_reason": "BEAR_MARKET_FILTERED",
+      "quality_flag": "degraded",
+      "rc_len": 20
+    },
+    {
+      "report_id": "ea3f09c1-22ea-4926-98f5-b14860864cf2",
+      "stock_code": "688036.SH",
+      "trade_date": "2026-04-08",
+      "status_reason": "BEAR_MARKET_FILTERED",
+      "quality_flag": "degraded",
+      "rc_len": 20
+    },
+    {
+      "report_id": "f452368f-6562-493e-bd57-bd2de74680dd",
+      "stock_code": "688111.SH",
+      "trade_date": "2026-04-08",
+      "status_reason": "BEAR_MARKET_FILTERED",
+      "quality_flag": "degraded",
+      "rc_len": 20
+    },
+    {
+      "report_id": "9492feec-dc91-4487-9962-44c5c8f374f7",
+      "stock_code": "688187.SH",
+      "trade_date": "2026-04-08",
+      "status_reason": "BEAR_MARKET_FILTERED",
+      "quality_flag": "degraded",
+      "rc_len": 20
+    },
+    {
+      "report_id": "c4d32317-03fc-447c-856b-8a6c3f98fbfc",
+      "stock_code": "688235.SH",
+      "trade_date": "2026-04-08",
+      "status_reason": "BEAR_MARKET_FILTERED",
+      "quality_flag": "degraded",
+      "rc_len": 20
+    },
+    {
+      "report_id": "feb92bff-7e67-40ae-8bf4-e5b9c819e784",
+      "stock_code": "688303.SH",
+      "trade_date": "2026-04-08",
+      "status_reason": "BEAR_MARKET_FILTERED",
+      "quality_flag": "degraded",
+      "rc_len": 20
+    },
+    {
+      "report_id": "af276895-769f-4c55-99cf-019fccf25727",
+      "stock_code": "688396.SH",
+      "trade_date": "2026-04-08",
+      "status_reason": "BEAR_MARKET_FILTERED",
+      "quality_flag": "degraded",
+      "rc_len": 20
+    },
+    {
+      "report_id": "9026b8b0-b165-450f-b563-8dd19e277e3e",
+      "stock_code": "688599.SH",
+      "trade_date": "2026-04-08",
+      "status_reason": "BEAR_MARKET_FILTERED",
+      "quality_flag": "degraded",
+      "rc_len": 20
+    },
+    {
+      "report_id": "987fddb6-42ef-4fe3-bce5-bc2c10e69996",
+      "stock_code": "688981.SH",
+      "trade_date": "2026-04-08",
+      "status_reason": "BEAR_MARKET_FILTERED",
+      "quality_flag": "degraded",
+      "rc_len": 20
+    },
+    {
+      "report_id": "655317a0-f4df-4951-ad0d-dc40be69b897",
+      "stock_code": "601898.SH",
+      "trade_date": "2026-04-09",
+      "status_reason": null,
+      "quality_flag": "ok",
+      "rc_len": 6
+    }
+  ]
+}

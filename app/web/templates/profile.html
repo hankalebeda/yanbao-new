@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>个人中心 - A股研报平台</title>
+  <link rel="stylesheet" href="/static/demo.css">
+</head>
+<body>
+  <nav class="site-nav">
+    <a href="/" class="nav-brand">A股研报平台</a>
+    <button class="nav-toggle" aria-label="菜单" onclick="document.querySelector('.nav-links').classList.toggle('open')">☰</button>
+    <div class="nav-links">
+      {% include "_nav_links.html" %}
+    </div>
+  </nav>
+
+  <main class="container">
+    <h1 class="page-title">个人中心</h1>
+
+    <div class="profile-layout">
+      <aside class="profile-sidebar">
+        <a href="#account" class="active">账户信息</a>
+        <a href="#membership">会员与订阅</a>
+        <a href="#feedback">我的反馈</a>
+      </aside>
+      <div class="profile-main">
+        <section class="card" id="account">
+          <h3 class="card-title">账户信息</h3>
+          <p><strong>昵称：</strong>{{ current_user.nickname or '未设置' }}</p>
+          {% if current_user.phone %}
+          <p><strong>手机号：</strong>{{ current_user.phone }}</p>
+          {% endif %}
+          <p><strong>邮箱：</strong>{% if current_user.email and '@phone.local' not in (current_user.email or '') %}{{ current_user.email }}{% else %}—{% endif %}</p>
+          <p><strong>注册时间：</strong>{% if current_user.created_at %}{{ (current_user.created_at | string)[:10] }}{% else %}—{% endif %}</p>
+        </section>
+        {% set _role_raw = (current_user.role or 'user') | lower %}
+          {% set _is_admin = _role_raw in ('admin', 'super_admin') %}
+          {% set _membership_raw = (current_user.membership_level or '') | lower %}
+          {% set _tier_only_raw = (current_user.tier or 'Free') | lower %}
+          {% set _tier_raw = _tier_only_raw if (_membership_raw in ('', 'free') and _tier_only_raw not in ('', 'free')) else (_membership_raw if _membership_raw else _tier_only_raw) %}
+          {% set _expires_at = current_user.membership_expires_at or current_user.tier_expires_at %}
+          {% set _is_unconfirmed_paid = (not _is_admin) and (_tier_raw not in ('free', '')) and (_expires_at is none) %}
+          {% set _tier_label = '待确认' if _is_unconfirmed_paid else ('基础权益' if _tier_raw in ('free', '') else ('专业权益' if _tier_raw in ('pro', 'monthly') else ('企业权益' if _tier_raw in ('enterprise', 'annual') else _tier_raw))) %}
+          {% set _role_label = '管理员' if _role_raw in ('admin', 'super_admin') else '普通用户' %}
+        <section class="card" id="membership" data-subscription-reason="{{ 'expiry_unconfirmed' if _is_unconfirmed_paid else 'ok' }}">
+          <h3 class="card-title">订阅权益</h3>
+          <p id="profile-subscription-tier"><strong>当前套餐：</strong><span class="badge badge-hold">{{ _tier_label }}</span></p>
+          <p><strong>用户角色：</strong>{{ _role_label }}</p>
+          <p><strong>到期时间：</strong>{% if _expires_at %}{{ (_expires_at | string)[:10] }}{% else %}—{% endif %}</p>
+          <p><strong>访问权限：</strong>{% if _is_admin %}管理员{% elif _is_unconfirmed_paid %}等待权益确认{% elif _tier_raw in ('free', '') %}基础研报{% else %}完整研报 + 高级区{% endif %}</p>
+          <p style="margin-top: var(--space-3);"><a href="/subscribe" class="btn-primary">去充值/续费</a></p>
+        </section>
+        <section class="card" id="feedback">
+          <h3 class="card-title">我的反馈</h3>
+          <p class="muted">暂无反馈记录</p>
+        </section>
+      </div>
+    </div>
+  </main>
+
+  <footer class="site-footer">
+    <div class="footer-inner">
+      {% include "_footer_disclaimer.html" %}
+    </div>
+  </footer>
+</body>
+</html>

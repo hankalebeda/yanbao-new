@@ -1,0 +1,177 @@
+{
+  "success": true,
+  "message": "ok",
+  "data": {
+    "report_id": "1438f785-9fdc-46a0-8f2a-9ad928bb71ed",
+    "stock_code": "601898.SH",
+    "stock_name": "中煤能源",
+    "trade_date": "2026-04-09",
+    "recommendation": "HOLD",
+    "confidence": 0.62,
+    "strategy_type": "B",
+    "market_state": "NEUTRAL",
+    "quality_flag": "ok",
+    "llm_fallback_level": "primary",
+    "risk_audit_status": "not_triggered",
+    "review_flag": "APPROVED",
+    "publish_status": "PUBLISHED",
+    "published": true,
+    "status_reason": null,
+    "degraded_banner": null,
+    "conclusion_text": "中煤能源当前处于震荡偏弱格局，建议HOLD。根据kline_daily数据，收盘价17.36元，低于MA5的17.812元和MA20的18.028元，短中期趋势均承压；当日最高17.64元、最低17.28元，收盘与开盘持平，显示反弹动能不足。市场状态来自market_state_input为NEUTRAL，在趋势跟踪策略B下，不宜激进追多。ATR%为5.08%，说明短线波动不低，若后续不能重新站上MA20，则仍有回撤风险。鉴于数据源状态均为ok，但缺乏明确增量资金信号，维持中性判断。",
+    "citations": [
+      {
+        "citation_id": "1ff0b5e1-3909-4959-a381-4c304595df22",
+        "source_name": "tencent",
+        "source_url": "https://quote.eastmoney.com/concept/601898.html",
+        "fetch_time": "2026-04-17T13:27:44.243020",
+        "title": "K线日线数据",
+        "excerpt": "开盘 17.36 收盘 17.36 最高 17.64 最低 17.28"
+      },
+      {
+        "citation_id": "9b7e67aa-7a31-4619-9eef-dc7f14a26d81",
+        "source_name": "backfill",
+        "source_url": "https://guba.eastmoney.com/news,cjpl.html",
+        "fetch_time": "2026-04-17T13:12:44.635549",
+        "title": "热点题材数据",
+        "excerpt": "601898.SH hotspot_top50 ok"
+      },
+      {
+        "citation_id": "ef80fd94-f5a9-4066-8dd1-5ab5a990c38e",
+        "source_name": "etf_flow",
+        "source_url": "https://data.eastmoney.com/etf/default.html",
+        "fetch_time": "2026-04-17T13:12:36.569501",
+        "title": "ETF资金流向",
+        "excerpt": "601898.SH etf_flow_summary ok"
+      },
+      {
+        "citation_id": "df3b543f-9467-4de6-b6b5-75bd7e5439ca",
+        "source_name": "northbound",
+        "source_url": "https://data.eastmoney.com/hsgtcg/stock.html?code=601898",
+        "fetch_time": "2026-04-17T13:12:36.539448",
+        "title": "北向资金",
+        "excerpt": "601898.SH northbound_summary ok"
+      },
+      {
+        "citation_id": "ed6757d4-3147-4d02-b393-db0bf7b403ca",
+        "source_name": "market_state_cache",
+        "source_url": "https://quote.eastmoney.com/zs000001.html",
+        "fetch_time": "2026-04-17T15:40:23.176125",
+        "title": "市场状态",
+        "excerpt": "市场状态 NEUTRAL 参考日 2026-04-08"
+      }
+    ],
+    "instruction_card": {
+      "signal_entry_price": "¥**.**",
+      "atr_pct": 0.05078,
+      "atr_multiplier": 2.0,
+      "stop_loss": "¥**.**",
+      "target_price": "¥**.**",
+      "stop_loss_calc_mode": "atr_multiplier"
+    },
+    "sim_trade_instruction": null,
+    "used_data": [
+      {
+        "usage_id": "8878bb0a-018c-45af-8948-65e1ceaf817e",
+        "trade_date": "2026-04-09",
+        "stock_code": "601898.SH",
+        "dataset_name": "hotspot_top50",
+        "source_name": "backfill",
+        "batch_id": "c13891f5-1a9e-47d9-a3ff-2219931139d4",
+        "fetch_time": "2026-04-17T13:12:44.635549",
+        "status": "ok",
+        "status_reason": null
+      },
+      {
+        "usage_id": "b82cabfb-68f9-4ebd-ad0a-5b5f4cc8d909",
+        "trade_date": "2026-04-09",
+        "stock_code": "601898.SH",
+        "dataset_name": "etf_flow_summary",
+        "source_name": "etf_flow",
+        "batch_id": "7e9ce2ff-717b-43d8-934b-f02810b8705a",
+        "fetch_time": "2026-04-17T13:12:36.569501",
+        "status": "ok",
+        "status_reason": null
+      },
+      {
+        "usage_id": "773c9e7c-2807-40d7-a760-70328ba793c2",
+        "trade_date": "2026-04-09",
+        "stock_code": "601898.SH",
+        "dataset_name": "market_state_input",
+        "source_name": "market_state_cache",
+        "batch_id": "0bf103ab-8c7b-40fd-a6d4-028ef74bc2ed",
+        "fetch_time": "2026-04-17T15:40:23.176125",
+        "status": "ok",
+        "status_reason": null
+      },
+      {
+        "usage_id": "13670961-ded3-4a9b-a225-9d1d93027d97",
+        "trade_date": "2026-04-09",
+        "stock_code": "601898.SH",
+        "dataset_name": "northbound_summary",
+        "source_name": "northbound",
+        "batch_id": "e0216ce0-e078-4fe7-9764-33e120b7976c",
+        "fetch_time": "2026-04-17T13:12:36.539448",
+        "status": "ok",
+        "status_reason": null
+      },
+      {
+        "usage_id": "c2493921-ff89-4961-816c-391659df8637",
+        "trade_date": "2026-04-09",
+        "stock_code": "601898.SH",
+        "dataset_name": "kline_daily",
+        "source_name": "tencent",
+        "batch_id": "4f2ccf6f-27f0-40a3-8312-6f1b4bb6257f",
+        "fetch_time": "2026-04-17T13:27:44.243020",
+        "status": "ok",
+        "status_reason": null
+      }
+    ],
+    "capital_game_summary": {
+      "headline": "主力资金数据待采集；龙虎榜数据待采集；融资融券数据待采集；北向资金摘要已就绪；ETF 资金流摘要已就绪",
+      "summary_text": "北向资金状态：ok；ETF 资金流状态：ok",
+      "has_real_conclusion": false,
+      "main_force": {
+        "status": "missing",
+        "reason": "main_force_data_not_collected"
+      },
+      "dragon_tiger": {
+        "source": null,
+        "lhb_count_30d": null,
+        "lhb_count_90d": null,
+        "net_buy_total": null,
+        "avg_net_buy_ratio": null,
+        "seat_concentration": null
+      },
+      "margin_financing": {
+        "status": "missing",
+        "reason": "margin_data_not_collected"
+      },
+      "northbound": {
+        "status": "ok",
+        "reason": "数据已接入",
+        "fetch_time": "2026-04-17T13:12:36.539448"
+      },
+      "etf_flow": {
+        "status": "ok",
+        "reason": "数据已接入",
+        "fetch_time": "2026-04-17T13:12:36.569501"
+      }
+    },
+    "term_context": {
+      "recommendation": "观望等待",
+      "quality_flag": "数据正常",
+      "risk_audit_status": "尚未触发",
+      "strategy_type": "趋势跟踪",
+      "market_state": "震荡",
+      "confidence": "0.62",
+      "ATR": "ATR=5.1%，代表该股近期平均每日波动约 5.1%，当前止损按 2.0 倍 ATR 计算。",
+      "atr_pct": "5.1%",
+      "signal_entry_price": "¥**.**",
+      "stop_loss": "¥**.**",
+      "target_price": "¥**.**"
+    }
+  },
+  "request_id": "8ad2d727-da44-4b13-a749-ac5b96e7a0d8",
+  "error": null
+}

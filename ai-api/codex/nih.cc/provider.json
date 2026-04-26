@@ -1,0 +1,9 @@
+{
+    "resource":  "provider",
+    "name":  "nih.cc",
+    "homepage":  "https://api.nih.cc/v1",
+    "app":  "codex",
+    "model":  "gpt-5.4",
+    "endpoint":  "https://api.nih.cc/v1",
+    "enabled":  true
+}

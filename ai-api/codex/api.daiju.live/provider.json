@@ -1,0 +1,9 @@
+{
+    "resource":  "provider",
+    "name":  "api.daiju.live",
+    "homepage":  "https://api.daiju.live",
+    "app":  "codex",
+    "model":  "gpt-5.3-codex",
+    "endpoint":  "https://api.daiju.live/v1",
+    "enabled":  true
+}

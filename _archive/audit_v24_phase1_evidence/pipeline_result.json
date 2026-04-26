@@ -1,0 +1,86 @@
+{
+  "data": {
+    "2026-04-07": {
+      "kline_ok": 0,
+      "northbound": 200,
+      "etf_flow": 200,
+      "hotspot": 200
+    },
+    "2026-04-08": {
+      "kline_ok": 0,
+      "northbound": 200,
+      "etf_flow": 200,
+      "hotspot": 200
+    },
+    "2026-04-09": {
+      "kline_ok": 0,
+      "northbound": 200,
+      "etf_flow": 200,
+      "hotspot": 200
+    },
+    "2026-04-10": {
+      "kline_ok": 1,
+      "northbound": 200,
+      "etf_flow": 200,
+      "hotspot": 200
+    },
+    "2026-04-13": {
+      "kline_ok": 0,
+      "northbound": 200,
+      "etf_flow": 200,
+      "hotspot": 200
+    },
+    "2026-04-14": {
+      "kline_ok": 2,
+      "northbound": 200,
+      "etf_flow": 200,
+      "hotspot": 200
+    },
+    "2026-04-15": {
+      "kline_ok": 2,
+      "northbound": 200,
+      "etf_flow": 200,
+      "hotspot": 200
+    },
+    "2026-04-16": {
+      "kline_ok": 28,
+      "northbound": 200,
+      "etf_flow": 200,
+      "hotspot": 200
+    }
+  },
+  "reports": {
+    "2026-04-07": {
+      "ok": 0,
+      "fail": 200
+    },
+    "2026-04-08": {
+      "ok": 0,
+      "fail": 200
+    },
+    "2026-04-09": {
+      "ok": 0,
+      "fail": 200
+    },
+    "2026-04-10": {
+      "ok": 0,
+      "fail": 200
+    },
+    "2026-04-13": {
+      "ok": 0,
+      "fail": 200
+    },
+    "2026-04-14": {
+      "ok": 0,
+      "fail": 200
+    },
+    "2026-04-15": {
+      "ok": 0,
+      "fail": 200
+    },
+    "2026-04-16": {
+      "ok": 0,
+      "fail": 200
+    }
+  }
+}

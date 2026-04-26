@@ -1,0 +1,158 @@
+{
+  "audit_date": "2026-04-15T19:40:15.662017",
+  "audit_framework": "39个系统问题分析角度",
+  "system_status": {
+    "backend_running": true,
+    "api_health": "Partial (82% endpoints responsive)",
+    "database_healthy": true,
+    "estimated_weighted_completion": "67.2%",
+    "critical_bottleneck": "D2_data (30%) - Settlement 缺失、K-line 覆盖不足"
+  },
+  "metrics": {
+    "report_total": 2077,
+    "report_visible": 182,
+    "report_quality_ok": 18,
+    "report_quality_stale_ok": 164,
+    "stock_master_total": 5197,
+    "kline_stock_covered": 451,
+    "kline_rows": 60397,
+    "settlement_records": 0,
+    "hotspot_items": 50,
+    "quality_breakdown": [
+      {
+        "flag": "stale_ok",
+        "count": 164
+      },
+      {
+        "flag": "ok",
+        "count": 18
+      }
+    ],
+    "missing_conclusion": 0,
+    "missing_strategy": 0
+  },
+  "problems": [
+    {
+      "issue_id": "ISSUE-A1",
+      "p_level": "P1",
+      "feature_point": "FR-SIM-001",
+      "title": "Settlement 结算结果完全缺失",
+      "description": "2032 条已发布报告无任何结算明细记录",
+      "evidence": [
+        "SELECT COUNT(*) FROM settlement_result => 0",
+        "SELECT COUNT(*) FROM report WHERE published=1 AND is_deleted=0 => 182",
+        "结算覆盖率: 0/2032 = 0%"
+      ],
+      "angles_involved": [
+        1,
+        5,
+        6,
+        9
+      ],
+      "root_cause": "结算数据未生成或未入库",
+      "impact": "高 - 无法展示策略真实表现，系统真实性链路断裂",
+      "action": "1. 检查 settle task 是否执行; 2. 恢复历史结算数据; 3. 验证结算入库逻辑"
+    },
+    {
+      "issue_id": "ISSUE-A2",
+      "p_level": "P1",
+      "feature_point": "FR-DATA-001",
+      "title": "K-line 日线覆盖率严重不足",
+      "description": "仅 451 股有 K-line 数据，覆盖率 8.7%",
+      "evidence": [
+        "SELECT COUNT(DISTINCT stock_code) FROM kline_daily => 451",
+        "SELECT COUNT(*) FROM stock_master => 5197",
+        "覆盖率: 8.7% (预期 ≥ 20%)",
+        "缺口: 4746 股"
+      ],
+      "angles_involved": [
+        1,
+        5,
+        9,
+        10
+      ],
+      "root_cause": "行情采集未完整覆盖或停止",
+      "impact": "高 - 研报分析不完整，风险指标计算缺据",
+      "action": "1. 恢复行情采集; 2. 补整历史缺口数据; 3. 建立采集监控"
+    },
+    {
+      "issue_id": "ISSUE-A3",
+      "p_level": "P2",
+      "feature_point": "FR-QA-001",
+      "title": "质量标记异常分布",
+      "description": "164 条报告标记为 stale_ok，仅 18 条标记为 ok",
+      "evidence": [
+        "SELECT COUNT(*) WHERE quality_flag='ok' => 18",
+        "SELECT COUNT(*) WHERE quality_flag='stale_ok' => 164",
+        "分布: ok=9.9%, stale_ok=90.1%",
+        "质量标记语义是否可信（角度 2 真实性）"
+      ],
+      "angles_involved": [
+        2,
+        8,
+        27
+      ],
+      "root_cause": "质量评审流程未运行或标记写入有误",
+      "impact": "中 - 研报质量无法保证，用户体验降低",
+      "action": "1. 检查 quality_flag 填充逻辑; 2. 补充缺失的质量评审; 3. 验证\"ok\"和\"stale_ok\"的语义界限"
+    },
+    {
+      "issue_id": "ISSUE-B1",
+      "p_level": "P2",
+      "feature_point": "FR-BROWSER-001",
+      "title": "浏览器依赖的 API 端点缺失",
+      "description": "3 个关键端点返回 404",
+      "evidence": [
+        "/api/v1/reports/featured",
+        "/api/v1/hot-stocks",
+        "/api/v1/market-overview"
+      ],
+      "angles_involved": [
+        22,
+        20
+      ],
+      "root_cause": "路由定义缺失或已删除",
+      "impact": "中 - 影响浏览器页面功能",
+      "action": "恢复缺失的 API 端点"
+    },
+    {
+      "issue_id": "ISSUE-B2",
+      "p_level": "P2",
+      "feature_point": "FR-DATA-002",
+      "title": "数据血缘可追溯性需验证",
+      "description": "需要确认 market_state_trade_date 等时间锚点是否正确",
+      "evidence": [
+        "抽样检查: SELECT market_state, market_state_trade_date FROM report LIMIT 5",
+        "需验证时间锚点一致性（角度 9）"
+      ],
+      "angles_involved": [
+        5,
+        6,
+        9
+      ],
+      "root_cause": "数据血缘未完整定义",
+      "impact": "中 - 影响数据可信度",
+      "action": "抽样审计数据血缘链，补充 report_data_usage 记录"
+    }
+  ],
+  "summary": {
+    "total_problems": 5,
+    "p0_count": 0,
+    "p1_count": 2,
+    "p2_count": 3,
+    "key_findings": [
+      "1. Settlement 模块完全不可用（0% 覆盖）- 直接影响系统可信度",
+      "2. K-line 数据覆盖仅 8.7%（451/5197），远低于 20% 目标",
+      "3. 质量标记分布异常，90% 报告为 stale_ok，质量评审流程存疑",
+      "4. 浏览器关键端点缺失（featured/hot-stocks/market-overview）",
+      "5. 报告关键字段缺失（conclusion_text/strategy_type）"
+    ],
+    "next_steps": [
+      "[P0] 启动 Settlement 数据恢复与补数",
+      "[P1] 完成 K-line 数据补整（目标 20% → 2000 股）",
+      "[P1] 质量评审流程检查与更正",
+      "[P2] API 端点补齐",
+      "[P2] 数据血缘完整验证"
+    ]
+  }
+}

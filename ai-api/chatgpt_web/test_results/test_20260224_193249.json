@@ -1,0 +1,70 @@
+{
+  "passed": 4,
+  "total": 4,
+  "results": {
+    "model_probe": {
+      "raw": "GPT-5.2",
+      "is_5x": true
+    },
+    "single": {
+      "response": "以下是 2026-02-24 今日 A股 重要新闻快讯：\n\n📈 马年首个交易日 A股三大指数集体高开：\n在节后首个交易日，A股市场呈现“开门红”走势，三大主要指数（上证综指、深证成指、创业板指）均大幅高开，涨幅均在 1% 以上，全市场超 4900 只个股上涨，其中贵金属、油气等板块领涨。此表现显示节后市场资金情绪改善，投资者反应积极。\nMr.家居\n\n🔗 可访问来源（中文）：\n👉 马年首个交易日，A股三大指数集体高开，全市超4900只个股上涨｜每日经济新闻\n\n如需实时行情数据（如收盘涨跌、成交量、各行业板块表现等），我也可以进一步整理。",
+      "elapsed_s": 6.47,
+      "has_citation": true
+    },
+    "batch": [
+      {
+        "code": "600519",
+        "name": "MOUTAI",
+        "response": "CASE-A001|MOUTAI|OK",
+        "elapsed_s": 3.96,
+        "has_citation": false
+      },
+      {
+        "code": "000858",
+        "name": "WULIANGYE",
+        "response": "CASE-A002|WULIANGYE|OK",
+        "elapsed_s": 4.41,
+        "has_citation": false
+      },
+      {
+        "code": "300750",
+        "name": "CATL",
+        "response": "CASE-A003|CATL|OK",
+        "elapsed_s": 4.9,
+        "has_citation": false
+      },
+      {
+        "code": "601318",
+        "name": "PINGAN",
+        "response": "CASE-A004|PINGAN|OK",
+        "elapsed_s": 4.39,
+        "has_citation": false
+      },
+      {
+        "code": "600036",
+        "name": "CMB",
+        "response": "CASE-A005|CMB|OK",
+        "elapsed_s": 5.46,
+        "has_citation": false
+      },
+      {
+        "code": "600276",
+        "name": "HGRX",
+        "response": "CASE-A006|HGRX|OK",
+        "elapsed_s": 5.47,
+        "has_citation": false
+      }
+    ],
+    "reconnect": {
+      "probe": {
+        "raw": "GPT-5.2",
+        "is_5x": true
+      },
+      "result": {
+        "response": "CASE-RECONNECT|HEALTH|OK",
+        "elapsed_s": 7.45,
+        "has_citation": false
+      }
+    }
+  }
+}

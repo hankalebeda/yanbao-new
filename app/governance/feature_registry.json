@@ -1,0 +1,4361 @@
+{
+  "version": "3.0.0",
+  "generated_at": "2026-03-18T07:05:00+00:00",
+  "description": "唯一功能注册源 — 所有 FR-00~FR-13 + AI Provider 路由的 L4 功能点。禁止手写状态字段（structural_status/last_test_status 等由 build_feature_catalog 生成）。",
+  "features": [
+    {
+      "feature_id": "FR00-AUTH-01",
+      "title": "已发布研报只读保护",
+      "fr_id": "FR-00",
+      "group": "AUTH",
+      "visibility": "public",
+      "ssot_refs": [
+        "01§2.0",
+        "03§FR-00",
+        "05§2.2.3"
+      ],
+      "runtime_page_path": null,
+      "primary_api": {
+        "method": "GET",
+        "path": "/api/v1/reports/{report_id}"
+      },
+      "request_params": [
+        {
+          "name": "report_id",
+          "type": "string",
+          "required": true,
+          "default": null,
+          "description": "研报ID"
+        }
+      ],
+      "default_example": {
+        "curl": "curl http://localhost:8000/api/v1/reports/{report_id}"
+      },
+      "key_response_fields": [
+        {
+          "name": "published",
+          "type": "bool",
+          "description": "是否已发布"
+        },
+        {
+          "name": "recommendation",
+          "type": "string",
+          "description": "买卖建议"
+        }
+      ],
+      "required_test_kinds": [
+        "api"
+      ],
+      "owner_scope": "测试与质量",
+      "spec_requirement": "已发布研报(published=true)只读保护：PUT→405/403，内容不变；PATCH仅允许review_flag/published",
+      "code_verdict": "✅ 正确：FastAPI无PUT路由→默认405",
+      "test_verdict": "✅ test_fr00_published_report_readonly断言405+内容不变",
+      "page_verdict": null,
+      "gaps": []
+    },
+    {
+      "feature_id": "FR00-AUTH-02",
+      "title": "证据三要素校验(citations)",
+      "fr_id": "FR-00",
+      "group": "AUTH",
+      "visibility": "public",
+      "ssot_refs": [
+        "01§2.0",
+        "03§FR-00"
+      ],
+      "runtime_page_path": null,
+      "primary_api": {
+        "method": "GET",
+        "path": "/api/v1/reports/{report_id}"
+      },
+      "request_params": [
+        {
+          "name": "report_id",
+          "type": "string",
+          "required": true,
+          "default": null,
+          "description": "研报ID"
+        }
+      ],
+      "default_example": {
+        "curl": "curl http://localhost:8000/api/v1/reports/{report_id}"
+      },
+      "key_response_fields": [
+        {
+          "name": "citations",
+          "type": "array",
+          "description": "引用列表(source_name/source_url/fetch_time)"
+        }
+      ],
+      "required_test_kinds": [
+        "api"
+      ],
+      "owner_scope": "测试与质量",
+      "spec_requirement": "citations三要素: source_name非空、source_url以http(s)开头、fetch_time为ISO8601；写入端需校验并清洗非法URL",
+      "code_verdict": "✅ 正确：_validate_source_url() 已限制 source_url 为 http(s)，写入 citations 时会清洗非法 URL",
+      "test_verdict": "✅ 已测：test_fr00_citations_complete + batch1::test_invalid_url_citation_validation 覆盖读取与写入清洗",
+      "page_verdict": null,
+      "gaps": []
+    },
+    {
+      "feature_id": "FR00-AUTH-03",
+      "title": "关键操作审计链路",
+      "fr_id": "FR-00",
+      "group": "AUTH",
+      "visibility": "admin",
+      "ssot_refs": [
+        "01§2.0",
+        "03§FR-00"
+      ],
+      "runtime_page_path": null,
+      "primary_api": {
+        "method": "PATCH",
+        "path": "/api/v1/admin/reports/{report_id}"
+      },
+      "request_params": [
+        {
+          "name": "report_id",
+          "type": "string",
+          "required": true,
+          "default": null,
+          "description": "研报ID"
+        }
+      ],
+      "default_example": {
+        "curl": "curl -X PATCH http://localhost:8000/api/v1/admin/reports/{report_id} -d '{\"published\": false}'"
+      },
+      "key_response_fields": [
+        {
+          "name": "audit_trail",
+          "type": "object",
+          "description": "审计记录(actor/action/before/after)"
+        }
+      ],
+      "required_test_kinds": [
+        "api"
+      ],
+      "owner_scope": "测试与质量",
+      "spec_requirement": "PATCH admin/reports/{id}→audit_log含actor_user_id+before/after快照",
+      "code_verdict": "✅ 正确：双表审计(admin_operation+audit_log)",
+      "test_verdict": "✅ test_fr00_publish_operation_audit_record完整验证",
+      "page_verdict": null,
+      "gaps": []
+    },
+    {
+      "feature_id": "FR01-POOL-01",
+      "title": "管理端手动池刷新",
+      "fr_id": "FR-01",
+      "group": "POOL",
+      "visibility": "admin",
+      "ssot_refs": [
+        "01§2.1",
+        "03§FR-01",
+        "05§1"
+      ],
+      "runtime_page_path": "/admin",
+      "primary_api": {
+        "method": "POST",
+        "path": "/api/v1/admin/pool/refresh"
+      },
+      "request_params": [
+        {
+          "name": "trade_date",
+          "type": "string",
+          "required": false,
+          "default": "今日",
+          "description": "交易日(YYYY-MM-DD)"
+        },
+        {
+          "name": "force_rebuild",
+          "type": "bool",
+          "required": false,
+          "default": false,
+          "description": "是否强制重建"
+        }
+      ],
+      "default_example": {
+        "curl": "curl -X POST http://localhost:8000/api/v1/admin/pool/refresh -H 'Content-Type: application/json' -d '{}'"
+      },
+      "key_response_fields": [
+        {
+          "name": "task_id",
+          "type": "string",
+          "description": "任务ID"
+        },
+        {
+          "name": "status",
+          "type": "string",
+          "description": "IDLE|REFRESHING|COMPLETED|FALLBACK|COLD_START_BLOCKED"
+        },
+        {
+          "name": "core_pool_size",
+          "type": "int",
+          "description": "核心池大小"
+        }
+      ],
+      "required_test_kinds": [
+        "api"
+      ],
+      "owner_scope": "数据工程师",
+      "spec_requirement": "POST /admin/pool/refresh→task_id+status∈{IDLE,REFRESHING,COMPLETED,FALLBACK,COLD_START_BLOCKED}；鉴权JWT+RBAC(admin|super_admin)",
+      "code_verdict": "✅ 正确",
+      "test_verdict": "✅ 完整覆盖",
+      "page_verdict": null,
+      "gaps": []
+    },
+    {
+      "feature_id": "FR01-POOL-02",
+      "title": "八因子加权评分",
+      "fr_id": "FR-01",
+      "group": "POOL",
+      "visibility": "internal",
+      "ssot_refs": [
+        "01§2.1",
+        "03§FR-01"
+      ],
+      "runtime_page_path": null,
+      "primary_api": {
+        "method": "POST",
+        "path": "/api/v1/admin/pool/refresh"
+      },
+      "request_params": [],
+      "default_example": {},
+      "key_response_fields": [
+        {
+          "name": "scores",
+          "type": "dict",
+          "description": "股票评分字典"
+        }
+      ],
+      "required_test_kinds": [
+        "api"
+      ],
+      "owner_scope": "数据工程师",
+      "spec_requirement": "八因子权重：momentum=20%,market_cap=15%,liquidity=20%,MA20_slope=15%,earnings=10%,turnover=10%,RSI=5%,52w_high=5%；公式score=Σ(normalize_rank×weight)×100",
+      "code_verdict": "✅ 已改为基于近10日/远10日成交量比的 earnings_improve 代理指标，不再硬编码 0.5",
+      "test_verdict": "✅ 已有 FR01 权重/八因子回归覆盖权重与因子清单",
+      "page_verdict": null,
+      "gaps": []
+    },
+    {
+      "feature_id": "FR01-POOL-03",
+      "title": "核心池股票查询",
+      "fr_id": "FR-01",
+      "group": "POOL",
+      "visibility": "public",
+      "ssot_refs": [
+        "01§2.1",
+        "05§1"
+      ],
+      "runtime_page_path": null,
+      "primary_api": {
+        "method": "GET",
+        "path": "/api/v1/pool/stocks"
+      },
+      "request_params": [],
+      "default_example": {
+        "curl": "curl http://localhost:8000/api/v1/pool/stocks"
+      },
+      "key_response_fields": [
+        {
+          "name": "stocks",
+          "type": "array",
+          "description": "核心池股票列表"
+        }
+      ],
+      "required_test_kinds": [
+        "api"
+      ],
+      "owner_scope": "数据工程师",
+      "spec_requirement": "核心池查询：精确200只无ST，候补池201-250非空且所有分数<核心池最小分数",
+      "code_verdict": "✅ 正确",
+      "test_verdict": "✅ test_fr01_pool_size_200+test_fr01_pool_no_st完整覆盖",
+      "page_verdict": null,
+      "gaps": []
+    },
+    {
+      "feature_id": "FR01-POOL-04",
+      "title": "池快照与版本管理",
+      "fr_id": "FR-01",
+      "group": "POOL",
+      "visibility": "internal",
+      "ssot_refs": [
+        "01§2.1",
+        "03§FR-01"
+      ],
+      "runtime_page_path": null,
+      "primary_api": {
+        "method": "POST",
+        "path": "/api/v1/admin/pool/refresh"
+      },
+      "request_params": [],
+      "default_example": {},
+      "key_response_fields": [
+        {
+          "name": "pool_version",
+          "type": "int",
+          "description": "池版本号"
+        },
+        {
+          "name": "pool_date",
+          "type": "string",
+          "description": "池日期"
+        }
+      ],
+      "required_test_kinds": [
+        "api"
+      ],
+      "owner_scope": "数据工程师",
+      "spec_requirement": "池快照版本管理+失败回退到上一交易日池(fallback_from非空)",
+      "code_verdict": "✅ 正确",
+      "test_verdict": "✅ test_fr01_fallback_on_fail验证FALLBACK+fallback_from",
+      "page_verdict": null,
+      "gaps": []
+    },
+    {
+      "feature_id": "FR01-POOL-05",
+      "title": "候补池与末位淘汰",
+      "fr_id": "FR-01",
+      "group": "POOL",
+      "visibility": "internal",
+      "ssot_refs": [
+        "01§2.1",
+        "03§FR-01"
+      ],
+      "runtime_page_path": null,
+      "primary_api": {
+        "method": "POST",
+        "path": "/api/v1/admin/pool/refresh"
+      },
+      "request_params": [],
+      "default_example": {},
+      "key_response_fields": [
+        {
+          "name": "standby_pool",
+          "type": "array",
+          "description": "候补池"
+        },
+        {
+          "name": "evicted_stocks",
+          "type": "array",
+          "description": "被淘汰股票"
+        }
+      ],
+      "required_test_kinds": [
+        "api"
+      ],
+      "owner_scope": "数据工程师",
+      "spec_requirement": "候补池201-250名，分数<核心池最小分数",
+      "code_verdict": "✅ STANDBY_POOL_SIZE=50，按分数排序",
+      "test_verdict": "✅ 断言max(standby)<min(core)",
+      "page_verdict": null,
+      "gaps": []
+    },
+    {
+      "feature_id": "FR01-POOL-06",
+      "title": "并发互斥与幂等",
+      "fr_id": "FR-01",
+      "group": "POOL",
+      "visibility": "internal",
+      "ssot_refs": [
+        "01§2.1",
+        "03§FR-01"
+      ],
+      "runtime_page_path": null,
+      "primary_api": {
+        "method": "POST",
+        "path": "/api/v1/admin/pool/refresh"
+      },
+      "request_params": [],
+      "default_example": {},
+      "key_response_fields": [],
+      "required_test_kinds": [
+        "api"
+      ],
+      "owner_scope": "数据工程师",
+      "spec_requirement": "并发互斥：同trade_date并发→409 CONCURRENT_CONFLICT；幂等：同日已完成→直接返回不重算；冷启动：无历史池→COLD_START_ERROR阻断FR-04/FR-06",
+      "code_verdict": "✅ 并发锁+幂等+冷启动异常均已实现",
+      "test_verdict": "✅ 已测：tests/test_fr01_pool_refresh.py::test_fr01_concurrent_conflict_409 + tests/test_v7_audit_batch5.py::test_pool_refresh_idempotent + tests/test_v7_audit_batch1.py::test_cold_start_error",
+      "page_verdict": null,
+      "gaps": []
+    },
+    {
+      "feature_id": "FR02-SCHED-01",
+      "title": "调度状态查询",
+      "fr_id": "FR-02",
+      "group": "SCHED",
+      "visibility": "admin",
+      "ssot_refs": [
+        "01§2.2",
+        "03§FR-02",
+        "05§2"
+      ],
+      "runtime_page_path": "/admin",
+      "primary_api": {
+        "method": "GET",
+        "path": "/api/v1/admin/scheduler/status"
+      },
+      "request_params": [],
+      "default_example": {
+        "curl": "curl http://localhost:8000/api/v1/admin/scheduler/status"
+      },
+      "key_response_fields": [
+        {
+          "name": "status",
+          "type": "string",
+          "description": "调度器状态"
+        },
+        {
+          "name": "tasks",
+          "type": "array",
+          "description": "任务列表"
+        }
+      ],
+      "required_test_kinds": [
+        "api"
+      ],
+      "owner_scope": "数据工程师",
+      "spec_requirement": "调度状态查询：GET /admin/scheduler/status→近7天记录按triggered_at desc；status∈{PENDING,WAITING_UPSTREAM,RUNNING,SUCCESS,FAILED,SKIPPED}",
+      "code_verdict": "✅ 正确",
+      "test_verdict": "✅ test_fr02_schedule_execution验证",
+      "page_verdict": null,
+      "gaps": []
+    },
+    {
+      "feature_id": "FR02-SCHED-02",
+      "title": "DAG 重触发",
+      "fr_id": "FR-02",
+      "group": "SCHED",
+      "visibility": "admin",
+      "ssot_refs": [
+        "01§2.2",
+        "03§FR-02"
+      ],
+      "governance_flags": [
+        "RETIRED_ROUTE"
+      ],
+      "runtime_page_path": "/admin",
+      "primary_api": {
+        "method": "POST",
+        "path": "/api/v1/admin/dag/retrigger"
+      },
+      "request_params": [
+        {
+          "name": "task_name",
+          "type": "string",
+          "required": true,
+          "default": null,
+          "description": "任务名称"
+        }
+      ],
+      "default_example": {
+        "curl": "curl -X POST http://localhost:8000/api/v1/admin/dag/retrigger -d '{\"task_name\": \"pool_refresh\"}'"
+      },
+      "key_response_fields": [
+        {
+          "name": "triggered",
+          "type": "bool",
+          "description": "是否成功触发"
+        }
+      ],
+      "required_test_kinds": [
+        "api"
+      ],
+      "owner_scope": "数据工程师",
+      "spec_requirement": "DAG重触发+依赖传播：FR-06等FR-04完成事件，FR-07/08等FR-06完成；DAG全局超时08:30自解挂起",
+      "code_verdict": "✅ dag_scheduler.py完整实现DAG_DEPENDENCIES+check_upstream_ready+enforce_cascade_timeout",
+      "test_verdict": "✅ 已退役为 410 ROUTE_RETIRED；tests/test_fr02_scheduler_ops.py::test_fr02_retired_retrigger_route 覆盖治理回归",
+      "page_verdict": null,
+      "gaps": []
+    },
+    {
+      "feature_id": "FR02-SCHED-03",
+      "title": "上游依赖检查",
+      "fr_id": "FR-02",
+      "group": "SCHED",
+      "visibility": "internal",
+      "ssot_refs": [
+        "01§2.2",
+        "03§FR-02"
+      ],
+      "runtime_page_path": null,
+      "primary_api": {
+        "method": "GET",
+        "path": "/api/v1/admin/scheduler/status"
+      },
+      "request_params": [],
+      "default_example": {},
+      "key_response_fields": [],
+      "required_test_kinds": [
+        "api"
+      ],
+      "owner_scope": "数据工程师",
+      "spec_requirement": "交易日历3级回退：通达信vipdoc→DB kline CSV→工作日启发式",
+      "code_verdict": "✅ 交易日历严格3级回退：TDX vipdoc→DB kline CSV→工作日启发式，已验证",
+      "test_verdict": "✅ test_fr02验证TDX优先/CSV回退/工作日兜底全路径",
+      "page_verdict": null,
+      "gaps": []
+    },
+    {
+      "feature_id": "FR02-SCHED-04",
+      "title": "跨日超时处理",
+      "fr_id": "FR-02",
+      "group": "SCHED",
+      "visibility": "internal",
+      "ssot_refs": [
+        "01§2.2",
+        "03§FR-02"
+      ],
+      "runtime_page_path": null,
+      "primary_api": {
+        "method": "GET",
+        "path": "/api/v1/admin/scheduler/status"
+      },
+      "request_params": [],
+      "default_example": {},
+      "key_response_fields": [],
+      "required_test_kinds": [
+        "api"
+      ],
+      "owner_scope": "数据工程师",
+      "spec_requirement": "分布式锁：fencing token+TTL=300s+心跳续租；多实例互斥；跨日等待支持",
+      "code_verdict": "✅ dag_scheduler.py完整实现try_acquire_lock+heartbeat_lock+fencing token+TTL=300s",
+      "test_verdict": "✅ test_fr02_dag_lock验证acquire/held/TTL过期/heartbeat/fencing全流程",
+      "page_verdict": null,
+      "gaps": []
+    },
+    {
+      "feature_id": "FR02-SCHED-05",
+      "title": "内部指标汇总",
+      "fr_id": "FR-02",
+      "group": "SCHED",
+      "visibility": "internal",
+      "ssot_refs": [
+        "01§2.2",
+        "03§FR-02"
+      ],
+      "runtime_page_path": null,
+      "primary_api": {
+        "method": "GET",
+        "path": "/api/v1/internal/metrics/summary"
+      },
+      "request_params": [],
+      "default_example": {
+        "curl": "curl -H 'X-Internal-Token: xxx' http://localhost:8000/api/v1/internal/metrics/summary"
+      },
+      "key_response_fields": [
+        {
+          "name": "metrics",
+          "type": "object",
+          "description": "指标汇总"
+        }
+      ],
+      "required_test_kinds": [
+        "api"
+      ],
+      "owner_scope": "数据工程师",
+      "spec_requirement": "内部指标汇总接口 GET /internal/metrics/summary",
+      "code_verdict": "✅ 正确",
+      "test_verdict": "✅ 已测：tests/test_fr02_scheduler_ops.py::test_fr02_internal_metrics_summary_requires_internal_token + tests/test_fr02_scheduler_ops.py::test_fr02_internal_metrics_summary_returns_envelope",
+      "page_verdict": null,
+      "gaps": []
+    },
+    {
+      "feature_id": "FR03-COOKIE-01",
+      "title": "Cookie 上传/更新",
+      "fr_id": "FR-03",
+      "group": "COOKIE",
+      "visibility": "admin",
+      "ssot_refs": [
+        "01§2.3",
+        "03§FR-03",
+        "05§3"
+      ],
+      "runtime_page_path": "/admin",
+      "primary_api": {
+        "method": "POST",
+        "path": "/api/v1/admin/cookie-session"
+      },
+      "request_params": [
+        {
+          "name": "platform",
+          "type": "string",
+          "required": true,
+          "default": null,
+          "description": "平台标识"
+        },
+        {
+          "name": "cookies",
+          "type": "object",
+          "required": true,
+          "default": null,
+          "description": "Cookie JSON"
+        }
+      ],
+      "default_example": {
+        "curl": "curl -X POST http://localhost:8000/api/v1/admin/cookie-session -d '{\"platform\":\"eastmoney\",\"cookies\":{}}'"
+      },
+      "key_response_fields": [
+        {
+          "name": "session_id",
+          "type": "string",
+          "description": "会话ID"
+        }
+      ],
+      "required_test_kinds": [
+        "api"
+      ],
+      "owner_scope": "数据工程师",
+      "spec_requirement": "Cookie上传/更新：POST /admin/cookie-session(body:{login_source,cookie_string})→201；login_source∈{weibo,douyin,xueqiu,kuaishou}",
+      "code_verdict": "✅ 正确",
+      "test_verdict": "✅ 验证完整",
+      "page_verdict": null,
+      "gaps": []
+    },
+    {
+      "feature_id": "FR03-COOKIE-02",
+      "title": "Cookie 健康探测",
+      "fr_id": "FR-03",
+      "group": "COOKIE",
+      "visibility": "admin",
+      "ssot_refs": [
+        "01§2.3",
+        "03§FR-03",
+        "05§3"
+      ],
+      "runtime_page_path": "/admin",
+      "primary_api": {
+        "method": "GET",
+        "path": "/api/v1/admin/cookie-session/health"
+      },
+      "request_params": [],
+      "default_example": {
+        "curl": "curl http://localhost:8000/api/v1/admin/cookie-session/health"
+      },
+      "key_response_fields": [
+        {
+          "name": "healthy",
+          "type": "bool",
+          "description": "是否健康"
+        },
+        {
+          "name": "sessions",
+          "type": "array",
+          "description": "会话列表"
+        }
+      ],
+      "required_test_kinds": [
+        "api"
+      ],
+      "owner_scope": "数据工程师",
+      "spec_requirement": "Cookie健康探测：每5分钟自动探测+分布式探活互斥锁；并发→仅1获锁其余skipped；连续失败≥2→NFR-13告警",
+      "code_verdict": "✅ 每5分钟自动探测已实现；scheduler cookie_probe、分布式 TTL 互斥、并发 skipped 与连续失败 NFR-13 告警链路已实现",
+      "test_verdict": "✅ 已覆盖探活执行、scheduler cookie_probe、分布式 TTL 互斥与连续失败告警",
+      "page_verdict": null,
+      "gaps": []
+    },
+    {
+      "feature_id": "FR03-COOKIE-03",
+      "title": "内部 Cookie 刷新",
+      "fr_id": "FR-03",
+      "group": "COOKIE",
+      "visibility": "internal",
+      "ssot_refs": [
+        "01§2.3",
+        "03§FR-03"
+      ],
+      "runtime_page_path": null,
+      "primary_api": {
+        "method": "POST",
+        "path": "/api/v1/internal/cookie/refresh"
+      },
+      "request_params": [],
+      "default_example": {
+        "curl": "curl -X POST -H 'X-Internal-Token: xxx' http://localhost:8000/api/v1/internal/cookie/refresh"
+      },
+      "key_response_fields": [],
+      "required_test_kinds": [
+        "api",
+        "page"
+      ],
+      "owner_scope": "数据工程师",
+      "spec_requirement": "内部Cookie刷新：POST /internal/cookie/refresh；status∈{ACTIVE,EXPIRING,EXPIRED,REFRESH_FAILED,SKIPPED}",
+      "code_verdict": "✅ _transition_expiring_sessions：ACTIVE→EXPIRING / ACTIVE→EXPIRED / EXPIRING→EXPIRED 正确",
+      "test_verdict": "✅ 已覆盖 EXPIRING/EXPIRED 状态迁移与 internal refresh 语义",
+      "page_verdict": null,
+      "gaps": []
+    },
+    {
+      "feature_id": "FR03-COOKIE-04",
+      "title": "TTL 管理与过期告警",
+      "fr_id": "FR-03",
+      "group": "COOKIE",
+      "visibility": "internal",
+      "ssot_refs": [
+        "01§2.3",
+        "03§FR-03"
+      ],
+      "runtime_page_path": null,
+      "primary_api": {
+        "method": "GET",
+        "path": "/api/v1/admin/cookie-session/health"
+      },
+      "request_params": [],
+      "default_example": {},
+      "key_response_fields": [
+        {
+          "name": "ttl_remaining",
+          "type": "int",
+          "description": "剩余有效期(秒)"
+        }
+      ],
+      "required_test_kinds": [
+        "api",
+        "page"
+      ],
+      "owner_scope": "数据工程师",
+      "spec_requirement": "TTL管理：weibo=24h,xueqiu=48h,douyin=24h,kuaishou=24h；Cookie明文不得出现在日志/前端",
+      "code_verdict": "✅ TTL配置正确+快照脱敏",
+      "test_verdict": "✅ 已覆盖 weibo=24h / xueqiu=48h / douyin=24h / kuaishou=24h TTL 与快照脱敏",
+      "page_verdict": null,
+      "gaps": []
+    },
+    {
+      "feature_id": "FR04-DATA-01",
+      "title": "热点采集",
+      "fr_id": "FR-04",
+      "group": "DATA",
+      "visibility": "internal",
+      "ssot_refs": [
+        "01§2.4",
+        "03§FR-04",
+        "05§4"
+      ],
+      "runtime_page_path": null,
+      "primary_api": {
+        "method": "POST",
+        "path": "/api/v1/internal/hotspot/collect"
+      },
+      "request_params": [],
+      "default_example": {
+        "curl": "curl -X POST -H 'X-Internal-Token: xxx' http://localhost:8000/api/v1/internal/hotspot/collect"
+      },
+      "key_response_fields": [
+        {
+          "name": "collected_count",
+          "type": "int",
+          "description": "采集数量"
+        }
+      ],
+      "required_test_kinds": [
+        "api",
+        "page"
+      ],
+      "owner_scope": "数据工程师",
+      "spec_requirement": "7源优先级采集热搜(eastmoney→weibo→…)，去重合并Top50；≥3源=ok/<3=stale_ok/全失败=degraded",
+      "code_verdict": "✅ multisource_ingest完整实现7源+合并+quality_flag三级",
+      "test_verdict": "✅ test_fr04_normalized_output验证Top50+rank连续",
+      "gaps": []
+    },
+    {
+      "feature_id": "FR04-DATA-02",
+      "title": "热点富化",
+      "fr_id": "FR-04",
+      "group": "DATA",
+      "visibility": "internal",
+      "ssot_refs": [
+        "01§2.4",
+        "03§FR-04"
+      ],
+      "runtime_page_path": null,
+      "primary_api": {
+        "method": "POST",
+        "path": "/api/v1/internal/hotspot/enrich"
+      },
+      "request_params": [],
+      "default_example": {
+        "curl": "curl -X POST -H 'X-Internal-Token: xxx' http://localhost:8000/api/v1/internal/hotspot/enrich"
+      },
+      "key_response_fields": [],
+      "required_test_kinds": [
+        "api",
+        "page"
+      ],
+      "owner_scope": "数据工程师",
+      "spec_requirement": "热点富化：关联股票代码、标注event_type、计算衰减权重/情绪分",
+      "code_verdict": "✅ /hotspot/enrich调用enrich_topic→compute_decay_weight/score_sentiment/infer_event_type",
+      "test_verdict": "✅ test_fr04_hotspot_enrich验证富化字段/空库/鉴权",
+      "gaps": []
+    },
+    {
+      "feature_id": "FR04-DATA-03",
+      "title": "热点健康检查",
+      "fr_id": "FR-04",
+      "group": "DATA",
+      "visibility": "internal",
+      "ssot_refs": [
+        "01§2.4",
+        "03§FR-04"
+      ],
+      "runtime_page_path": null,
+      "primary_api": {
+        "method": "GET",
+        "path": "/api/v1/internal/hotspot/health"
+      },
+      "request_params": [],
+      "default_example": {
+        "curl": "curl -H 'X-Internal-Token: xxx' http://localhost:8000/api/v1/internal/hotspot/health"
+      },
+      "key_response_fields": [
+        {
+          "name": "status",
+          "type": "string",
+          "description": "整体健康状态(ok/degraded)"
+        },
+        {
+          "name": "sources",
+          "type": "array",
+          "description": "逐源 last_fetch/freshness/age_hours 列表"
+        }
+      ],
+      "required_test_kinds": [
+        "api"
+      ],
+      "owner_scope": "数据工程师",
+      "spec_requirement": "热点健康检查：返回 status/status_reason + sources[*].last_fetch/freshness/age_hours；空库/冷启动也返回 200 + degraded",
+      "code_verdict": "✅ 正确：/hotspot/health 已返回逐源状态与新鲜度阈值，sources=[] 时降级为 cold_start_no_hotspot_data",
+      "test_verdict": "✅ 已测：test_hotspot_health_endpoint 覆盖冷启动 + fresh/stale/degraded 三档新鲜度",
+      "gaps": []
+    },
+    {
+      "feature_id": "FR04-DATA-04",
+      "title": "数据源降级状态",
+      "fr_id": "FR-04",
+      "group": "DATA",
+      "visibility": "internal",
+      "ssot_refs": [
+        "01§2.4",
+        "03§FR-04"
+      ],
+      "runtime_page_path": null,
+      "primary_api": {
+        "method": "GET",
+        "path": "/api/v1/internal/source/fallback-status"
+      },
+      "request_params": [],
+      "default_example": {
+        "curl": "curl -H 'X-Internal-Token: xxx' http://localhost:8000/api/v1/internal/source/fallback-status"
+      },
+      "key_response_fields": [
+        {
+          "name": "sources",
+          "type": "array",
+          "description": "各数据源降级状态"
+        }
+      ],
+      "required_test_kinds": [
+        "api"
+      ],
+      "owner_scope": "数据工程师",
+      "spec_requirement": "实时查询各数据源降级/circuit_breaker状态；读取 SSOT 真实列并合并 runtime 状态，clean bootstrap / 空表也必须结构化返回 200",
+      "code_verdict": "✅ 正确：/source/fallback-status 现读取 circuit_state 等真实列，并合并 runtime circuit_open 状态，不再 raw 500",
+      "test_verdict": "✅ 已测：覆盖 401、clean bootstrap 结构化 200、runtime/DB 分裂与 OPEN→degraded 口径",
+      "gaps": []
+    },
+    {
+      "feature_id": "FR04-DATA-05",
+      "title": "断路器与部分提交",
+      "fr_id": "FR-04",
+      "group": "DATA",
+      "visibility": "internal",
+      "ssot_refs": [
+        "01§2.4",
+        "03§FR-04"
+      ],
+      "runtime_page_path": null,
+      "primary_api": {
+        "method": "GET",
+        "path": "/api/v1/internal/source/fallback-status"
+      },
+      "request_params": [],
+      "default_example": {},
+      "key_response_fields": [],
+      "required_test_kinds": [
+        "api"
+      ],
+      "owner_scope": "数据工程师",
+      "spec_requirement": "单源连续失败≥3→熔断300s→半开探测→恢复/冷却；非核心池Partial Commit，单股失败不回滚全批",
+      "code_verdict": "✅ CLOSED→OPEN→HALF_OPEN完整状态机+300s cooldown+partial commit+NFR-13告警分发",
+      "test_verdict": "✅ test_fr04验证熔断全流程+test_fr04_nfr13_alert验证告警写入FR-04/NFR-13",
+      "gaps": []
+    },
+    {
+      "feature_id": "FR04-DATA-06",
+      "title": "热股查询(公开)",
+      "fr_id": "FR-04",
+      "group": "DATA",
+      "visibility": "public",
+      "ssot_refs": [
+        "01§2.4",
+        "05§4"
+      ],
+      "runtime_page_path": "/",
+      "primary_api": {
+        "method": "GET",
+        "path": "/api/v1/market/hot-stocks"
+      },
+      "request_params": [
+        {
+          "name": "limit",
+          "type": "int",
+          "required": false,
+          "default": 10,
+          "description": "返回数量"
+        }
+      ],
+      "default_example": {
+        "curl": "curl http://localhost:8000/api/v1/market/hot-stocks"
+      },
+      "key_response_fields": [
+        {
+          "name": "stocks",
+          "type": "array",
+          "description": "热股列表"
+        }
+      ],
+      "required_test_kinds": [
+        "api"
+      ],
+      "owner_scope": "数据工程师",
+      "spec_requirement": "公开端点GET /market/hot-stocks返回热门股票列表",
+      "code_verdict": "✅ 端点返回热搜数据+rank/topic_title/source_name字段，limit max=50",
+      "test_verdict": "✅ test_fr04_hot_stocks验证热搜字段/limit约束/422校验",
+      "gaps": []
+    },
+    {
+      "feature_id": "FR04-DATA-07",
+      "title": "ETF/北向数据采集",
+      "fr_id": "FR-04",
+      "group": "DATA",
+      "visibility": "internal",
+      "ssot_refs": [
+        "01§2.4",
+        "04§4.5"
+      ],
+      "runtime_page_path": null,
+      "primary_api": {
+        "method": "POST",
+        "path": "/api/v1/internal/hotspot/collect"
+      },
+      "request_params": [],
+      "default_example": {},
+      "key_response_fields": [],
+      "required_test_kinds": [
+        "api"
+      ],
+      "owner_scope": "数据工程师",
+      "spec_requirement": "采集northbound_summary+etf_flow_summary；status∈{ok,missing,degraded}；缺失不阻塞主链；血缘登记report_data_usage",
+      "code_verdict": "✅ _collect_summary正确处理ok/missing/degraded+report_data_usage记录",
+      "test_verdict": "✅ test_fr04验证northbound=ok+etf_flow异常=degraded+usage行",
+      "gaps": []
+    },
+    {
+      "feature_id": "FR05-MKT-01",
+      "title": "市场状态查询",
+      "fr_id": "FR-05",
+      "group": "MKT",
+      "visibility": "public",
+      "ssot_refs": [
+        "01§2.5",
+        "03§FR-05",
+        "05§5"
+      ],
+      "runtime_page_path": "/",
+      "primary_api": {
+        "method": "GET",
+        "path": "/api/v1/market/state"
+      },
+      "request_params": [],
+      "default_example": {
+        "curl": "curl http://localhost:8000/api/v1/market/state"
+      },
+      "key_response_fields": [
+        {
+          "name": "state",
+          "type": "string",
+          "description": "BULL|BEAR|NEUTRAL|VOLATILE"
+        },
+        {
+          "name": "confidence",
+          "type": "float",
+          "description": "置信度"
+        }
+      ],
+      "required_test_kinds": [
+        "api"
+      ],
+      "owner_scope": "数据工程师",
+      "spec_requirement": "market_state∈{BULL,NEUTRAL,BEAR}；优先级BEAR>BULL>NEUTRAL",
+      "code_verdict": "✅ 正确：if is_bear先于if is_bull",
+      "test_verdict": "✅ test_fr05_bear_priority验证",
+      "page_verdict": null,
+      "gaps": []
+    },
+    {
+      "feature_id": "FR05-MKT-02",
+      "title": "BULL-BEAR 计算引擎",
+      "fr_id": "FR-05",
+      "group": "MKT",
+      "visibility": "internal",
+      "ssot_refs": [
+        "01§2.5",
+        "03§FR-05"
+      ],
+      "runtime_page_path": null,
+      "primary_api": {
+        "method": "GET",
+        "path": "/api/v1/market/state"
+      },
+      "request_params": [],
+      "default_example": {},
+      "key_response_fields": [],
+      "required_test_kinds": [
+        "api"
+      ],
+      "owner_scope": "数据工程师",
+      "spec_requirement": "BULL条件：hs300_ma20>ma20_5d_ago AND hs300_return_20d>0.03；BEAR条件：hs300_ma5<hs300_ma20 AND return_20d<-0.05；基于T-1收盘",
+      "code_verdict": "✅ 阈值正确",
+      "test_verdict": "✅ 已覆盖具体 metrics 触发 BEAR 判定",
+      "page_verdict": null,
+      "gaps": []
+    },
+    {
+      "feature_id": "FR05-MKT-03",
+      "title": "幽灵时段识别",
+      "fr_id": "FR-05",
+      "group": "MKT",
+      "visibility": "internal",
+      "ssot_refs": [
+        "01§2.5",
+        "03§FR-05"
+      ],
+      "runtime_page_path": null,
+      "primary_api": {
+        "method": "GET",
+        "path": "/api/v1/market/state"
+      },
+      "request_params": [],
+      "default_example": {},
+      "key_response_fields": [],
+      "required_test_kinds": [
+        "api"
+      ],
+      "owner_scope": "数据工程师",
+      "spec_requirement": "幽灵时段00:00-08:59:59→返回上一有效交易日缓存；绝对冷启动→NEUTRAL+COLD_START_FALLBACK",
+      "code_verdict": "✅ 正确",
+      "test_verdict": "✅ 已覆盖幽灵时段缓存回退与 latest_cache_on_or_before",
+      "page_verdict": null,
+      "gaps": []
+    },
+    {
+      "feature_id": "FR05-MKT-04",
+      "title": "冷启动市场状态",
+      "fr_id": "FR-05",
+      "group": "MKT",
+      "visibility": "internal",
+      "ssot_refs": [
+        "01§2.5",
+        "03§FR-05"
+      ],
+      "runtime_page_path": null,
+      "primary_api": {
+        "method": "GET",
+        "path": "/api/v1/market/state"
+      },
+      "request_params": [],
+      "default_example": {},
+      "key_response_fields": [],
+      "required_test_kinds": [
+        "api"
+      ],
+      "owner_scope": "数据工程师",
+      "spec_requirement": "降级→NEUTRAL+state_reason含market_state_degraded=true",
+      "code_verdict": "✅ 正确",
+      "test_verdict": "✅ 断言state_reason+degraded标记",
+      "page_verdict": null,
+      "gaps": []
+    },
+    {
+      "feature_id": "FR06-LLM-01",
+      "title": "研报生成触发",
+      "fr_id": "FR-06",
+      "group": "LLM",
+      "visibility": "public",
+      "ssot_refs": [
+        "01§2.6",
+        "03§FR-06",
+        "05§6"
+      ],
+      "runtime_page_path": null,
+      "primary_api": {
+        "method": "POST",
+        "path": "/api/v1/reports/generate"
+      },
+      "request_params": [
+        {
+          "name": "stock_code",
+          "type": "string",
+          "required": true,
+          "default": null,
+          "description": "股票代码"
+        },
+        {
+          "name": "force_regenerate",
+          "type": "bool",
+          "required": false,
+          "default": false,
+          "description": "强制重生"
+        }
+      ],
+      "default_example": {
+        "curl": "curl -X POST http://localhost:8000/api/v1/reports/generate -d '{\"stock_code\":\"600519.SH\"}'"
+      },
+      "key_response_fields": [
+        {
+          "name": "report_id",
+          "type": "string",
+          "description": "研报ID"
+        },
+        {
+          "name": "status",
+          "type": "string",
+          "description": "生成状态"
+        }
+      ],
+      "required_test_kinds": [
+        "api"
+      ],
+      "owner_scope": "研报生成工程师",
+      "spec_requirement": "POST /reports/generate→recommendation∈{BUY,SELL,HOLD}；citations非空；幂等键daily:{stock_code}:{trade_date}→同report_id",
+      "code_verdict": "✅ 正确",
+      "test_verdict": "✅ test_fr06_idempotency验证幂等+citations",
+      "gaps": []
+    },
+    {
+      "feature_id": "FR06-LLM-02",
+      "title": "内部 LLM 生成",
+      "fr_id": "FR-06",
+      "group": "LLM",
+      "visibility": "internal",
+      "ssot_refs": [
+        "01§2.6",
+        "03§FR-06"
+      ],
+      "runtime_page_path": null,
+      "primary_api": {
+        "method": "POST",
+        "path": "/api/v1/internal/llm/generate"
+      },
+      "request_params": [],
+      "default_example": {
+        "curl": "curl -X POST -H 'X-Internal-Token: xxx' http://localhost:8000/api/v1/internal/llm/generate"
+      },
+      "key_response_fields": [],
+      "required_test_kinds": [
+        "api"
+      ],
+      "owner_scope": "研报生成工程师",
+      "spec_requirement": "先验数据：已结算历史样本≥30→prior_stats(含sample_count+data_cutoff<月初)；<30→null；全局LLM熔断(连续N次→llm_circuit_open→Pending→Suspended)",
+      "code_verdict": "✅ GlobalLLMCircuitBreaker实现完整; prior_stats<30返回None已验证",
+      "test_verdict": "✅ 5路CB测试+4路prior_stats测试通过",
+      "gaps": []
+    },
+    {
+      "feature_id": "FR06-LLM-03",
+      "title": "LLM 健康检查",
+      "fr_id": "FR-06",
+      "group": "LLM",
+      "visibility": "internal",
+      "ssot_refs": [
+        "01§2.6",
+        "03§FR-06"
+      ],
+      "runtime_page_path": null,
+      "primary_api": {
+        "method": "GET",
+        "path": "/api/v1/internal/llm/health"
+      },
+      "request_params": [],
+      "default_example": {
+        "curl": "curl -H 'X-Internal-Token: xxx' http://localhost:8000/api/v1/internal/llm/health"
+      },
+      "key_response_fields": [
+        {
+          "name": "status",
+          "type": "string",
+          "description": "LLM 健康状态(ok/degraded)"
+        },
+        {
+          "name": "tags",
+          "type": "array",
+          "description": "上游模型标签列表"
+        },
+        {
+          "name": "latency_ms",
+          "type": "integer",
+          "description": "探测延迟"
+        }
+      ],
+      "required_test_kinds": [
+        "api"
+      ],
+      "owner_scope": "研报生成工程师",
+      "spec_requirement": "LLM健康检查接口：返回 status/tags/latency_ms/error；上游失败或超时返回 200 + degraded，不得 raw 500",
+      "code_verdict": "✅ 正确：/internal/llm/health 已降级封装，上游 4xx/5xx/超时返回结构化 degraded 响应",
+      "test_verdict": "✅ 已测：test_llm_health_endpoint_returns_degraded_on_upstream_failure 覆盖 502/异常降级",
+      "gaps": []
+    },
+    {
+      "feature_id": "FR06-LLM-04",
+      "title": "LLM 版本查询",
+      "fr_id": "FR-06",
+      "group": "LLM",
+      "visibility": "internal",
+      "ssot_refs": [
+        "01§2.6",
+        "03§FR-06"
+      ],
+      "runtime_page_path": null,
+      "primary_api": {
+        "method": "GET",
+        "path": "/api/v1/internal/llm/version"
+      },
+      "request_params": [],
+      "default_example": {
+        "curl": "curl -H 'X-Internal-Token: xxx' http://localhost:8000/api/v1/internal/llm/version"
+      },
+      "key_response_fields": [
+        {
+          "name": "version",
+          "type": "string",
+          "description": "LLM 版本"
+        }
+      ],
+      "required_test_kinds": [
+        "api"
+      ],
+      "owner_scope": "研报生成工程师",
+      "spec_requirement": "LLM版本查询接口",
+      "code_verdict": "✅ 正确",
+      "test_verdict": "✅ 已测",
+      "gaps": []
+    },
+    {
+      "feature_id": "FR06-LLM-05",
+      "title": "降级梯度策略",
+      "fr_id": "FR-06",
+      "group": "LLM",
+      "visibility": "internal",
+      "ssot_refs": [
+        "01§2.6",
+        "03§FR-06"
+      ],
+      "runtime_page_path": null,
+      "primary_api": {
+        "method": "POST",
+        "path": "/api/v1/reports/generate"
+      },
+      "request_params": [],
+      "default_example": {},
+      "key_response_fields": [
+        {
+          "name": "quality_flag",
+          "type": "string",
+          "description": "质量标记"
+        },
+        {
+          "name": "status_reason",
+          "type": "string",
+          "description": "降级原因"
+        }
+      ],
+      "required_test_kinds": [
+        "api"
+      ],
+      "owner_scope": "研报生成工程师",
+      "spec_requirement": "LLM降级链primary→backup→cli→local→failed；llm_fallback_level追踪",
+      "code_verdict": "✅ 降级链完整实现(codex→ollama)；llm_fallback_level精准追踪",
+      "test_verdict": "✅ test_fr06_llm_degradation_e2e验证primary失败→local接管/all失败→failed/pool_backup→backup",
+      "gaps": []
+    },
+    {
+      "feature_id": "FR06-LLM-06",
+      "title": "辩证审阅与自我批评",
+      "fr_id": "FR-06",
+      "group": "LLM",
+      "visibility": "internal",
+      "ssot_refs": [
+        "01§2.6",
+        "03§FR-06"
+      ],
+      "runtime_page_path": null,
+      "primary_api": {
+        "method": "POST",
+        "path": "/api/v1/reports/generate"
+      },
+      "request_params": [],
+      "default_example": {},
+      "key_response_fields": [],
+      "required_test_kinds": [
+        "api"
+      ],
+      "owner_scope": "研报生成工程师",
+      "spec_requirement": "BUY+confidence≥0.65→副模型风险审计；成功→completed+高级区'风险补充审计'章节；超时→skipped+skip_reason非空",
+      "code_verdict": "✅ 正确：BUY + confidence≥0.65 时会触发第二阶段风险审计，成功 completed，失败/超时 skipped+skip_reason",
+      "test_verdict": "✅ 已测：test_fr06_dialectical_audit_triggered + mock_llm skipped 路径 + batch2 触发条件回归",
+      "gaps": []
+    },
+    {
+      "feature_id": "FR06-LLM-07",
+      "title": "策略引擎与买卖信号",
+      "fr_id": "FR-06",
+      "group": "LLM",
+      "visibility": "internal",
+      "ssot_refs": [
+        "01§2.6",
+        "03§FR-06"
+      ],
+      "runtime_page_path": null,
+      "primary_api": {
+        "method": "POST",
+        "path": "/api/v1/reports/generate"
+      },
+      "request_params": [],
+      "default_example": {},
+      "key_response_fields": [
+        {
+          "name": "recommendation",
+          "type": "string",
+          "description": "BUY|SELL|HOLD"
+        },
+        {
+          "name": "confidence",
+          "type": "float",
+          "description": "信号置信度"
+        }
+      ],
+      "required_test_kinds": [
+        "api"
+      ],
+      "owner_scope": "研报生成工程师",
+      "spec_requirement": "strategy_type∈{A,B,C}规则引擎判(非LLM)：A=事件命中(×1.5)；B=MA20向上+5日涨>3%(×2.0)；C=ATR<2%+波动率后30%分位(×2.5)；atr_multiplier差异化",
+      "code_verdict": "✅ _ATR_MULTIPLIER_BY_STRATEGY={A:1.5,B:2.0,C:2.5}; C类查volatility_20d第30%分位; B类检查近5日涨幅>3%",
+      "test_verdict": "✅ report_generation_ssot已实现策略分类逻辑，注册表描述陈旧",
+      "gaps": []
+    },
+    {
+      "feature_id": "FR06-LLM-08",
+      "title": "熊市短路机制",
+      "fr_id": "FR-06",
+      "group": "LLM",
+      "visibility": "internal",
+      "ssot_refs": [
+        "01§2.6",
+        "03§FR-06"
+      ],
+      "runtime_page_path": null,
+      "primary_api": {
+        "method": "POST",
+        "path": "/api/v1/reports/generate"
+      },
+      "request_params": [],
+      "default_example": {},
+      "key_response_fields": [
+        {
+          "name": "user_id",
+          "type": "string",
+          "description": "被修改用户 ID"
+        },
+        {
+          "name": "tier",
+          "type": "string",
+          "description": "修改后的会员等级"
+        },
+        {
+          "name": "role",
+          "type": "string",
+          "description": "修改后的角色"
+        }
+      ],
+      "required_test_kinds": [
+        "api"
+      ],
+      "owner_scope": "研报生成工程师",
+      "spec_requirement": "BEAR+B/C类→不调LLM，published=false，quality_flag=degraded，status_reason=BEAR_MARKET_FILTERED",
+      "code_verdict": "✅ 代码正确实现",
+      "test_verdict": "✅ BEAR防损场景由sim_positioning_ssot处理,market_state=BEAR时指令全部SKIPPED",
+      "gaps": []
+    },
+    {
+      "feature_id": "FR06-LLM-09",
+      "title": "实操指令卡",
+      "fr_id": "FR-06",
+      "group": "LLM",
+      "visibility": "public",
+      "ssot_refs": [
+        "01§2.6",
+        "03§FR-06",
+        "05§6"
+      ],
+      "runtime_page_path": "/reports/{report_id}",
+      "primary_api": {
+        "method": "GET",
+        "path": "/api/v1/reports/{report_id}"
+      },
+      "request_params": [
+        {
+          "name": "report_id",
+          "type": "string",
+          "required": true,
+          "default": null,
+          "description": "研报ID"
+        }
+      ],
+      "default_example": {
+        "curl": "curl http://localhost:8000/api/v1/reports/{report_id}"
+      },
+      "key_response_fields": [
+        {
+          "name": "instruction_card",
+          "type": "object",
+          "description": "实操指令卡"
+        }
+      ],
+      "required_test_kinds": [
+        "api"
+      ],
+      "owner_scope": "研报生成工程师",
+      "spec_requirement": "instruction_card必含6字段；BUY强信号→三挡(10k/100k/500k)；1W买不起→SKIPPED；防倒挂stop_loss>entry→全挡SKIPPED+logic_inversion_fallback；ATR缺失→92%fallback",
+      "code_verdict": "✅ stop_loss>=entry时返回skipped=True+logic_inversion_fallback，全挡SKIPPED正确实现",
+      "test_verdict": "✅ 已验证逻辑正确",
+      "gaps": []
+    },
+    {
+      "feature_id": "FR06-LLM-10",
+      "title": "同日同股幂等",
+      "fr_id": "FR-06",
+      "group": "LLM",
+      "visibility": "internal",
+      "ssot_refs": [
+        "01§2.6",
+        "03§FR-06"
+      ],
+      "runtime_page_path": null,
+      "primary_api": {
+        "method": "POST",
+        "path": "/api/v1/reports/generate"
+      },
+      "request_params": [],
+      "default_example": {},
+      "key_response_fields": [],
+      "required_test_kinds": [
+        "api"
+      ],
+      "owner_scope": "研报生成工程师",
+      "spec_requirement": "幂等：同stock_code+trade_date→同report_id；并发→409",
+      "code_verdict": "✅ 正确",
+      "test_verdict": "✅ test_fr06_idempotency+concurrent_conflict",
+      "gaps": []
+    },
+    {
+      "feature_id": "FR06-LLM-WEBAI-01",
+      "title": "WebAI 统一调用",
+      "fr_id": "FR-06",
+      "group": "LLM-WEBAI",
+      "visibility": "internal",
+      "ssot_refs": [
+        "01§2.6",
+        "03§FR-06"
+      ],
+      "runtime_page_path": null,
+      "primary_api": {
+        "method": "POST",
+        "path": "/api/v1/webai/analyze"
+      },
+      "request_params": [
+        {
+          "name": "prompt",
+          "type": "string",
+          "required": true,
+          "default": null,
+          "description": "分析请求"
+        }
+      ],
+      "default_example": {
+        "curl": "curl -X POST http://localhost:8000/api/v1/webai/analyze -d '{\"prompt\":\"test\"}'"
+      },
+      "key_response_fields": [
+        {
+          "name": "result",
+          "type": "string",
+          "description": "分析结果"
+        }
+      ],
+      "required_test_kinds": [
+        "api"
+      ],
+      "owner_scope": "研报生成工程师",
+      "spec_requirement": "WebAI统一调用网关",
+      "code_verdict": "✅ 正确",
+      "test_verdict": "✅ 已测",
+      "gaps": []
+    },
+    {
+      "feature_id": "FR06-LLM-GEMINI-01",
+      "title": "Gemini Provider 分析",
+      "fr_id": "FR-06",
+      "group": "LLM-GEMINI",
+      "visibility": "internal",
+      "ssot_refs": [
+        "01§2.6"
+      ],
+      "runtime_page_path": null,
+      "primary_api": {
+        "method": "POST",
+        "path": "/api/v1/gemini/analyze"
+      },
+      "request_params": [
+        {
+          "name": "prompt",
+          "type": "string",
+          "required": true,
+          "default": null,
+          "description": "分析请求"
+        }
+      ],
+      "default_example": {
+        "curl": "curl -X POST http://localhost:8000/api/v1/gemini/analyze"
+      },
+      "key_response_fields": [
+        {
+          "name": "result",
+          "type": "string",
+          "description": "分析结果"
+        }
+      ],
+      "required_test_kinds": [
+        "api"
+      ],
+      "owner_scope": "研报生成工程师",
+      "spec_requirement": "Gemini Web自动化分析：POST /api/v1/gemini/analyze→Playwright驱动真实连接",
+      "code_verdict": "已通过pytest验收测试",
+      "test_verdict": "✅ 已有pytest验收测试",
+      "gaps": []
+    },
+    {
+      "feature_id": "FR06-LLM-GEMINI-02",
+      "title": "Gemini 批量分析",
+      "fr_id": "FR-06",
+      "group": "LLM-GEMINI",
+      "visibility": "internal",
+      "ssot_refs": [
+        "01§2.6"
+      ],
+      "runtime_page_path": null,
+      "primary_api": {
+        "method": "POST",
+        "path": "/api/v1/gemini/analyze/batch"
+      },
+      "request_params": [],
+      "default_example": {
+        "curl": "curl -X POST http://localhost:8000/api/v1/gemini/analyze/batch"
+      },
+      "key_response_fields": [],
+      "required_test_kinds": [
+        "api"
+      ],
+      "owner_scope": "研报生成工程师",
+      "spec_requirement": "Gemini批量分析：POST /api/v1/gemini/analyze/batch→asyncio.gather并发",
+      "code_verdict": "已通过pytest验收测试",
+      "test_verdict": "✅ 已有pytest验收测试",
+      "gaps": []
+    },
+    {
+      "feature_id": "FR06-LLM-GEMINI-03",
+      "title": "Gemini 会话管理",
+      "fr_id": "FR-06",
+      "group": "LLM-GEMINI",
+      "visibility": "internal",
+      "ssot_refs": [
+        "01§2.6"
+      ],
+      "runtime_page_path": null,
+      "primary_api": {
+        "method": "DELETE",
+        "path": "/api/v1/gemini/session"
+      },
+      "request_params": [],
+      "default_example": {
+        "curl": "curl -X DELETE http://localhost:8000/api/v1/gemini/session"
+      },
+      "key_response_fields": [],
+      "required_test_kinds": [
+        "api"
+      ],
+      "owner_scope": "研报生成工程师",
+      "spec_requirement": "Gemini会话管理：DELETE /api/v1/gemini/session→关闭Chrome进程",
+      "code_verdict": "已通过pytest验收测试",
+      "test_verdict": "✅ 已有pytest验收测试",
+      "gaps": []
+    },
+    {
+      "feature_id": "FR06-LLM-GEMINI-04",
+      "title": "Gemini 会话状态",
+      "fr_id": "FR-06",
+      "group": "LLM-GEMINI",
+      "visibility": "internal",
+      "ssot_refs": [
+        "01§2.6"
+      ],
+      "runtime_page_path": null,
+      "primary_api": {
+        "method": "GET",
+        "path": "/api/v1/gemini/session/status"
+      },
+      "request_params": [],
+      "default_example": {
+        "curl": "curl http://localhost:8000/api/v1/gemini/session/status"
+      },
+      "key_response_fields": [
+        {
+          "name": "active",
+          "type": "bool",
+          "description": "会话是否活跃"
+        }
+      ],
+      "required_test_kinds": [
+        "api"
+      ],
+      "owner_scope": "研报生成工程师",
+      "spec_requirement": "Gemini会话状态：GET /api/v1/gemini/session/status",
+      "code_verdict": "已通过pytest验收测试",
+      "test_verdict": "✅ 已有pytest验收测试",
+      "gaps": []
+    },
+    {
+      "feature_id": "FR06-LLM-CHATGPT-01",
+      "title": "ChatGPT Provider 分析",
+      "fr_id": "FR-06",
+      "group": "LLM-CHATGPT",
+      "visibility": "internal",
+      "ssot_refs": [
+        "01§2.6"
+      ],
+      "runtime_page_path": null,
+      "primary_api": {
+        "method": "POST",
+        "path": "/api/v1/chatgpt/analyze"
+      },
+      "request_params": [
+        {
+          "name": "prompt",
+          "type": "string",
+          "required": true,
+          "default": null,
+          "description": "分析请求"
+        }
+      ],
+      "default_example": {
+        "curl": "curl -X POST http://localhost:8000/api/v1/chatgpt/analyze"
+      },
+      "key_response_fields": [
+        {
+          "name": "result",
+          "type": "string",
+          "description": "分析结果"
+        }
+      ],
+      "required_test_kinds": [
+        "api"
+      ],
+      "owner_scope": "研报生成工程师",
+      "spec_requirement": "ChatGPT Web自动化分析：POST /api/v1/chatgpt/analyze→Playwright+GPT-5.x探测",
+      "code_verdict": "已通过pytest验收测试",
+      "test_verdict": "✅ 已有pytest验收测试",
+      "gaps": []
+    },
+    {
+      "feature_id": "FR06-LLM-CHATGPT-02",
+      "title": "ChatGPT 批量分析",
+      "fr_id": "FR-06",
+      "group": "LLM-CHATGPT",
+      "visibility": "internal",
+      "ssot_refs": [
+        "01§2.6"
+      ],
+      "runtime_page_path": null,
+      "primary_api": {
+        "method": "POST",
+        "path": "/api/v1/chatgpt/analyze/batch"
+      },
+      "request_params": [],
+      "default_example": {},
+      "key_response_fields": [],
+      "required_test_kinds": [
+        "api"
+      ],
+      "owner_scope": "研报生成工程师",
+      "spec_requirement": "ChatGPT批量分析：POST /api/v1/chatgpt/analyze/batch",
+      "code_verdict": "已通过pytest验收测试",
+      "test_verdict": "✅ 已有pytest验收测试",
+      "gaps": []
+    },
+    {
+      "feature_id": "FR06-LLM-CHATGPT-03",
+      "title": "ChatGPT 会话管理",
+      "fr_id": "FR-06",
+      "group": "LLM-CHATGPT",
+      "visibility": "internal",
+      "ssot_refs": [
+        "01§2.6"
+      ],
+      "runtime_page_path": null,
+      "primary_api": {
+        "method": "DELETE",
+        "path": "/api/v1/chatgpt/session"
+      },
+      "request_params": [],
+      "default_example": {},
+      "key_response_fields": [],
+      "required_test_kinds": [
+        "api"
+      ],
+      "owner_scope": "研报生成工程师",
+      "spec_requirement": "ChatGPT会话管理：DELETE /api/v1/chatgpt/session",
+      "code_verdict": "已通过pytest验收测试",
+      "test_verdict": "✅ 已有pytest验收测试",
+      "gaps": []
+    },
+    {
+      "feature_id": "FR06-LLM-CHATGPT-04",
+      "title": "ChatGPT 会话状态",
+      "fr_id": "FR-06",
+      "group": "LLM-CHATGPT",
+      "visibility": "internal",
+      "ssot_refs": [
+        "01§2.6"
+      ],
+      "runtime_page_path": null,
+      "primary_api": {
+        "method": "GET",
+        "path": "/api/v1/chatgpt/session/status"
+      },
+      "request_params": [],
+      "default_example": {},
+      "key_response_fields": [],
+      "required_test_kinds": [
+        "api"
+      ],
+      "owner_scope": "研报生成工程师",
+      "spec_requirement": "ChatGPT会话状态：GET /api/v1/chatgpt/session/status",
+      "code_verdict": "已通过pytest验收测试",
+      "test_verdict": "✅ 已有pytest验收测试",
+      "gaps": []
+    },
+    {
+      "feature_id": "FR06-LLM-DEEPSEEK-01",
+      "title": "DeepSeek Provider 分析",
+      "fr_id": "FR-06",
+      "group": "LLM-DEEPSEEK",
+      "visibility": "internal",
+      "ssot_refs": [
+        "01§2.6"
+      ],
+      "runtime_page_path": null,
+      "primary_api": {
+        "method": "POST",
+        "path": "/api/v1/deepseek/analyze"
+      },
+      "request_params": [
+        {
+          "name": "prompt",
+          "type": "string",
+          "required": true,
+          "default": null,
+          "description": "分析请求"
+        }
+      ],
+      "default_example": {
+        "curl": "curl -X POST http://localhost:8000/api/v1/deepseek/analyze"
+      },
+      "key_response_fields": [
+        {
+          "name": "result",
+          "type": "string",
+          "description": "分析结果"
+        }
+      ],
+      "required_test_kinds": [
+        "api"
+      ],
+      "owner_scope": "研报生成工程师",
+      "spec_requirement": "DeepSeek Web自动化分析：POST /api/v1/deepseek/analyze",
+      "code_verdict": "已通过pytest验收测试",
+      "test_verdict": "✅ 已有pytest验收测试",
+      "gaps": []
+    },
+    {
+      "feature_id": "FR06-LLM-DEEPSEEK-02",
+      "title": "DeepSeek 批量分析",
+      "fr_id": "FR-06",
+      "group": "LLM-DEEPSEEK",
+      "visibility": "internal",
+      "ssot_refs": [
+        "01§2.6"
+      ],
+      "runtime_page_path": null,
+      "primary_api": {
+        "method": "POST",
+        "path": "/api/v1/deepseek/analyze/batch"
+      },
+      "request_params": [],
+      "default_example": {},
+      "key_response_fields": [],
+      "required_test_kinds": [
+        "api"
+      ],
+      "owner_scope": "研报生成工程师",
+      "spec_requirement": "DeepSeek批量分析：POST /api/v1/deepseek/analyze/batch",
+      "code_verdict": "已通过pytest验收测试",
+      "test_verdict": "✅ 已有pytest验收测试",
+      "gaps": []
+    },
+    {
+      "feature_id": "FR06-LLM-DEEPSEEK-03",
+      "title": "DeepSeek 会话管理",
+      "fr_id": "FR-06",
+      "group": "LLM-DEEPSEEK",
+      "visibility": "internal",
+      "ssot_refs": [
+        "01§2.6"
+      ],
+      "runtime_page_path": null,
+      "primary_api": {
+        "method": "DELETE",
+        "path": "/api/v1/deepseek/session"
+      },
+      "request_params": [],
+      "default_example": {},
+      "key_response_fields": [],
+      "required_test_kinds": [
+        "api"
+      ],
+      "owner_scope": "研报生成工程师",
+      "spec_requirement": "DeepSeek会话管理：DELETE /api/v1/deepseek/session",
+      "code_verdict": "已通过pytest验收测试",
+      "test_verdict": "✅ 已有pytest验收测试",
+      "gaps": []
+    },
+    {
+      "feature_id": "FR06-LLM-DEEPSEEK-04",
+      "title": "DeepSeek 会话状态",
+      "fr_id": "FR-06",
+      "group": "LLM-DEEPSEEK",
+      "visibility": "internal",
+      "ssot_refs": [
+        "01§2.6"
+      ],
+      "runtime_page_path": null,
+      "primary_api": {
+        "method": "GET",
+        "path": "/api/v1/deepseek/session/status"
+      },
+      "request_params": [],
+      "default_example": {},
+      "key_response_fields": [],
+      "required_test_kinds": [
+        "api"
+      ],
+      "owner_scope": "研报生成工程师",
+      "spec_requirement": "DeepSeek会话状态：GET /api/v1/deepseek/session/status",
+      "code_verdict": "已通过pytest验收测试",
+      "test_verdict": "✅ 已有pytest验收测试",
+      "gaps": []
+    },
+    {
+      "feature_id": "FR06-LLM-QWEN-01",
+      "title": "Qwen Provider 分析",
+      "fr_id": "FR-06",
+      "group": "LLM-QWEN",
+      "visibility": "internal",
+      "ssot_refs": [
+        "01§2.6"
+      ],
+      "runtime_page_path": null,
+      "primary_api": {
+        "method": "POST",
+        "path": "/api/v1/qwen/analyze"
+      },
+      "request_params": [
+        {
+          "name": "prompt",
+          "type": "string",
+          "required": true,
+          "default": null,
+          "description": "分析请求"
+        }
+      ],
+      "default_example": {
+        "curl": "curl -X POST http://localhost:8000/api/v1/qwen/analyze"
+      },
+      "key_response_fields": [
+        {
+          "name": "result",
+          "type": "string",
+          "description": "分析结果"
+        }
+      ],
+      "required_test_kinds": [
+        "api"
+      ],
+      "owner_scope": "研报生成工程师",
+      "spec_requirement": "Qwen Web自动化分析：POST /api/v1/qwen/analyze→支持CDP模式",
+      "code_verdict": "已通过pytest验收测试",
+      "test_verdict": "✅ 已有pytest验收测试",
+      "gaps": []
+    },
+    {
+      "feature_id": "FR06-LLM-QWEN-02",
+      "title": "Qwen 批量分析",
+      "fr_id": "FR-06",
+      "group": "LLM-QWEN",
+      "visibility": "internal",
+      "ssot_refs": [
+        "01§2.6"
+      ],
+      "runtime_page_path": null,
+      "primary_api": {
+        "method": "POST",
+        "path": "/api/v1/qwen/analyze/batch"
+      },
+      "request_params": [],
+      "default_example": {},
+      "key_response_fields": [],
+      "required_test_kinds": [
+        "api"
+      ],
+      "owner_scope": "研报生成工程师",
+      "spec_requirement": "Qwen批量分析：POST /api/v1/qwen/analyze/batch",
+      "code_verdict": "已通过pytest验收测试",
+      "test_verdict": "✅ 已有pytest验收测试",
+      "gaps": []
+    },
+    {
+      "feature_id": "FR06-LLM-QWEN-03",
+      "title": "Qwen 会话管理",
+      "fr_id": "FR-06",
+      "group": "LLM-QWEN",
+      "visibility": "internal",
+      "ssot_refs": [
+        "01§2.6"
+      ],
+      "runtime_page_path": null,
+      "primary_api": {
+        "method": "DELETE",
+        "path": "/api/v1/qwen/session"
+      },
+      "request_params": [],
+      "default_example": {},
+      "key_response_fields": [],
+      "required_test_kinds": [
+        "api"
+      ],
+      "owner_scope": "研报生成工程师",
+      "spec_requirement": "Qwen会话管理：DELETE /api/v1/qwen/session",
+      "code_verdict": "已通过pytest验收测试",
+      "test_verdict": "✅ 已有pytest验收测试",
+      "gaps": []
+    },
+    {
+      "feature_id": "FR06-LLM-QWEN-04",
+      "title": "Qwen 会话状态",
+      "fr_id": "FR-06",
+      "group": "LLM-QWEN",
+      "visibility": "internal",
+      "ssot_refs": [
+        "01§2.6"
+      ],
+      "runtime_page_path": null,
+      "primary_api": {
+        "method": "GET",
+        "path": "/api/v1/qwen/session/status"
+      },
+      "request_params": [],
+      "default_example": {},
+      "key_response_fields": [],
+      "required_test_kinds": [
+        "api"
+      ],
+      "owner_scope": "研报生成工程师",
+      "spec_requirement": "Qwen会话状态：GET /api/v1/qwen/session/status",
+      "code_verdict": "已通过pytest验收测试",
+      "test_verdict": "✅ 已有pytest验收测试",
+      "gaps": []
+    },
+    {
+      "feature_id": "FR07-SETTLE-01",
+      "title": "结算触发",
+      "fr_id": "FR-07",
+      "group": "SETTLE",
+      "visibility": "admin",
+      "ssot_refs": [
+        "01§2.7",
+        "03§FR-07",
+        "05§7"
+      ],
+      "runtime_page_path": "/admin",
+      "primary_api": {
+        "method": "POST",
+        "path": "/api/v1/admin/settlement/run"
+      },
+      "request_params": [],
+      "default_example": {
+        "curl": "curl -X POST http://localhost:8000/api/v1/admin/settlement/run"
+      },
+      "key_response_fields": [
+        {
+          "name": "settled_count",
+          "type": "int",
+          "description": "结算数量"
+        }
+      ],
+      "required_test_kinds": [
+        "api"
+      ],
+      "owner_scope": "数据工程师",
+      "spec_requirement": "异步结算HTTP 202+task_id；结算公式：佣金=max(金额×0.025%,5元)；印花税=卖出金额×0.5‰；滑点=0.05%；shares固定100",
+      "code_verdict": "✅ 滑点率已修正为0.0005(0.05%)",
+      "test_verdict": "✅ buy_slippage=0.50, sell_slippage=0.5250断言通过",
+      "page_verdict": null,
+      "gaps": []
+    },
+    {
+      "feature_id": "FR07-SETTLE-02",
+      "title": "预测提取",
+      "fr_id": "FR-07",
+      "group": "SETTLE",
+      "visibility": "public",
+      "ssot_refs": [
+        "01§2.7",
+        "03§FR-07",
+        "05§7"
+      ],
+      "runtime_page_path": null,
+      "primary_api": {
+        "method": "POST",
+        "path": "/api/v1/predictions/extract"
+      },
+      "request_params": [],
+      "default_example": {
+        "curl": "curl -X POST http://localhost:8000/api/v1/predictions/extract"
+      },
+      "key_response_fields": [
+        {
+          "name": "extracted_count",
+          "type": "int",
+          "description": "提取数量"
+        }
+      ],
+      "required_test_kinds": [
+        "api"
+      ],
+      "owner_scope": "数据工程师",
+      "spec_requirement": "四维度统计：样本≥30→非null+display_hint=null；<30→null+display_hint='样本积累中'",
+      "code_verdict": "✅ runtime_materialization/sim_query已改用中文样本积累中; fr07_metrics一直正确",
+      "test_verdict": "✅ test_fr07_metrics_supplemental.py验证display_hint=样本积累中",
+      "page_verdict": null,
+      "gaps": []
+    },
+    {
+      "feature_id": "FR07-SETTLE-03",
+      "title": "预测结算",
+      "fr_id": "FR-07",
+      "group": "SETTLE",
+      "visibility": "public",
+      "ssot_refs": [
+        "01§2.7",
+        "03§FR-07",
+        "05§7"
+      ],
+      "runtime_page_path": null,
+      "primary_api": {
+        "method": "POST",
+        "path": "/api/v1/predictions/settle"
+      },
+      "request_params": [],
+      "default_example": {
+        "curl": "curl -X POST http://localhost:8000/api/v1/predictions/settle"
+      },
+      "key_response_fields": [
+        {
+          "name": "settled_count",
+          "type": "int",
+          "description": "结算数量"
+        }
+      ],
+      "required_test_kinds": [
+        "api"
+      ],
+      "owner_scope": "数据工程师",
+      "spec_requirement": "win_rate口径：仅net_return_pct>0计胜，排除return=0(阈值abs<0.0001)；profit_loss_ratio同",
+      "code_verdict": "✅ win_rate已排除零收益(ZERO_RETURN_THRESHOLD=0.0001)",
+      "test_verdict": "✅ test_fr07_metrics_supplemental.py 5个断言通过",
+      "page_verdict": null,
+      "gaps": []
+    },
+    {
+      "feature_id": "FR07-SETTLE-04",
+      "title": "预测统计",
+      "fr_id": "FR-07",
+      "group": "SETTLE",
+      "visibility": "public",
+      "ssot_refs": [
+        "01§2.7",
+        "03§FR-07",
+        "05§7"
+      ],
+      "runtime_page_path": "/dashboard",
+      "primary_api": {
+        "method": "GET",
+        "path": "/api/v1/predictions/stats"
+      },
+      "request_params": [],
+      "default_example": {
+        "curl": "curl http://localhost:8000/api/v1/predictions/stats"
+      },
+      "key_response_fields": [
+        {
+          "name": "win_rate",
+          "type": "float",
+          "description": "胜率"
+        },
+        {
+          "name": "sample_count",
+          "type": "int",
+          "description": "样本数"
+        }
+      ],
+      "required_test_kinds": [
+        "api"
+      ],
+      "owner_scope": "数据工程师",
+      "spec_requirement": "GET /api/v1/predictions/stats→PredictionStatsPayload；200 成功响应；无结算样本仍返回 200；total_judged=judged 且 by_window 固定覆盖 1/7/14/30/60",
+      "code_verdict": "✅ 正确实现公开预测统计摘要，不把该接口扩展为 dashboard 公开态替代源",
+      "test_verdict": "✅ test_predictions_stats_returns_success 覆盖 200/envelope + total_judged=judged + by_window 固定窗口",
+      "page_verdict": null,
+      "gaps": []
+    },
+    {
+      "feature_id": "FR07-SETTLE-05",
+      "title": "双摩擦撮合",
+      "fr_id": "FR-07",
+      "group": "SETTLE",
+      "visibility": "internal",
+      "ssot_refs": [
+        "01§2.7",
+        "03§FR-07"
+      ],
+      "runtime_page_path": null,
+      "primary_api": {
+        "method": "POST",
+        "path": "/api/v1/admin/settlement/run"
+      },
+      "request_params": [],
+      "default_example": {},
+      "key_response_fields": [],
+      "required_test_kinds": [
+        "api"
+      ],
+      "owner_scope": "数据工程师",
+      "spec_requirement": "结算互斥锁：并发→仅1成功(202)另1返回409",
+      "code_verdict": "✅ 基于DB状态检查409互斥（SettlementServiceError(409, CONCURRENT_CONFLICT)）",
+      "test_verdict": "✅ test_fr07_concurrent_settlement_409验证并发409保护",
+      "page_verdict": null,
+      "gaps": []
+    },
+    {
+      "feature_id": "FR07-SETTLE-06",
+      "title": "MC/MA 基线校验",
+      "fr_id": "FR-07",
+      "group": "SETTLE",
+      "visibility": "internal",
+      "ssot_refs": [
+        "01§2.7",
+        "03§FR-07"
+      ],
+      "runtime_page_path": null,
+      "primary_api": {
+        "method": "POST",
+        "path": "/api/v1/admin/settlement/run"
+      },
+      "request_params": [],
+      "default_example": {},
+      "key_response_fields": [],
+      "required_test_kinds": [
+        "api"
+      ],
+      "owner_scope": "数据工程师",
+      "spec_requirement": "对照组：样本≥30→baseline_random(runs=500蒙特卡洛)+baseline_ma_cross；<30→null",
+      "code_verdict": "✅ RANDOM_BASELINE_RUNS=500有放回采样; baseline_ma_cross独立实现; 已检查sample<30",
+      "test_verdict": "✅ test_fr07_metrics_supplemental.py 5个测试通过",
+      "page_verdict": null,
+      "gaps": []
+    },
+    {
+      "feature_id": "FR07-SETTLE-07",
+      "title": "信号偏移警告",
+      "fr_id": "FR-07",
+      "group": "SETTLE",
+      "visibility": "internal",
+      "ssot_refs": [
+        "01§2.7",
+        "03§FR-07"
+      ],
+      "runtime_page_path": null,
+      "primary_api": {
+        "method": "POST",
+        "path": "/api/v1/admin/settlement/run"
+      },
+      "request_params": [],
+      "default_example": {},
+      "key_response_fields": [],
+      "required_test_kinds": [
+        "api"
+      ],
+      "owner_scope": "数据工程师",
+      "spec_requirement": "信号有效性：AI跑输随机基线→signal_validity_warning:true；coverage_pct计算",
+      "code_verdict": "✅ 正确",
+      "test_verdict": "✅ monkeypatch验证",
+      "page_verdict": null,
+      "gaps": []
+    },
+    {
+      "feature_id": "FR08-SIM-01",
+      "title": "模拟看板",
+      "fr_id": "FR-08",
+      "group": "SIM",
+      "visibility": "public",
+      "ssot_refs": [
+        "01§2.8",
+        "03§FR-08",
+        "05§8"
+      ],
+      "runtime_page_path": "/portfolio/sim-dashboard",
+      "primary_api": {
+        "method": "GET",
+        "path": "/api/v1/portfolio/sim-dashboard"
+      },
+      "request_params": [],
+      "default_example": {
+        "curl": "curl http://localhost:8000/api/v1/portfolio/sim-dashboard"
+      },
+      "key_response_fields": [
+        {
+          "name": "positions",
+          "type": "array",
+          "description": "持仓列表"
+        },
+        {
+          "name": "total_pnl",
+          "type": "float",
+          "description": "总盈亏"
+        }
+      ],
+      "required_test_kinds": [
+        "api",
+        "page"
+      ],
+      "owner_scope": "前端与体验",
+      "spec_requirement": "回撤熔断：drawdown≤-0.20→HALT(不新开仓)；-0.20<dd≤-0.12→REDUCE(仓位×0.5)；>-0.12→NORMAL",
+      "code_verdict": "✅ drawdown_state_factor=0.5使effective_position_ratio减半",
+      "test_verdict": "✅ test_fr08_sim_scenarios.py通过",
+      "page_verdict": null,
+      "gaps": []
+    },
+    {
+      "feature_id": "FR08-SIM-02",
+      "title": "持仓列表",
+      "fr_id": "FR-08",
+      "group": "SIM",
+      "visibility": "public",
+      "ssot_refs": [
+        "01§2.8",
+        "05§8"
+      ],
+      "runtime_page_path": "/portfolio/sim-dashboard",
+      "primary_api": {
+        "method": "GET",
+        "path": "/api/v1/sim/positions"
+      },
+      "request_params": [
+        {
+          "name": "status",
+          "type": "string",
+          "required": false,
+          "default": null,
+          "description": "持仓状态过滤"
+        }
+      ],
+      "default_example": {
+        "curl": "curl http://localhost:8000/api/v1/sim/positions"
+      },
+      "key_response_fields": [
+        {
+          "name": "positions",
+          "type": "array",
+          "description": "持仓列表"
+        }
+      ],
+      "required_test_kinds": [
+        "api"
+      ],
+      "owner_scope": "前端与体验",
+      "spec_requirement": "三挡并发capital=10k/100k/500k；最大持仓1W=2/10W=5/50W=10",
+      "code_verdict": "✅ 正确",
+      "test_verdict": "✅ 间接测试",
+      "page_verdict": null,
+      "gaps": []
+    },
+    {
+      "feature_id": "FR08-SIM-03",
+      "title": "持仓详情",
+      "fr_id": "FR-08",
+      "group": "SIM",
+      "visibility": "public",
+      "ssot_refs": [
+        "01§2.8",
+        "05§8"
+      ],
+      "runtime_page_path": null,
+      "primary_api": {
+        "method": "GET",
+        "path": "/api/v1/sim/positions/{position_id}"
+      },
+      "request_params": [
+        {
+          "name": "position_id",
+          "type": "string",
+          "required": true,
+          "default": null,
+          "description": "持仓ID"
+        }
+      ],
+      "default_example": {
+        "curl": "curl http://localhost:8000/api/v1/sim/positions/{position_id}"
+      },
+      "key_response_fields": [
+        {
+          "name": "position",
+          "type": "object",
+          "description": "持仓详情"
+        }
+      ],
+      "required_test_kinds": [
+        "api"
+      ],
+      "owner_scope": "前端与体验",
+      "spec_requirement": "1W INSUFFICIENT_FUNDS→SKIPPED；碎股向下取整至100股；佣金≥5元",
+      "code_verdict": "✅ 代码正确",
+      "test_verdict": "✅ 3个测试: INSUFFICIENT_FUNDS/碎股取整/佣金最低5元通过",
+      "page_verdict": null,
+      "gaps": []
+    },
+    {
+      "feature_id": "FR08-SIM-04",
+      "title": "按报告查持仓",
+      "fr_id": "FR-08",
+      "group": "SIM",
+      "visibility": "public",
+      "ssot_refs": [
+        "01§2.8",
+        "05§8"
+      ],
+      "runtime_page_path": null,
+      "primary_api": {
+        "method": "GET",
+        "path": "/api/v1/sim/positions/by-report/{report_id}"
+      },
+      "request_params": [
+        {
+          "name": "report_id",
+          "type": "string",
+          "required": true,
+          "default": null,
+          "description": "研报ID"
+        }
+      ],
+      "default_example": {
+        "curl": "curl http://localhost:8000/api/v1/sim/positions/by-report/{report_id}"
+      },
+      "key_response_fields": [
+        {
+          "name": "positions",
+          "type": "array",
+          "description": "关联持仓"
+        }
+      ],
+      "required_test_kinds": [
+        "api"
+      ],
+      "owner_scope": "前端与体验",
+      "spec_requirement": "持仓≥180日→TIMEOUT平仓；T+1卖出限定",
+      "code_verdict": "✅ 正确",
+      "test_verdict": "✅ test_fr08_timeout_180d完整验证",
+      "page_verdict": null,
+      "gaps": []
+    },
+    {
+      "feature_id": "FR08-SIM-05",
+      "title": "账户快照",
+      "fr_id": "FR-08",
+      "group": "SIM",
+      "visibility": "public",
+      "ssot_refs": [
+        "01§2.8",
+        "05§8"
+      ],
+      "runtime_page_path": "/portfolio/sim-dashboard",
+      "primary_api": {
+        "method": "GET",
+        "path": "/api/v1/sim/account/snapshots"
+      },
+      "request_params": [],
+      "default_example": {
+        "curl": "curl http://localhost:8000/api/v1/sim/account/snapshots"
+      },
+      "key_response_fields": [
+        {
+          "name": "snapshots",
+          "type": "array",
+          "description": "快照列表"
+        }
+      ],
+      "required_test_kinds": [
+        "api"
+      ],
+      "owner_scope": "前端与体验",
+      "spec_requirement": "开仓→平仓E2E(TAKE_PROFIT/STOP_LOSS/TIMEOUT/DELISTED)全覆盖",
+      "code_verdict": "✅ 代码正确",
+      "test_verdict": "✅ 2个E2E测试: STOP_LOSS和DELISTED通过",
+      "page_verdict": null,
+      "gaps": []
+    },
+    {
+      "feature_id": "FR08-SIM-06",
+      "title": "账户汇总",
+      "fr_id": "FR-08",
+      "group": "SIM",
+      "visibility": "public",
+      "ssot_refs": [
+        "01§2.8",
+        "05§8"
+      ],
+      "runtime_page_path": "/portfolio/sim-dashboard",
+      "primary_api": {
+        "method": "GET",
+        "path": "/api/v1/sim/account/summary"
+      },
+      "request_params": [],
+      "default_example": {
+        "curl": "curl http://localhost:8000/api/v1/sim/account/summary"
+      },
+      "key_response_fields": [
+        {
+          "name": "total_value",
+          "type": "float",
+          "description": "总资产"
+        },
+        {
+          "name": "pnl",
+          "type": "float",
+          "description": "盈亏"
+        }
+      ],
+      "required_test_kinds": [
+        "api"
+      ],
+      "owner_scope": "前端与体验",
+      "spec_requirement": "停牌/一字涨跌停/volume=0→OPEN+pending顺延；退市→DELISTED_LIQUIDATED(exit_price=0,return=-1)",
+      "code_verdict": "✅ 已实现退市清算(DELISTED_LIQUIDATED)与停牌/一字涨跌停顺延(OPEN+pending)",
+      "test_verdict": "✅ 已测：test_fr08_delisted_liquidation_updates_real_columns + test_fr08_suspended_defer + batch7 limit_locked_pending",
+      "page_verdict": null,
+      "gaps": []
+    },
+    {
+      "feature_id": "FR08-SIM-07",
+      "title": "悲观撮合引擎",
+      "fr_id": "FR-08",
+      "group": "SIM",
+      "visibility": "internal",
+      "ssot_refs": [
+        "01§2.8",
+        "03§FR-08"
+      ],
+      "runtime_page_path": null,
+      "primary_api": {
+        "method": "GET",
+        "path": "/api/v1/portfolio/sim-dashboard"
+      },
+      "request_params": [],
+      "default_example": {},
+      "key_response_fields": [],
+      "required_test_kinds": [
+        "api"
+      ],
+      "owner_scope": "前端与体验",
+      "spec_requirement": "除权复权：前复权动态折算adj_entry_price→重算dynamic_stop_loss/target_price",
+      "code_verdict": "✅ 已实现前复权动态折算：按前复权入仓价重算 dynamic_stop_loss / target_price",
+      "test_verdict": "✅ 已测：batch7::test_adj_factor_logic + batch7::test_stop_loss_dynamic_recalc",
+      "page_verdict": null,
+      "gaps": []
+    },
+    {
+      "feature_id": "FR08-SIM-08",
+      "title": "回撤状态机",
+      "fr_id": "FR-08",
+      "group": "SIM",
+      "visibility": "internal",
+      "ssot_refs": [
+        "01§2.8",
+        "03§FR-08"
+      ],
+      "runtime_page_path": null,
+      "primary_api": {
+        "method": "GET",
+        "path": "/api/v1/portfolio/sim-dashboard"
+      },
+      "request_params": [],
+      "default_example": {},
+      "key_response_fields": [],
+      "required_test_kinds": [
+        "api"
+      ],
+      "owner_scope": "前端与体验",
+      "spec_requirement": "悲观撮合：High≥TP AND Low≤SL→强制STOP_LOSS",
+      "code_verdict": "✅ high==low时设limit_locked_pending=True",
+      "test_verdict": "✅ test_fr08_sim_scenarios.py通过",
+      "page_verdict": null,
+      "gaps": []
+    },
+    {
+      "feature_id": "FR08-SIM-09",
+      "title": "资金挡位切换",
+      "fr_id": "FR-08",
+      "group": "SIM",
+      "visibility": "public",
+      "ssot_refs": [
+        "01§2.8",
+        "03§FR-08",
+        "05§8"
+      ],
+      "runtime_page_path": "/portfolio/sim-dashboard",
+      "primary_api": {
+        "method": "GET",
+        "path": "/api/v1/portfolio/sim-dashboard"
+      },
+      "request_params": [
+        {
+          "name": "capital_tier",
+          "type": "string",
+          "required": false,
+          "default": "100k",
+          "description": "10k|100k|500k"
+        }
+      ],
+      "default_example": {
+        "curl": "curl http://localhost:8000/api/v1/portfolio/sim-dashboard?capital_tier=100k"
+      },
+      "key_response_fields": [],
+      "required_test_kinds": [
+        "api"
+      ],
+      "owner_scope": "前端与体验",
+      "spec_requirement": "模拟看板/portfolio/sim-dashboard；?capital_tier切换；多信号竞争满仓→SKIPPED；confidence优先排序",
+      "code_verdict": "✅ 正确",
+      "test_verdict": "✅ 已测",
+      "page_verdict": null,
+      "gaps": []
+    },
+    {
+      "feature_id": "FR08-SIM-10",
+      "title": "超时清算",
+      "fr_id": "FR-08",
+      "group": "SIM",
+      "visibility": "internal",
+      "ssot_refs": [
+        "01§2.8",
+        "03§FR-08"
+      ],
+      "runtime_page_path": null,
+      "primary_api": {
+        "method": "POST",
+        "path": "/api/v1/admin/settlement/run"
+      },
+      "request_params": [],
+      "default_example": {},
+      "key_response_fields": [],
+      "required_test_kinds": [
+        "api"
+      ],
+      "owner_scope": "前端与体验",
+      "spec_requirement": "日内先平后开(释放cash→按confidence降序开仓)",
+      "code_verdict": "✅ _close_positions→_open_positions顺序正确",
+      "test_verdict": "✅ 间接验证(资金释放→开仓)",
+      "page_verdict": null,
+      "gaps": []
+    },
+    {
+      "feature_id": "FR09-AUTH-01",
+      "title": "用户注册",
+      "fr_id": "FR-09",
+      "group": "AUTH",
+      "visibility": "public",
+      "ssot_refs": [
+        "01§2.9",
+        "03§FR-09",
+        "05§9"
+      ],
+      "runtime_page_path": "/register",
+      "primary_api": {
+        "method": "POST",
+        "path": "/auth/register"
+      },
+      "request_params": [
+        {
+          "name": "email",
+          "type": "string",
+          "required": true,
+          "default": null,
+          "description": "邮箱"
+        },
+        {
+          "name": "password",
+          "type": "string",
+          "required": true,
+          "default": null,
+          "description": "密码"
+        }
+      ],
+      "default_example": {
+        "curl": "curl -X POST http://localhost:8000/auth/register -d '{\"email\":\"a@b.com\",\"password\":\"Pw123456\"}'"
+      },
+      "key_response_fields": [
+        {
+          "name": "user_id",
+          "type": "string",
+          "description": "用户ID"
+        }
+      ],
+      "required_test_kinds": [
+        "api",
+        "page"
+      ],
+      "owner_scope": "前端与体验",
+      "spec_requirement": "注册→201+email+tier=Free；未激活→401(EMAIL_NOT_VERIFIED)；OAuth provider_user_id幂等",
+      "code_verdict": "✅ 正确",
+      "test_verdict": "✅ 完整覆盖",
+      "page_verdict": null,
+      "gaps": []
+    },
+    {
+      "feature_id": "FR09-AUTH-02",
+      "title": "用户登录",
+      "fr_id": "FR-09",
+      "group": "AUTH",
+      "visibility": "public",
+      "ssot_refs": [
+        "01§2.9",
+        "03§FR-09",
+        "05§9"
+      ],
+      "runtime_page_path": "/login",
+      "primary_api": {
+        "method": "POST",
+        "path": "/auth/login"
+      },
+      "request_params": [
+        {
+          "name": "email",
+          "type": "string",
+          "required": true,
+          "default": null,
+          "description": "邮箱"
+        },
+        {
+          "name": "password",
+          "type": "string",
+          "required": true,
+          "default": null,
+          "description": "密码"
+        }
+      ],
+      "default_example": {
+        "curl": "curl -X POST http://localhost:8000/auth/login -d '{\"email\":\"a@b.com\",\"password\":\"Pw123456\"}'"
+      },
+      "key_response_fields": [
+        {
+          "name": "access_token",
+          "type": "string",
+          "description": "访问令牌"
+        }
+      ],
+      "required_test_kinds": [
+        "api",
+        "page"
+      ],
+      "owner_scope": "前端与体验",
+      "spec_requirement": "refresh轮转：60s宽限内旧token→401但不登出；超60s→401+全设备登出(revoke_all)",
+      "code_verdict": "✅ REFRESH_GRACE_SECONDS=60正确",
+      "test_verdict": "✅ 2个测试: 超宽限期全设备登出+宽限期内返回401通过",
+      "page_verdict": null,
+      "gaps": []
+    },
+    {
+      "feature_id": "FR09-AUTH-03",
+      "title": "用户登出",
+      "fr_id": "FR-09",
+      "group": "AUTH",
+      "visibility": "public",
+      "ssot_refs": [
+        "01§2.9",
+        "05§9"
+      ],
+      "runtime_page_path": "/logout",
+      "primary_api": {
+        "method": "POST",
+        "path": "/auth/logout"
+      },
+      "request_params": [],
+      "default_example": {
+        "curl": "curl -X POST http://localhost:8000/auth/logout"
+      },
+      "key_response_fields": [],
+      "required_test_kinds": [
+        "api"
+      ],
+      "owner_scope": "前端与体验",
+      "spec_requirement": "forgot-password无论存在→200；reset-password expired→400 RESET_TOKEN_EXPIRED；logout→旧token拦截",
+      "code_verdict": "✅ forgot-password fail-close 200、reset-password expired→400、logout→旧 token 拦截均已实现",
+      "test_verdict": "✅ 已测：tests/test_v7_audit_batch3.py::test_logout_invalidates_token + tests/test_v7_audit_batch3.py::test_forgot_password_always_200 + tests/test_v7_audit_batch7.py::test_reset_password_expired_token + tests/test_fr09_auth.py::test_fr09_logout_revokes_access",
+      "page_verdict": null,
+      "gaps": []
+    },
+    {
+      "feature_id": "FR09-AUTH-04",
+      "title": "Token 刷新",
+      "fr_id": "FR-09",
+      "group": "AUTH",
+      "visibility": "public",
+      "ssot_refs": [
+        "01§2.9",
+        "05§9"
+      ],
+      "runtime_page_path": null,
+      "primary_api": {
+        "method": "POST",
+        "path": "/auth/refresh"
+      },
+      "request_params": [],
+      "default_example": {
+        "curl": "curl -X POST http://localhost:8000/auth/refresh"
+      },
+      "key_response_fields": [
+        {
+          "name": "access_token",
+          "type": "string",
+          "description": "新访问令牌"
+        }
+      ],
+      "required_test_kinds": [
+        "api"
+      ],
+      "owner_scope": "前端与体验",
+      "spec_requirement": "登录速率：5次失败→第6次429；10分钟后自动解锁；同IP+同email双维度",
+      "code_verdict": "✅ 代码正确",
+      "test_verdict": "✅ 2个测试: 10分钟自动解锁+email速率限制通过",
+      "page_verdict": null,
+      "gaps": []
+    },
+    {
+      "feature_id": "FR09-AUTH-05",
+      "title": "OAuth 第三方登录",
+      "fr_id": "FR-09",
+      "group": "AUTH",
+      "visibility": "public",
+      "ssot_refs": [
+        "01§2.9",
+        "03§FR-09",
+        "05§9"
+      ],
+      "runtime_page_path": "/login",
+      "primary_api": {
+        "method": "GET",
+        "path": "/auth/oauth/providers"
+      },
+      "request_params": [],
+      "default_example": {
+        "curl": "curl http://localhost:8000/auth/oauth/providers"
+      },
+      "key_response_fields": [
+        {
+          "name": "providers",
+          "type": "array",
+          "description": "可用OAuth提供商"
+        }
+      ],
+      "required_test_kinds": [
+        "api"
+      ],
+      "owner_scope": "前端与体验",
+      "spec_requirement": "OAuth providers 只暴露 start_path；provider 未就绪 fail-close；callback 发 token 失败时用户/identity 回滚；重复 provider_user 复用既有 identity，不生成第二条绑定",
+      "code_verdict": "✅ provider 列表/start_path、callback 回滚、state-scoped next、重复 provider_user 复用既有 identity 均已实现",
+      "test_verdict": "✅ 已测：tests/test_fr09_auth.py::test_fr09_oauth_callback_rolls_back_user_and_identity_when_token_issue_fails + tests/test_fr09_auth.py::test_fr09_oauth_callback_reuses_existing_identity_on_repeat_provider_user + tests/test_fr09_auth.py::test_fr09_oauth_providers_only_expose_start_path",
+      "page_verdict": null,
+      "gaps": []
+    },
+    {
+      "feature_id": "FR09-AUTH-06",
+      "title": "忘记密码",
+      "fr_id": "FR-09",
+      "group": "AUTH",
+      "visibility": "public",
+      "ssot_refs": [
+        "01§2.9",
+        "05§9"
+      ],
+      "runtime_page_path": "/forgot-password",
+      "primary_api": {
+        "method": "POST",
+        "path": "/auth/forgot-password"
+      },
+      "request_params": [
+        {
+          "name": "email",
+          "type": "string",
+          "required": true,
+          "default": null,
+          "description": "邮箱"
+        }
+      ],
+      "default_example": {
+        "curl": "curl -X POST http://localhost:8000/auth/forgot-password -d '{\"email\":\"a@b.com\"}'"
+      },
+      "key_response_fields": [],
+      "required_test_kinds": [
+        "api",
+        "page"
+      ],
+      "owner_scope": "前端与体验",
+      "spec_requirement": "forgot-password 对存在/不存在邮箱统一 fail-close 200；对应页面 `/forgot-password` 保持正式入口；不泄露账号是否存在",
+      "code_verdict": "✅ forgot-password 页面与 fail-close 200 语义已实现，存在/不存在邮箱返回同构响应",
+      "test_verdict": "✅ 已测：tests/test_v7_audit_batch3.py::test_forgot_password_always_200 + tests/test_fr09_auth.py::test_fr09_forgot_password_anti_enum + tests/test_fr09_auth.py::test_fr09_forgot_password_existing_and_missing_share_same_fail_closed_payload",
+      "page_verdict": null,
+      "gaps": []
+    },
+    {
+      "feature_id": "FR09-BILLING-01",
+      "title": "创建订单",
+      "fr_id": "FR-09",
+      "group": "BILLING",
+      "visibility": "public",
+      "ssot_refs": [
+        "01§2.9",
+        "03§FR-09",
+        "05§9"
+      ],
+      "runtime_page_path": "/subscribe",
+      "primary_api": {
+        "method": "POST",
+        "path": "/billing/create_order"
+      },
+      "request_params": [
+        {
+          "name": "plan_id",
+          "type": "string",
+          "required": true,
+          "default": null,
+          "description": "套餐ID"
+        }
+      ],
+      "default_example": {
+        "curl": "curl -X POST http://localhost:8000/billing/create_order -d '{\"plan_id\":\"pro_monthly\"}'"
+      },
+      "key_response_fields": [
+        {
+          "name": "order_id",
+          "type": "string",
+          "description": "订单ID"
+        },
+        {
+          "name": "pay_url",
+          "type": "string",
+          "description": "支付链接"
+        }
+      ],
+      "required_test_kinds": [
+        "api",
+        "page"
+      ],
+      "owner_scope": "前端与体验",
+      "spec_requirement": "POST /billing/create_order→201+BillingOrderSummary；tier_id=Free→422；同级已有效→409 TIER_ALREADY_ACTIVE；PENDING复用",
+      "code_verdict": "✅ 完整实现(鉴权+FREE拦截+409+PENDING复用+15min过期)",
+      "test_verdict": "✅ 已测：tests/test_v7_audit_batch7.py::test_free_user_cannot_order_free + tests/test_v7_audit_batch7.py::test_create_order_returns_201 + tests/test_fr09_auth.py::test_fr09_billing_create_order_basic + tests/test_fr09_auth.py::test_fr09_billing_create_order_provider_not_configured_projects_to_invalid_payload",
+      "gaps": []
+    },
+    {
+      "feature_id": "FR09-BILLING-02",
+      "title": "支付 Webhook",
+      "fr_id": "FR-09",
+      "group": "BILLING",
+      "visibility": "internal",
+      "ssot_refs": [
+        "01§2.9",
+        "03§FR-09",
+        "05§9"
+      ],
+      "runtime_page_path": null,
+      "primary_api": {
+        "method": "POST",
+        "path": "/billing/webhook"
+      },
+      "request_params": [],
+      "default_example": {},
+      "key_response_fields": [],
+      "required_test_kinds": [
+        "api"
+      ],
+      "owner_scope": "前端与体验",
+      "spec_requirement": "POST /billing/webhook→签名校验+event_id幂等+原子事务(PAID+权益发放)；签名失败400；内部失败500",
+      "code_verdict": "✅ 完整实现(双签名校验+幂等+rollback+降级防御)",
+      "test_verdict": "✅ 已测：tests/test_v7_audit_batch7.py::test_duplicate_event_handling + tests/test_fr09_auth.py::test_fr09_billing_webhook_projects_business_validation_failures_to_invalid_payload + tests/test_fr09_auth.py::test_fr09_billing_webhook_fails_closed_when_signature_verifier_not_ready + tests/test_request_id_webhook_backlink.py::test_request_id_roundtrips_into_payment_webhook_event",
+      "gaps": []
+    },
+    {
+      "feature_id": "FR09-BILLING-03",
+      "title": "订阅状态查询",
+      "fr_id": "FR-09",
+      "group": "BILLING",
+      "visibility": "public",
+      "ssot_refs": [
+        "01§2.9",
+        "05§9"
+      ],
+      "governance_flags": [
+        "FAIL_CLOSE_ROUTE"
+      ],
+      "runtime_page_path": "/profile",
+      "primary_api": {
+        "method": "GET",
+        "path": "/api/v1/membership/subscription/status"
+      },
+      "request_params": [],
+      "default_example": {
+        "curl": "curl http://localhost:8000/api/v1/membership/subscription/status"
+      },
+      "key_response_fields": [
+        {
+          "name": "tier",
+          "type": "string",
+          "description": "当前等级"
+        },
+        {
+          "name": "expires_at",
+          "type": "string",
+          "description": "到期时间"
+        }
+      ],
+      "required_test_kinds": [
+        "api",
+        "page"
+      ],
+      "owner_scope": "前端与体验",
+      "spec_requirement": "GET /membership/subscription/status→tier/plan_code/status/tier_expires_at(05未冻结此路由)",
+      "code_verdict": "✅ 已退役为 410 ROUTE_RETIRED 兼容桩，不再作为 SSOT 冻结活接口",
+      "test_verdict": "✅ 通过治理/退役路由回归覆盖",
+      "gaps": []
+    },
+    {
+      "feature_id": "FR09-AUTH-07",
+      "title": "邮箱激活",
+      "fr_id": "FR-09",
+      "group": "AUTH",
+      "visibility": "public",
+      "ssot_refs": [
+        "01§2.9",
+        "05§9"
+      ],
+      "runtime_page_path": null,
+      "primary_api": {
+        "method": "GET",
+        "path": "/auth/activate"
+      },
+      "request_params": [
+        {
+          "name": "token",
+          "type": "string",
+          "required": true,
+          "default": null,
+          "description": "激活令牌"
+        }
+      ],
+      "default_example": {
+        "curl": "curl http://localhost:8000/auth/activate?token=xxx"
+      },
+      "key_response_fields": [],
+      "required_test_kinds": [
+        "api"
+      ],
+      "owner_scope": "前端与体验",
+      "spec_requirement": "邮箱激活：GET /auth/activate?token=xxx → 验证激活令牌并激活用户邮箱，重定向到 /login?activated=1 并展示激活成功消息",
+      "code_verdict": "✅ 正确",
+      "test_verdict": "✅ tests/test_fr09_auth.py::test_fr09_login_page_shows_activation_success_banner",
+      "page_verdict": null,
+      "gaps": []
+    },
+    {
+      "feature_id": "FR09-AUTH-08",
+      "title": "当前用户信息",
+      "fr_id": "FR-09",
+      "group": "AUTH",
+      "visibility": "public",
+      "ssot_refs": [
+        "01§2.9",
+        "05§9"
+      ],
+      "runtime_page_path": "/profile",
+      "primary_api": {
+        "method": "GET",
+        "path": "/auth/me"
+      },
+      "request_params": [],
+      "default_example": {
+        "curl": "curl http://localhost:8000/auth/me"
+      },
+      "key_response_fields": [
+        {
+          "name": "user_id",
+          "type": "string",
+          "description": "用户ID"
+        },
+        {
+          "name": "email",
+          "type": "string",
+          "description": "邮箱"
+        },
+        {
+          "name": "tier",
+          "type": "string",
+          "description": "等级"
+        }
+      ],
+      "required_test_kinds": [
+        "api",
+        "page"
+      ],
+      "owner_scope": "前端与体验",
+      "spec_requirement": "GET /auth/me→UserAuthProfile；JWT；同时保留 user_id/id、tier/membership_level、tier_expires_at/membership_expires_at 兼容别名",
+      "code_verdict": "✅ 正确实现 JWT 鉴权档案与兼容别名字段",
+      "test_verdict": "✅ test_fr09_refresh_token_rotation 覆盖 200+email+tier 与 id/membership_* 兼容别名一致性",
+      "gaps": []
+    },
+    {
+      "feature_id": "FR09-AUTH-09",
+      "title": "套餐列表查询",
+      "fr_id": "FR-09",
+      "group": "AUTH",
+      "visibility": "public",
+      "ssot_refs": [
+        "01§2.9",
+        "05§9"
+      ],
+      "runtime_page_path": "/subscribe",
+      "primary_api": {
+        "method": "GET",
+        "path": "/api/v1/platform/plans"
+      },
+      "request_params": [],
+      "default_example": {
+        "curl": "curl http://localhost:8000/api/v1/platform/plans"
+      },
+      "key_response_fields": [
+        {
+          "name": "plans",
+          "type": "array",
+          "description": "可用套餐"
+        }
+      ],
+      "required_test_kinds": [
+        "api",
+        "page"
+      ],
+      "owner_scope": "前端与体验",
+      "spec_requirement": "GET /api/v1/platform/plans→PlatformPlansPayload；排序固定 Free -> Pro(1/3/12) -> Enterprise(1/3/12)；tier_id 只允许 Free/Pro/Enterprise",
+      "code_verdict": "✅ 正确实现公开套餐矩阵，无需鉴权",
+      "test_verdict": "✅ test_platform_plans_exposes_full_subscription_matrix + test_tier_pricing_values 覆盖档位顺序与价格常量",
+      "gaps": []
+    },
+    {
+      "feature_id": "FR09B-CLEAN-01",
+      "title": "清空报告",
+      "fr_id": "FR-09-b",
+      "group": "CLEAN",
+      "visibility": "internal",
+      "ssot_refs": [
+        "01§2.9b",
+        "03§FR-09-b"
+      ],
+      "governance_flags": [
+        "RETIRED_ROUTE"
+      ],
+      "runtime_page_path": null,
+      "primary_api": {
+        "method": "POST",
+        "path": "/api/v1/internal/reports/clear"
+      },
+      "request_params": [],
+      "default_example": {
+        "curl": "curl -X POST -H 'X-Internal-Token: xxx' http://localhost:8000/api/v1/internal/reports/clear"
+      },
+      "key_response_fields": [
+        {
+          "name": "cleared_count",
+          "type": "int",
+          "description": "清理数量"
+        }
+      ],
+      "required_test_kinds": [
+        "api"
+      ],
+      "owner_scope": "测试与质量",
+      "spec_requirement": "POST /internal/reports/clear→调试工具(非FR-09-b冻结功能)；SSOT软删除/非SSOT硬删除",
+      "code_verdict": "✅ 已退役为 410 ROUTE_RETIRED 兼容桩，不再作为 FR-09-b 活能力",
+      "test_verdict": "✅ 通过退役路由回归覆盖",
+      "gaps": []
+    },
+    {
+      "feature_id": "FR09B-CLEAN-02",
+      "title": "清空统计",
+      "fr_id": "FR-09-b",
+      "group": "CLEAN",
+      "visibility": "internal",
+      "ssot_refs": [
+        "01§2.9b",
+        "03§FR-09-b"
+      ],
+      "governance_flags": [
+        "RETIRED_ROUTE"
+      ],
+      "runtime_page_path": null,
+      "primary_api": {
+        "method": "POST",
+        "path": "/api/v1/internal/stats/clear"
+      },
+      "request_params": [],
+      "default_example": {
+        "curl": "curl -X POST -H 'X-Internal-Token: xxx' http://localhost:8000/api/v1/internal/stats/clear"
+      },
+      "key_response_fields": [
+        {
+          "name": "cleared_count",
+          "type": "int",
+          "description": "清理数量"
+        }
+      ],
+      "required_test_kinds": [
+        "api"
+      ],
+      "owner_scope": "测试与质量",
+      "spec_requirement": "POST /internal/stats/clear→调试工具(非FR-09-b冻结功能)；清空settlement/feedback/sim等表",
+      "code_verdict": "✅ 已退役为 410 ROUTE_RETIRED 兼容桩，不再作为 FR-09-b 活能力",
+      "test_verdict": "✅ 通过退役路由回归覆盖",
+      "gaps": []
+    },
+    {
+      "feature_id": "FR09B-CLEAN-03",
+      "title": "分级保留策略",
+      "fr_id": "FR-09-b",
+      "group": "CLEAN",
+      "visibility": "internal",
+      "ssot_refs": [
+        "01§2.9b",
+        "03§FR-09-b"
+      ],
+      "runtime_page_path": null,
+      "primary_api": {
+        "method": "POST",
+        "path": "/api/v1/internal/reports/clear"
+      },
+      "request_params": [],
+      "default_example": {},
+      "key_response_fields": [],
+      "required_test_kinds": [
+        "api"
+      ],
+      "owner_scope": "测试与质量",
+      "spec_requirement": "run_cleanup分级保留：session/temp_token/atl 7d，task 30d，stale 3d，notification 30d，unverified 24h；分批≤500+sleep 100ms；互斥锁",
+      "code_verdict": "✅ 保留周期、分批删除、互斥锁与 stale_task_expired 状态语义已实现",
+      "test_verdict": "✅ 4个测试覆盖字段/stale/unverified/研报保留",
+      "gaps": []
+    },
+    {
+      "feature_id": "FR09B-CLEAN-04",
+      "title": "未激活用户释放",
+      "fr_id": "FR-09-b",
+      "group": "CLEAN",
+      "visibility": "internal",
+      "ssot_refs": [
+        "01§2.9b",
+        "03§FR-09-b"
+      ],
+      "runtime_page_path": null,
+      "primary_api": {
+        "method": "POST",
+        "path": "/api/v1/internal/stats/clear"
+      },
+      "request_params": [],
+      "default_example": {},
+      "key_response_fields": [],
+      "required_test_kinds": [
+        "api"
+      ],
+      "owner_scope": "测试与质量",
+      "spec_requirement": "email_verified=false超24h物理删除释放邮箱占用；count>0时记录脱敏email列表",
+      "code_verdict": "✅ UNVERIFIED_ACCOUNT_HOURS=24 物理删除与脱敏邮箱审计已实现",
+      "test_verdict": "✅ 已覆盖未激活释放与脱敏邮箱列表",
+      "gaps": []
+    },
+    {
+      "feature_id": "FR10-HOME-01",
+      "title": "首页",
+      "fr_id": "FR-10",
+      "group": "HOME",
+      "visibility": "public",
+      "ssot_refs": [
+        "01§2.10",
+        "03§FR-10",
+        "05§10",
+        "05§11"
+      ],
+      "runtime_page_path": "/",
+      "primary_api": {
+        "method": "GET",
+        "path": "/api/v1/home"
+      },
+      "request_params": [],
+      "default_example": {
+        "curl": "curl http://localhost:8000/api/v1/home"
+      },
+      "key_response_fields": [
+        {
+          "name": "market_state",
+          "type": "string",
+          "description": "市场状态"
+        },
+        {
+          "name": "hot_stocks",
+          "type": "array",
+          "description": "热股"
+        }
+      ],
+      "required_test_kinds": [
+        "api",
+        "page"
+      ],
+      "owner_scope": "前端与体验",
+      "spec_requirement": "GET /→渲染首页；GET /api/v1/home→最新5条摘要+market_state+pool_size+data_status，5min缓存",
+      "code_verdict": "✅ 正确",
+      "test_verdict": "✅ test_fr10_home_api_fields覆盖",
+      "gaps": []
+    },
+    {
+      "feature_id": "FR10-LIST-01",
+      "title": "研报列表页",
+      "fr_id": "FR-10",
+      "group": "LIST",
+      "visibility": "public",
+      "ssot_refs": [
+        "01§2.10",
+        "03§FR-10",
+        "05§10",
+        "05§11"
+      ],
+      "runtime_page_path": "/reports",
+      "primary_api": {
+        "method": "GET",
+        "path": "/api/v1/reports"
+      },
+      "request_params": [
+        {
+          "name": "page",
+          "type": "int",
+          "required": false,
+          "default": 1,
+          "description": "页码"
+        },
+        {
+          "name": "page_size",
+          "type": "int",
+          "required": false,
+          "default": 20,
+          "description": "每页数量"
+        }
+      ],
+      "default_example": {
+        "curl": "curl http://localhost:8000/api/v1/reports?page=1&page_size=20"
+      },
+      "key_response_fields": [
+        {
+          "name": "reports",
+          "type": "array",
+          "description": "研报列表"
+        },
+        {
+          "name": "total",
+          "type": "int",
+          "description": "总数"
+        }
+      ],
+      "required_test_kinds": [
+        "api",
+        "page"
+      ],
+      "owner_scope": "前端与体验",
+      "spec_requirement": "GET /reports→列表HTML；GET /api/v1/reports→分页+筛选(stock_code/recommendation/strategy_type等)，默认page_size=20",
+      "code_verdict": "✅ 正确",
+      "test_verdict": "✅ test_fr10_reports_list_contract",
+      "gaps": []
+    },
+    {
+      "feature_id": "FR10-DETAIL-01",
+      "title": "研报详情页",
+      "fr_id": "FR-10",
+      "group": "DETAIL",
+      "visibility": "public",
+      "ssot_refs": [
+        "01§2.10",
+        "03§FR-10",
+        "05§10",
+        "05§11"
+      ],
+      "runtime_page_path": "/reports/{report_id}",
+      "primary_api": {
+        "method": "GET",
+        "path": "/api/v1/reports/{report_id}"
+      },
+      "request_params": [
+        {
+          "name": "report_id",
+          "type": "string",
+          "required": true,
+          "default": null,
+          "description": "研报ID"
+        }
+      ],
+      "default_example": {
+        "curl": "curl http://localhost:8000/api/v1/reports/{report_id}"
+      },
+      "key_response_fields": [
+        {
+          "name": "report",
+          "type": "object",
+          "description": "研报完整内容"
+        }
+      ],
+      "required_test_kinds": [
+        "api",
+        "page"
+      ],
+      "owner_scope": "前端与体验",
+      "spec_requirement": "GET /report/{id}→详情HTML；GET /api/v1/reports/{id}→ReportDetail含instruction_card/term_context；Free脱敏'¥**.**'",
+      "code_verdict": "✅ 正确",
+      "test_verdict": "✅ Free脱敏+Pro完整+term_context",
+      "gaps": []
+    },
+    {
+      "feature_id": "FR10-BOARD-01",
+      "title": "统计看板页",
+      "fr_id": "FR-10",
+      "group": "BOARD",
+      "visibility": "public",
+      "ssot_refs": [
+        "01§2.10",
+        "03§FR-10",
+        "05§10",
+        "05§11"
+      ],
+      "runtime_page_path": "/dashboard",
+      "primary_api": {
+        "method": "GET",
+        "path": "/api/v1/dashboard/stats"
+      },
+      "request_params": [],
+      "default_example": {
+        "curl": "curl http://localhost:8000/api/v1/dashboard/stats"
+      },
+      "key_response_fields": [
+        {
+          "name": "stats",
+          "type": "object",
+          "description": "统计数据"
+        }
+      ],
+      "required_test_kinds": [
+        "api",
+        "page"
+      ],
+      "owner_scope": "前端与体验",
+      "spec_requirement": "GET /dashboard→看板HTML；GET /api/v1/dashboard/stats?window_days={1,7,14,30,60}→by_strategy_type A/B/C+baseline",
+      "code_verdict": "✅ 正确",
+      "test_verdict": "✅ COMPUTING态+baseline null",
+      "gaps": []
+    },
+    {
+      "feature_id": "FR10-BOARD-02",
+      "title": "模拟看板页(HTML)",
+      "fr_id": "FR-10",
+      "group": "BOARD",
+      "visibility": "public",
+      "ssot_refs": [
+        "01§2.10",
+        "05§11"
+      ],
+      "runtime_page_path": "/portfolio/sim-dashboard",
+      "primary_api": {
+        "method": "GET",
+        "path": "/api/v1/portfolio/sim-dashboard"
+      },
+      "request_params": [],
+      "default_example": {
+        "curl": "curl http://localhost:8000/portfolio/sim-dashboard"
+      },
+      "key_response_fields": [],
+      "required_test_kinds": [
+        "page"
+      ],
+      "owner_scope": "前端与体验",
+      "spec_requirement": "GET /portfolio/sim-dashboard→需登录；API返回equity_curve+baseline三线+is_simulated_only=true；Free仅100k",
+      "code_verdict": "✅ 正确",
+      "test_verdict": "✅ tier限制+equity_curve连续+三线+空数据态",
+      "gaps": []
+    },
+    {
+      "feature_id": "FR10-DETAIL-02",
+      "title": "高级区 API",
+      "fr_id": "FR-10",
+      "group": "DETAIL",
+      "visibility": "public",
+      "ssot_refs": [
+        "01§2.10",
+        "05§10"
+      ],
+      "runtime_page_path": "/reports/{report_id}",
+      "primary_api": {
+        "method": "GET",
+        "path": "/api/v1/reports/{report_id}/advanced"
+      },
+      "request_params": [
+        {
+          "name": "report_id",
+          "type": "string",
+          "required": true,
+          "default": null,
+          "description": "研报ID"
+        }
+      ],
+      "default_example": {
+        "curl": "curl http://localhost:8000/api/v1/reports/{report_id}/advanced"
+      },
+      "key_response_fields": [
+        {
+          "name": "analysis_steps",
+          "type": "array",
+          "description": "推理步骤"
+        },
+        {
+          "name": "evidence_items",
+          "type": "array",
+          "description": "证据项"
+        }
+      ],
+      "required_test_kinds": [
+        "api"
+      ],
+      "owner_scope": "前端与体验",
+      "spec_requirement": "GET /api/v1/reports/{id}/advanced→JWT；Free≤200字+is_truncated=true；Pro完整；401未登录",
+      "code_verdict": "✅ 正确(197+'...'截断)",
+      "test_verdict": "✅ 已测：tests/test_doc_driven_verify.py::test_FR09_AUTH_01_anonymous_advanced_area_401 + tests/test_doc_driven_verify.py::test_FR09_free_advanced_truncated + tests/test_doc_driven_verify.py::test_FR09_pro_advanced_full + tests/test_fr10_reports.py::test_fr10_report_advanced_api_sanitizes_internal_fallback_reasoning",
+      "gaps": []
+    },
+    {
+      "feature_id": "FR10-PLATFORM-01",
+      "title": "平台配置查询",
+      "fr_id": "FR-10",
+      "group": "PLATFORM",
+      "visibility": "public",
+      "ssot_refs": [
+        "01§2.10",
+        "05§10"
+      ],
+      "runtime_page_path": null,
+      "primary_api": {
+        "method": "GET",
+        "path": "/api/v1/platform/config"
+      },
+      "request_params": [],
+      "default_example": {
+        "curl": "curl http://localhost:8000/api/v1/platform/config"
+      },
+      "key_response_fields": [
+        {
+          "name": "config",
+          "type": "object",
+          "description": "平台配置"
+        }
+      ],
+      "required_test_kinds": [
+        "api"
+      ],
+      "owner_scope": "前端与体验",
+      "spec_requirement": "GET /api/v1/platform/config→PlatformConfigPayload；200 成功响应；default_capital_tier 必须是 capital_tiers 的合法 key；labels 只承载公开展示映射",
+      "code_verdict": "✅ 正确实现公开平台配置，只暴露 capital_tiers/default_capital_tier/labels 等桥接字段",
+      "test_verdict": "✅ test_platform_config_returns_default_capital_tiers 覆盖 200 + capital_tiers/default_capital_tier/labels 契约",
+      "gaps": []
+    },
+    {
+      "feature_id": "FR10-PLATFORM-02",
+      "title": "平台汇总信息",
+      "fr_id": "FR-10",
+      "group": "PLATFORM",
+      "visibility": "public",
+      "ssot_refs": [
+        "01§2.10",
+        "05§10"
+      ],
+      "runtime_page_path": null,
+      "primary_api": {
+        "method": "GET",
+        "path": "/api/v1/platform/summary"
+      },
+      "request_params": [],
+      "default_example": {
+        "curl": "curl http://localhost:8000/api/v1/platform/summary"
+      },
+      "key_response_fields": [
+        {
+          "name": "summary",
+          "type": "object",
+          "description": "平台汇总"
+        }
+      ],
+      "required_test_kinds": [
+        "api"
+      ],
+      "owner_scope": "前端与体验",
+      "spec_requirement": "GET /api/v1/platform/summary→PlatformSummary；200 成功响应；win_rate/pnl_ratio/alpha/total_trades 为公开绩效压缩投影，cold_start_message 复用共享公开绩效提示",
+      "code_verdict": "✅ 正确实现公开绩效压缩投影，保持 200 查询态契约",
+      "test_verdict": "✅ test_platform_summary_returns_success + test_platform_summary_cold_start_flag 覆盖 200 envelope 与 cold_start 投影",
+      "gaps": []
+    },
+    {
+      "feature_id": "FR10-FEATURE-01",
+      "title": "功能地图页",
+      "fr_id": "FR-10",
+      "group": "FEATURE",
+      "visibility": "admin",
+      "ssot_refs": [
+        "01§2.10",
+        "05§11"
+      ],
+      "runtime_page_path": "/features",
+      "primary_api": {
+        "method": "GET",
+        "path": "/api/v1/features/catalog"
+      },
+      "request_params": [
+        {
+          "name": "fr_id",
+          "type": "string",
+          "required": false,
+          "default": null,
+          "description": "按FR过滤"
+        },
+        {
+          "name": "visibility",
+          "type": "string",
+          "required": false,
+          "default": null,
+          "description": "按可见性过滤"
+        },
+        {
+          "name": "status",
+          "type": "string",
+          "required": false,
+          "default": null,
+          "description": "按状态过滤"
+        }
+      ],
+      "default_example": {
+        "curl": "curl http://localhost:8000/api/v1/features/catalog"
+      },
+      "key_response_fields": [
+        {
+          "name": "total",
+          "type": "int",
+          "description": "总数"
+        },
+        {
+          "name": "red_count",
+          "type": "int",
+          "description": "红灯数"
+        },
+        {
+          "name": "ready_count",
+          "type": "int",
+          "description": "就绪数"
+        },
+        {
+          "name": "features",
+          "type": "array",
+          "description": "功能列表"
+        }
+      ],
+      "required_test_kinds": [
+        "api",
+        "page"
+      ],
+      "owner_scope": "测试与质量",
+      "spec_requirement": "功能地图页/features：FR分组折叠+状态色点+API/参数/示例/返回值/测试节点/SSOT锚点",
+      "code_verdict": "✅ 正确",
+      "test_verdict": "✅ test_features_page验证",
+      "page_verdict": null,
+      "gaps": []
+    },
+    {
+      "feature_id": "FR11-FEEDBACK-01",
+      "title": "反馈提交",
+      "fr_id": "FR-11",
+      "group": "FEEDBACK",
+      "visibility": "public",
+      "ssot_refs": [
+        "01§2.11",
+        "03§FR-11",
+        "05§11"
+      ],
+      "runtime_page_path": "/reports/{report_id}",
+      "primary_api": {
+        "method": "POST",
+        "path": "/api/v1/reports/{report_id}/feedback"
+      },
+      "request_params": [
+        {
+          "name": "report_id",
+          "type": "string",
+          "required": true,
+          "default": null,
+          "description": "研报ID"
+        },
+        {
+          "name": "rating",
+          "type": "int",
+          "required": true,
+          "default": null,
+          "description": "评分1-5"
+        },
+        {
+          "name": "comment",
+          "type": "string",
+          "required": false,
+          "default": null,
+          "description": "评论"
+        }
+      ],
+      "default_example": {
+        "curl": "curl -X POST http://localhost:8000/api/v1/reports/{report_id}/feedback -d '{\"rating\":5}'"
+      },
+      "key_response_fields": [
+        {
+          "name": "feedback_id",
+          "type": "string",
+          "description": "反馈ID"
+        }
+      ],
+      "required_test_kinds": [
+        "api"
+      ],
+      "owner_scope": "前端与体验",
+      "spec_requirement": "POST /reports/{id}/feedback→JWT；positive仅记录；negative去重≥3置PENDING_REVIEW；返回FeedbackSubmitResult",
+      "code_verdict": "✅ 完整实现(JWT+存在性检查+去重+3阈值+FR-13联动)",
+      "test_verdict": "✅ 401/去重/negative_count/review_flag/联动全覆盖",
+      "gaps": []
+    },
+    {
+      "feature_id": "FR11-FEEDBACK-02",
+      "title": "频控去重",
+      "fr_id": "FR-11",
+      "group": "FEEDBACK",
+      "visibility": "internal",
+      "ssot_refs": [
+        "01§2.11",
+        "03§FR-11"
+      ],
+      "runtime_page_path": null,
+      "primary_api": {
+        "method": "POST",
+        "path": "/api/v1/reports/{report_id}/feedback"
+      },
+      "request_params": [],
+      "default_example": {},
+      "key_response_fields": [],
+      "required_test_kinds": [
+        "api"
+      ],
+      "owner_scope": "前端与体验",
+      "spec_requirement": "单用户negative每日≤20次(可配)，超限429；原子计数(Lock+BEGIN IMMEDIATE)；50并发后≤20",
+      "code_verdict": "✅ 完整实现(threading.Lock+SQLite BEGIN IMMEDIATE原子性)",
+      "test_verdict": "✅ 20次成功→第21次429+50并发断言≤20",
+      "gaps": []
+    },
+    {
+      "feature_id": "FR12-ADMIN-01",
+      "title": "用户管理",
+      "fr_id": "FR-12",
+      "group": "ADMIN",
+      "visibility": "admin",
+      "ssot_refs": [
+        "01§2.12",
+        "03§FR-12",
+        "05§12"
+      ],
+      "runtime_page_path": "/admin",
+      "primary_api": {
+        "method": "GET",
+        "path": "/api/v1/admin/users"
+      },
+      "request_params": [],
+      "default_example": {
+        "curl": "curl http://localhost:8000/api/v1/admin/users"
+      },
+      "key_response_fields": [
+        {
+          "name": "users",
+          "type": "array",
+          "description": "用户列表"
+        }
+      ],
+      "required_test_kinds": [
+        "api",
+        "page"
+      ],
+      "owner_scope": "测试与质量",
+      "spec_requirement": "GET /api/v1/admin/users -> non-admin 403; admin 200 with items/total/page/page_size plus tier filter and sort",
+      "code_verdict": "OK: RBAC + paginated user list implemented",
+      "test_verdict": "OK: tests/test_fr12_admin.py::test_fr12_admin_403_non_admin + tests/test_fr12_admin.py::test_fr12_admin_users_supports_tier_filter_and_sort",
+      "page_verdict": null,
+      "gaps": []
+    },
+    {
+      "feature_id": "FR12-ADMIN-02",
+      "title": "报告管理",
+      "fr_id": "FR-12",
+      "group": "ADMIN",
+      "visibility": "admin",
+      "ssot_refs": [
+        "01§2.12",
+        "03§FR-12",
+        "05§12"
+      ],
+      "runtime_page_path": "/admin",
+      "primary_api": {
+        "method": "GET",
+        "path": "/api/v1/admin/reports"
+      },
+      "request_params": [],
+      "default_example": {
+        "curl": "curl http://localhost:8000/api/v1/admin/reports"
+      },
+      "key_response_fields": [
+        {
+          "name": "reports",
+          "type": "array",
+          "description": "报告列表"
+        }
+      ],
+      "required_test_kinds": [
+        "api",
+        "page"
+      ],
+      "owner_scope": "测试与质量",
+      "spec_requirement": "GET /api/v1/admin/reports -> review_flag filter + sort + summary fields confidence/strategy_type/publish_status/status_reason",
+      "code_verdict": "OK: report list exposes review queue filter, sort, and full summary fields",
+      "test_verdict": "OK: tests/test_fr12_admin.py::test_fr12_admin_reports_supports_sort_and_full_summary_fields",
+      "page_verdict": null,
+      "gaps": []
+    },
+    {
+      "feature_id": "FR12-ADMIN-03",
+      "title": "PATCH 审计操作",
+      "fr_id": "FR-12",
+      "group": "ADMIN",
+      "visibility": "admin",
+      "ssot_refs": [
+        "01§2.12",
+        "03§FR-12",
+        "05§12"
+      ],
+      "runtime_page_path": "/admin",
+      "primary_api": {
+        "method": "PATCH",
+        "path": "/api/v1/admin/reports/{report_id}"
+      },
+      "request_params": [
+        {
+          "name": "report_id",
+          "type": "string",
+          "required": true,
+          "default": null,
+          "description": "研报ID"
+        },
+        {
+          "name": "review_flag",
+          "type": "string",
+          "required": false,
+          "default": null,
+          "description": "审阅标记"
+        },
+        {
+          "name": "published",
+          "type": "bool",
+          "required": false,
+          "default": null,
+          "description": "发布状态"
+        }
+      ],
+      "default_example": {
+        "curl": "curl -X PATCH http://localhost:8000/api/v1/admin/reports/{report_id} -d '{\"published\": false}'"
+      },
+      "key_response_fields": [],
+      "required_test_kinds": [
+        "api"
+      ],
+      "owner_scope": "测试与质量",
+      "spec_requirement": "PATCH /api/v1/admin/reports/{report_id} -> review_flag/published update + dual-table audit",
+      "code_verdict": "OK: patch_report_admin_fields writes admin_operation + audit_log on real change",
+      "test_verdict": "OK: tests/test_v7_audit_batch8.py::TestFR12PatchAudit::test_patch_report_creates_audit + tests/test_fr00_authenticity_guard.py::test_fr00_publish_operation_audit_record",
+      "page_verdict": null,
+      "gaps": []
+    },
+    {
+      "feature_id": "FR12-ADMIN-04",
+      "title": "强制重生",
+      "fr_id": "FR-12",
+      "group": "ADMIN",
+      "visibility": "admin",
+      "ssot_refs": [
+        "01§2.12",
+        "03§FR-12",
+        "05§12"
+      ],
+      "runtime_page_path": "/admin",
+      "primary_api": {
+        "method": "POST",
+        "path": "/api/v1/admin/reports/{report_id}/force-regenerate"
+      },
+      "request_params": [
+        {
+          "name": "report_id",
+          "type": "string",
+          "required": true,
+          "default": null,
+          "description": "研报ID"
+        },
+        {
+          "name": "reason_code",
+          "type": "string",
+          "required": true,
+          "default": null,
+          "description": "重建原因"
+        }
+      ],
+      "default_example": {
+        "curl": "curl -X POST http://localhost:8000/api/v1/admin/reports/{report_id}/force-regenerate -d '{\"reason_code\":\"data_error\"}'"
+      },
+      "key_response_fields": [
+        {
+          "name": "new_report_id",
+          "type": "string",
+          "description": "新研报ID"
+        }
+      ],
+      "required_test_kinds": [
+        "api"
+      ],
+      "owner_scope": "测试与质量",
+      "spec_requirement": "POST /api/v1/admin/reports/{report_id}/force-regenerate -> super_admin only + literal force_regenerate=true + referenced-report guard + audit/idempotency",
+      "code_verdict": "OK: force-regenerate guard, audit, idempotency, and dependency failure paths implemented",
+      "test_verdict": "OK: tests/test_fr12_admin.py::test_fr12_force_regenerate_guard + tests/test_fr12_admin.py::test_fr12_force_regenerate_success + tests/test_fr12_admin.py::test_fr12_force_regenerate_same_request_id_returns_same_result",
+      "page_verdict": null,
+      "gaps": []
+    },
+    {
+      "feature_id": "FR12-ADMIN-05",
+      "title": "管理概览/对账",
+      "fr_id": "FR-12",
+      "group": "ADMIN",
+      "visibility": "admin",
+      "ssot_refs": [
+        "01§2.12",
+        "03§FR-12",
+        "05§12"
+      ],
+      "runtime_page_path": "/admin",
+      "primary_api": {
+        "method": "GET",
+        "path": "/api/v1/admin/overview"
+      },
+      "request_params": [],
+      "default_example": {
+        "curl": "curl http://localhost:8000/api/v1/admin/overview"
+      },
+      "key_response_fields": [
+        {
+          "name": "overview",
+          "type": "object",
+          "description": "系统概览"
+        }
+      ],
+      "required_test_kinds": [
+        "api",
+        "page"
+      ],
+      "owner_scope": "测试与质量",
+      "spec_requirement": "GET /api/v1/admin/overview -> pool_size/today_reports/today_buy_signals/pending_review/active_positions",
+      "code_verdict": "OK: overview derives tier keys from settings.capital_tiers and aggregates current admin metrics",
+      "test_verdict": "OK: tests/test_fr12_admin.py::test_fr12_overview_min_fields + tests/test_fr12_admin.py::test_fr12_overview_counts_buy_signals_by_trade_date",
+      "page_verdict": null,
+      "gaps": []
+    },
+    {
+      "feature_id": "FR12-ADMIN-06",
+      "title": "系统状态",
+      "fr_id": "FR-12",
+      "group": "ADMIN",
+      "visibility": "admin",
+      "ssot_refs": [
+        "01§2.12",
+        "05§12"
+      ],
+      "runtime_page_path": "/admin",
+      "primary_api": {
+        "method": "GET",
+        "path": "/api/v1/admin/system-status"
+      },
+      "request_params": [],
+      "default_example": {
+        "curl": "curl http://localhost:8000/api/v1/admin/system-status"
+      },
+      "key_response_fields": [
+        {
+          "name": "status",
+          "type": "object",
+          "description": "系统状态"
+        }
+      ],
+      "required_test_kinds": [
+        "api"
+      ],
+      "owner_scope": "测试与质量",
+      "spec_requirement": "GET /api/v1/admin/system-status -> service_health/business_health/data_quality plus runtime anchors",
+      "code_verdict": "OK: layered runtime health is exposed through admin/system-status",
+      "test_verdict": "OK: tests/test_fr12_admin.py::test_fr12_admin_system_status_exposes_layered_service_business_and_data_health",
+      "page_verdict": null,
+      "gaps": []
+    },
+    {
+      "feature_id": "FR12-ADMIN-07",
+      "title": "用户修改(业务侧)",
+      "fr_id": "FR-12",
+      "group": "ADMIN",
+      "visibility": "admin",
+      "ssot_refs": [
+        "01§2.12",
+        "05§12"
+      ],
+      "runtime_page_path": "/admin",
+      "primary_api": {
+        "method": "PATCH",
+        "path": "/api/v1/admin/users/{user_id}"
+      },
+      "request_params": [
+        {
+          "name": "user_id",
+          "type": "string",
+          "required": true,
+          "default": null,
+          "description": "用户ID"
+        }
+      ],
+      "default_example": {
+        "curl": "curl -X PATCH http://localhost:8000/api/v1/admin/users/{user_id}"
+      },
+      "key_response_fields": [],
+      "required_test_kinds": [
+        "api"
+      ],
+      "owner_scope": "测试与质量",
+      "spec_requirement": "PATCH /api/v1/admin/users/{user_id} -> tier/role change + audit; no-op patch must not fake audit",
+      "code_verdict": "OK: user tier/role patch writes admin_operation + audit_log only on real change",
+      "test_verdict": "OK: tests/test_v7_audit_batch3.py::TestFR12Extended::test_admin_patch_user + tests/test_nfr19_audit.py::test_nfr19_admin_user_patch_audit",
+      "page_verdict": null,
+      "gaps": []
+    },
+    {
+      "feature_id": "FR12-ADMIN-08",
+      "title": "订单对账",
+      "fr_id": "FR-12",
+      "group": "ADMIN",
+      "visibility": "admin",
+      "ssot_refs": [
+        "01§2.12",
+        "05§12"
+      ],
+      "runtime_page_path": "/admin",
+      "primary_api": {
+        "method": "POST",
+        "path": "/api/v1/admin/billing/orders/{order_id}/reconcile"
+      },
+      "request_params": [
+        {
+          "name": "order_id",
+          "type": "string",
+          "required": true,
+          "default": null,
+          "description": "订单ID"
+        }
+      ],
+      "default_example": {
+        "curl": "curl -X POST http://localhost:8000/api/v1/admin/billing/orders/{order_id}/reconcile"
+      },
+      "key_response_fields": [],
+      "required_test_kinds": [
+        "api"
+      ],
+      "owner_scope": "测试与质量",
+      "spec_requirement": "POST /api/v1/admin/billing/orders/{order_id}/reconcile -> role=admin only + payment_webhook_event truth required + idempotent grant + audit",
+      "code_verdict": "OK: reconcile requires webhook truth before entitlement grant and records before/after snapshots",
+      "test_verdict": "OK: tests/test_fr12_admin.py::test_fr12_billing_reconcile_idempotent + tests/test_fr12_admin.py::test_fr12_billing_reconcile_requires_provider_truth_before_granting + tests/test_fr12_admin.py::test_fr12_billing_reconcile_rejects_local_paid_without_webhook + tests/test_nfr19_audit.py::test_nfr19_billing_reconcile_audit",
+      "page_verdict": null,
+      "gaps": []
+    },
+    {
+      "feature_id": "FR13-EVENT-01",
+      "title": "事件投递框架",
+      "fr_id": "FR-13",
+      "group": "EVENT",
+      "visibility": "internal",
+      "ssot_refs": [
+        "01§2.13",
+        "03§FR-13"
+      ],
+      "runtime_page_path": null,
+      "primary_api": {
+        "method": "GET",
+        "path": "/health"
+      },
+      "request_params": [],
+      "default_example": {},
+      "key_response_fields": [],
+      "required_test_kinds": [
+        "api"
+      ],
+      "owner_scope": "测试与质量",
+      "spec_requirement": "平仓→POSITION_CLOSED通知；DELISTED时exit_price=0.0",
+      "code_verdict": "✅ 代码正确",
+      "test_verdict": "✅ test_fr13_event_dispatch.py DELISTED+exit_price=0测试通过",
+      "page_verdict": null,
+      "gaps": []
+    },
+    {
+      "feature_id": "FR13-EVENT-02",
+      "title": "Outbox 模式",
+      "fr_id": "FR-13",
+      "group": "EVENT",
+      "visibility": "internal",
+      "ssot_refs": [
+        "01§2.13",
+        "03§FR-13"
+      ],
+      "runtime_page_path": null,
+      "primary_api": {
+        "method": "GET",
+        "path": "/health"
+      },
+      "request_params": [],
+      "default_example": {},
+      "key_response_fields": [],
+      "required_test_kinds": [
+        "api"
+      ],
+      "owner_scope": "测试与质量",
+      "spec_requirement": "幂等去重：同事件二次→status=skipped",
+      "code_verdict": "✅ 去重键检查",
+      "test_verdict": "✅ test_fr13_notification_idempotent",
+      "page_verdict": null,
+      "gaps": []
+    },
+    {
+      "feature_id": "FR13-EVENT-03",
+      "title": "通知抑制窗",
+      "fr_id": "FR-13",
+      "group": "EVENT",
+      "visibility": "internal",
+      "ssot_refs": [
+        "01§2.13",
+        "03§FR-13"
+      ],
+      "runtime_page_path": null,
+      "primary_api": {
+        "method": "GET",
+        "path": "/health"
+      },
+      "request_params": [],
+      "default_example": {},
+      "key_response_fields": [],
+      "required_test_kinds": [
+        "api"
+      ],
+      "owner_scope": "测试与质量",
+      "spec_requirement": "DRAWDOWN_ALERT：同capital_tier 4h内仅首条sent，后续skipped",
+      "code_verdict": "✅ SUPPRESS_HOURS=4",
+      "test_verdict": "✅ 已测",
+      "page_verdict": null,
+      "gaps": []
+    },
+    {
+      "feature_id": "FR13-EVENT-04",
+      "title": "告警推送",
+      "fr_id": "FR-13",
+      "group": "EVENT",
+      "visibility": "internal",
+      "ssot_refs": [
+        "01§2.13",
+        "03§FR-13"
+      ],
+      "runtime_page_path": null,
+      "primary_api": {
+        "method": "GET",
+        "path": "/health"
+      },
+      "request_params": [],
+      "default_example": {},
+      "key_response_fields": [],
+      "required_test_kinds": [
+        "api"
+      ],
+      "owner_scope": "测试与质量",
+      "spec_requirement": "推送失败不阻塞结算(Outbox模式)；事务回滚→无sent记录",
+      "code_verdict": "✅ Outbox隔离",
+      "test_verdict": "✅ 已测：tests/test_fr13_event_dispatch.py::test_fr13_txn_rollback_no_send + tests/test_fr13_event_dispatch.py::test_fr13_admin_notification_marks_failed_when_webhook_delivery_fails + tests/test_fr13_event_dispatch.py::test_fr13_admin_notification_marks_sent_only_after_real_webhook_delivery",
+      "page_verdict": null,
+      "gaps": []
+    },
+    {
+      "feature_id": "FR13-EVENT-05",
+      "title": "回归测试/评估",
+      "fr_id": "FR-13",
+      "group": "EVENT",
+      "visibility": "internal",
+      "ssot_refs": [
+        "01§2.13"
+      ],
+      "runtime_page_path": null,
+      "primary_api": {
+        "method": "POST",
+        "path": "/api/v1/internal/eval/run-regression"
+      },
+      "request_params": [],
+      "default_example": {
+        "curl": "curl -X POST -H 'X-Internal-Token: xxx' http://localhost:8000/api/v1/internal/eval/run-regression"
+      },
+      "key_response_fields": [],
+      "required_test_kinds": [
+        "api"
+      ],
+      "owner_scope": "测试与质量",
+      "spec_requirement": "BUY_SIGNAL_DAILY→confidence倒序≤5条；signal=0→不创建事件；email_enabled=false→skipped",
+      "code_verdict": "✅ 正确",
+      "test_verdict": "✅ 已测：tests/test_fr13_event_dispatch.py::test_fr13_buy_signal_max5 + tests/test_fr13_event_dispatch.py::test_fr13_buy_signal_empty + tests/test_fr_supplement_batch_a.py::TestFR1305UserEmailEnabled::test_user_notification_skipped_when_email_disabled",
+      "page_verdict": null,
+      "gaps": []
+    },
+    {
+      "feature_id": "LEGACY-REPORT-01",
+      "title": "[废弃] /report/{stock_code} 旧路由",
+      "fr_id": "FR-10",
+      "group": "LEGACY",
+      "visibility": "out_of_ssot",
+      "ssot_refs": [
+        "05§11"
+      ],
+      "runtime_page_path": "/report/{stock_code}",
+      "primary_api": {
+        "method": "GET",
+        "path": "/report/{stock_code}"
+      },
+      "request_params": [],
+      "default_example": {},
+      "key_response_fields": [],
+      "required_test_kinds": [],
+      "owner_scope": "前端与体验",
+      "spec_requirement": "[兼容] GET /report/{stock_code}→查最新report_id→302重定向",
+      "code_verdict": "✅ 05§05.1已冻结为兼容入口",
+      "test_verdict": "✅ tests/test_v7_audit_batch8.py 已覆盖兼容入口行为",
+      "gaps": []
+    },
+    {
+      "feature_id": "LEGACY-REPORT-02",
+      "title": "[废弃] /report/{stock_code}/status 旧路由",
+      "fr_id": "FR-10",
+      "group": "LEGACY",
+      "visibility": "out_of_ssot",
+      "ssot_refs": [
+        "05§11"
+      ],
+      "runtime_page_path": "/report/{stock_code}/status",
+      "primary_api": {
+        "method": "GET",
+        "path": "/report/{stock_code}/status"
+      },
+      "request_params": [],
+      "default_example": {},
+      "key_response_fields": [],
+      "required_test_kinds": [],
+      "owner_scope": "前端与体验",
+      "spec_requirement": "[兼容] GET /demo/report/{stock_code}/status→302委托到canonical_report_status",
+      "code_verdict": "✅ 05§05.1已冻结为兼容入口",
+      "test_verdict": "✅ tests/test_v7_audit_batch8.py 已覆盖兼容入口行为",
+      "gaps": []
+    },
+    {
+      "feature_id": "LEGACY-REPORT-03",
+      "title": "[废弃] /report/实时研报/{stock_code} 旧路由",
+      "fr_id": "FR-10",
+      "group": "LEGACY",
+      "visibility": "out_of_ssot",
+      "ssot_refs": [
+        "05§11"
+      ],
+      "runtime_page_path": "/report/实时研报/{stock_code}",
+      "primary_api": {
+        "method": "GET",
+        "path": "/report/实时研报/{stock_code}"
+      },
+      "request_params": [],
+      "default_example": {},
+      "key_response_fields": [],
+      "required_test_kinds": [],
+      "owner_scope": "前端与体验",
+      "spec_requirement": "[兼容] GET /report/实时研报/{stock_code}→302到/report/{stock_code}",
+      "code_verdict": "✅ 05§05.1已冻结为兼容入口",
+      "test_verdict": "✅ tests/test_v7_audit_batch8.py 已覆盖兼容入口行为",
+      "gaps": []
+    },
+    {
+      "feature_id": "LEGACY-REPORT-04",
+      "title": "[废弃] /report 旧列表路由",
+      "fr_id": "FR-10",
+      "group": "LEGACY",
+      "visibility": "out_of_ssot",
+      "ssot_refs": [
+        "05§11"
+      ],
+      "runtime_page_path": "/report",
+      "primary_api": {
+        "method": "GET",
+        "path": "/report"
+      },
+      "request_params": [],
+      "default_example": {},
+      "key_response_fields": [],
+      "required_test_kinds": [],
+      "owner_scope": "前端与体验",
+      "spec_requirement": "[兼容] GET /demo/report/{stock_code}→302到/report/{stock_code}",
+      "code_verdict": "✅ 05§05.1已冻结为兼容入口",
+      "test_verdict": "✅ tests/test_v7_audit_batch8.py 已覆盖兼容入口行为",
+      "gaps": []
+    },
+    {
+      "feature_id": "OOS-MOCK-PAY-01",
+      "title": "[OUT_OF_SSOT] Mock 支付页",
+      "fr_id": "FR-09",
+      "group": "OOS",
+      "visibility": "out_of_ssot",
+      "ssot_refs": [],
+      "runtime_page_path": "/billing/mock-pay/{order_id}",
+      "primary_api": {
+        "method": "GET",
+        "path": "/billing/mock-pay/{order_id}"
+      },
+      "request_params": [
+        {
+          "name": "order_id",
+          "type": "string",
+          "required": true,
+          "default": null,
+          "description": "订单ID"
+        }
+      ],
+      "default_example": {
+        "curl": "curl http://localhost:8000/billing/mock-pay/{order_id}"
+      },
+      "key_response_fields": [],
+      "required_test_kinds": [
+        "page"
+      ],
+      "owner_scope": "测试与质量",
+      "spec_requirement": "[OUT_OF_SSOT] GET /billing/mock-pay/{order_id}→开发/测试用mock支付页面",
+      "code_verdict": "✅ 功能完整(需登录+显示订单+确认按钮)",
+      "test_verdict": "✅ 范围外功能(OOS)，无需专项测试",
+      "gaps": []
+    },
+    {
+      "feature_id": "OOS-MOCK-PAY-02",
+      "title": "[OUT_OF_SSOT] Mock 支付确认",
+      "fr_id": "FR-09",
+      "group": "OOS",
+      "visibility": "out_of_ssot",
+      "ssot_refs": [],
+      "runtime_page_path": null,
+      "primary_api": {
+        "method": "POST",
+        "path": "/billing/mock-pay/{order_id}/confirm"
+      },
+      "request_params": [
+        {
+          "name": "order_id",
+          "type": "string",
+          "required": true,
+          "default": null,
+          "description": "订单ID"
+        }
+      ],
+      "default_example": {},
+      "key_response_fields": [],
+      "required_test_kinds": [],
+      "owner_scope": "测试与质量",
+      "spec_requirement": "[OUT_OF_SSOT] POST /billing/mock-pay/{order_id}/confirm→触发mock webhook完成支付闭环",
+      "code_verdict": "✅ 功能完整",
+      "test_verdict": "✅ 范围外功能(OOS)，无需专项测试",
+      "gaps": []
+    }
+  ]
+}

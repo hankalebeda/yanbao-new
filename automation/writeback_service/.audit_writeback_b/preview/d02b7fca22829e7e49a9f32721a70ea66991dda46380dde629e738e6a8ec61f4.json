@@ -1,0 +1,8 @@
+{
+  "base_sha256": "test",
+  "current_sha256": "cedf682ea05739cf03b54505e00c0a382063aa550912bdfd15dd63770881df1b",
+  "patch_hash": "9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08",
+  "patched_sha256": "9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08",
+  "previewed_at": "2026-03-30T23:16:54.496943+00:00",
+  "relative_path": "docs/core/22_\u5168\u91cf\u529f\u80fd\u8fdb\u5ea6\u603b\u8868_v7_\u7cbe\u5ba1.md"
+}

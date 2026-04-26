@@ -1,0 +1,7 @@
+{
+  "commit_id": "f411dceb-3d2a-48b8-8646-146a274a8537",
+  "fingerprint": "1c3c7132d5a03a71bbb27867f8a40c98ccdda9327fff03c63a51488e80c8cda3",
+  "idempotency_key": "remote-probe-rollback-1",
+  "operation": "rollback",
+  "saved_at": "2026-03-27T02:05:33.738277+00:00"
+}

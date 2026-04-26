@@ -1,0 +1,9 @@
+{
+    "resource":  "provider",
+    "name":  "sapi.777114.xyz",
+    "homepage":  "https://api.777114.xyz",
+    "app":  "codex",
+    "model":  "gpt-5.4",
+    "endpoint":  "https://api.777114.xyz/v1",
+    "enabled":  true
+}

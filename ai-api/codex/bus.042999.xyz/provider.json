@@ -1,0 +1,9 @@
+{
+    "resource":  "provider",
+    "name":  "bus.042999.xyz",
+    "homepage":  "https://bus.042999.xyz",
+    "app":  "codex",
+    "model":  "gpt-5.4",
+    "endpoint":  "https://bus.042999.xyz/v1",
+    "enabled":  true
+}

@@ -1,0 +1,223 @@
+id: yanbao_report_writeback_orchestration
+namespace: yanbao.ops
+description: >
+  Standalone report-generation writeback lane.
+  It orchestrates public single-report generation calls and a controlled
+  AI triage -> preview -> auto-commit writeback flow.
+  This flow is separate from the issue-mesh repair closure and never writes
+  business databases directly; it only calls app/newapi/writeback HTTP APIs.
+
+inputs:
+  - id: app_base_url
+    type: STRING
+    defaults: "http://host.docker.internal:18100"
+  - id: internal_token
+    type: STRING
+    required: true
+  - id: new_api_base_url
+    type: STRING
+    defaults: "http://192.168.232.141:3000"
+  - id: new_api_token
+    type: STRING
+    required: true
+  - id: writeback_a_base_url
+    type: STRING
+    defaults: "http://host.docker.internal:18192"
+  - id: writeback_a_token
+    type: STRING
+    required: true
+  - id: promote_prep_base_url
+    type: STRING
+    defaults: "http://host.docker.internal:18194"
+  - id: promote_prep_token
+    type: STRING
+    required: true
+  - id: run_id
+    type: STRING
+    required: true
+  - id: stock_codes
+    type: ARRAY
+    itemType: STRING
+    defaults:
+      - "600519.SH"
+      - "000001.SZ"
+      - "300750.SZ"
+  - id: trade_date
+    type: STRING
+    required: true
+  - id: target_path
+    type: STRING
+    required: true
+  - id: patch_text
+    type: STRING
+    required: true
+  - id: base_sha256
+    type: STRING
+    required: true
+  - id: idempotency_key
+    type: STRING
+    defaults: "kestra:{{ flow.id }}:{{ execution.id }}"
+  - id: request_id
+    type: STRING
+    defaults: "req-{{ execution.id }}"
+tasks:
+  - id: app_health
+    type: io.kestra.plugin.core.http.Request
+    method: GET
+    uri: "{{ inputs.app_base_url }}/health"
+
+  - id: app_internal_metrics
+    type: io.kestra.plugin.core.http.Request
+    method: GET
+    uri: "{{ inputs.app_base_url }}/api/v1/internal/metrics/summary"
+    headers:
+      X-Internal-Token: "{{ inputs.internal_token }}"
+
+  - id: runtime_gates
+    type: io.kestra.plugin.core.http.Request
+    method: GET
+    uri: "{{ inputs.app_base_url }}/api/v1/internal/runtime/gates"
+    headers:
+      X-Internal-Token: "{{ inputs.internal_token }}"
+
+  - id: audit_context
+    type: io.kestra.plugin.core.http.Request
+    method: GET
+    uri: "{{ inputs.app_base_url }}/api/v1/internal/audit/context"
+    headers:
+      X-Internal-Token: "{{ inputs.internal_token }}"
+
+  - id: new_api_models
+    type: io.kestra.plugin.core.http.Request
+    method: GET
+    uri: "{{ inputs.new_api_base_url }}/v1/models"
+    headers:
+      Authorization: "Bearer {{ inputs.new_api_token }}"
+
+  - id: report_generate_fanout
+    type: io.kestra.plugin.core.flow.ForEach
+    values: "{{ inputs.stock_codes }}"
+    concurrencyLimit: 12
+    tasks:
+      - id: generate_single_report
+        type: io.kestra.plugin.core.http.Request
+        method: POST
+        uri: "{{ inputs.app_base_url }}/api/v1/reports/generate"
+        headers:
+          Content-Type: application/json
+        body: |
+          {
+            "stock_code": "{{ taskrun.value }}",
+            "trade_date": "{{ inputs.trade_date }}",
+            "idempotency_key": "kestra:{{ execution.id }}:{{ taskrun.value }}:{{ inputs.trade_date }}",
+            "source": "real"
+          }
+
+  - id: writeback_preview
+    type: io.kestra.plugin.core.http.Request
+    method: POST
+    uri: "{{ inputs.writeback_a_base_url }}/v1/preview"
+    headers:
+      Content-Type: application/json
+      Authorization: "Bearer {{ inputs.writeback_a_token }}"
+    body: |
+      {
+        "target_path": "{{ inputs.target_path }}",
+        "base_sha256": "{{ inputs.base_sha256 }}",
+        "patch_text": {{ inputs.patch_text | json }}
+      }
+
+  - id: triage_decision
+    type: io.kestra.plugin.core.http.Request
+    timeout: PT5M
+    method: POST
+    uri: "{{ inputs.promote_prep_base_url }}/v1/triage/writeback"
+    headers:
+      Content-Type: application/json
+      Authorization: "Bearer {{ inputs.promote_prep_token }}"
+    options:
+      readTimeout: PT5M
+      readIdleTimeout: PT5M
+      connectTimeout: PT1M
+    body: |
+      {
+        "run_id": "{{ inputs.run_id }}",
+        "workflow_id": "{{ execution.id }}",
+        "layer": "report-writeback",
+        "target_path": {{ inputs.target_path | json }},
+        "patch_text": {{ inputs.patch_text | json }},
+        "base_sha256": "{{ inputs.base_sha256 }}",
+        "runtime_gates": {{ outputs.runtime_gates.body | jq('.data') | first | json }},
+        "audit_context": {{ outputs.audit_context.body | jq('.data') | first | json }},
+        "metadata": {
+          "execution_id": "{{ execution.id }}",
+          "trade_date": "{{ inputs.trade_date }}",
+          "stock_code_count": {{ inputs.stock_codes | length }},
+          "idempotency_key": "{{ inputs.idempotency_key }}",
+          "request_id": "{{ inputs.request_id }}"
+        }
+      }
+
+  - id: commit_if_triage_allow
+    type: io.kestra.plugin.core.flow.If
+    condition: "{{ outputs.triage_decision.body | jq('.auto_commit') | first }}"
+    then:
+      - id: commit_if_preview_clean
+        type: io.kestra.plugin.core.flow.If
+        condition: "{{ not (outputs.writeback_preview.body | jq('.conflict') | first) }}"
+        then:
+          - id: writeback_commit
+            type: io.kestra.plugin.core.http.Request
+            method: POST
+            uri: "{{ inputs.writeback_a_base_url }}/v1/commit"
+            headers:
+              Content-Type: application/json
+              Authorization: "Bearer {{ inputs.writeback_a_token }}"
+            body: |
+              {
+                "target_path": "{{ inputs.target_path }}",
+                "base_sha256": "{{ inputs.base_sha256 }}",
+                "patch_text": {{ inputs.patch_text | json }},
+                "idempotency_key": "{{ inputs.idempotency_key }}",
+                "request_id": "{{ inputs.request_id }}",
+                "run_id": "{{ inputs.run_id }}",
+                "triage_record_id": "{{ outputs.triage_decision.body | jq('.triage_record_id') | first }}",
+                "actor": {
+                  "type": "workflow",
+                  "id": "kestra-report-writeback-auto"
+                }
+              }
+        else:
+          - id: skip_writeback_commit_after_preview
+            type: io.kestra.plugin.core.log.Log
+            message: |
+              target_path={{ inputs.target_path }}
+              run_id={{ inputs.run_id }}
+              skip_commit=true
+              skip_reason=PREVIEW_CONFLICT
+              preview_conflict={{ outputs.writeback_preview.body | jq('.conflict') | first }}
+    else:
+      - id: skip_writeback_commit
+        type: io.kestra.plugin.core.log.Log
+        message: |
+          target_path={{ inputs.target_path }}
+          run_id={{ inputs.run_id }}
+          skip_commit=true
+          skip_reason=AI_TRIAGE_DECISION
+          triage_decision={{ outputs.triage_decision.body | jq('.decision') | first }}
+          triage_reason={{ outputs.triage_decision.body | jq('.reason') | first }}
+
+  - id: orchestration_summary
+    type: io.kestra.plugin.core.log.Log
+    message: |
+      report_generation_fanout_count={{ inputs.stock_codes | length }}
+      report_generation_concurrency=12
+      app_health_code={{ outputs.app_health.code }}
+      metrics_code={{ outputs.app_internal_metrics.code }}
+      runtime_gates_code={{ outputs.runtime_gates.code }}
+      audit_context_code={{ outputs.audit_context.code }}
+      new_api_models_code={{ outputs.new_api_models.code }}
+      triage_decision={{ outputs.triage_decision.body | jq('.decision') | first }}
+      triage_auto_commit={{ outputs.triage_decision.body | jq('.auto_commit') | first }}
+      manual_approval_required=false
+      writeback_commit_requires_pause=false

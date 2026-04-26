@@ -1,0 +1,13 @@
+{
+  "app_base_url": "http://host.docker.internal:18100",
+  "internal_token": "replace-me",
+  "mesh_runner_base_url": "http://host.docker.internal:18193",
+  "mesh_runner_token": "replace-me",
+  "promote_prep_base_url": "http://host.docker.internal:18194",
+  "promote_prep_token": "replace-me",
+  "writeback_a_base_url": "http://host.docker.internal:18192",
+  "writeback_a_token": "replace-me",
+  "source_run_id": "issue-mesh-20260330-026",
+  "fix_run_id": "code-fix-20260330-001",
+  "max_fix_items": 10
+}

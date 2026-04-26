@@ -1,0 +1,1199 @@
+<!DOCTYPE html>
+
+<html lang="zh-CN">
+
+<head>
+
+  <meta charset="UTF-8">
+
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title>管理后台 - A股研报平台</title>
+
+  <link rel="stylesheet" href="/static/demo.css">
+
+  <style>
+
+    /* 管理后台专项样式 */
+
+    .admin-wrap { display: grid; grid-template-columns: 220px 1fr; gap: var(--space-6); align-items: start; }
+
+    @media (max-width: 768px) { .admin-wrap { grid-template-columns: 1fr; } }
+
+    .admin-sidebar { background: var(--card); border-radius: var(--radius-lg); border: 1px solid rgba(226,232,240,.6); box-shadow: var(--shadow); padding: var(--space-5); position: sticky; top: 72px; }
+
+    .admin-sidebar-header { display: flex; align-items: center; gap: 10px; padding-bottom: var(--space-4); margin-bottom: var(--space-4); border-bottom: 1px solid var(--border); }
+
+    .admin-sidebar-icon { width: 36px; height: 36px; border-radius: var(--radius-sm); background: linear-gradient(135deg,var(--accent),var(--accent-dark)); display: flex; align-items: center; justify-content: center; color: #fff; font-size: 18px; flex-shrink: 0; }
+
+    .admin-sidebar-title { font-weight: 700; font-size: var(--fs-sm); color: var(--ink); line-height: 1.3; }
+
+    .admin-sidebar-sub { font-size: 11px; color: var(--muted); }
+
+    .admin-nav-group { margin-bottom: var(--space-4); }
+
+    .admin-nav-group-label { display: block; font-size: 10px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; margin-bottom: var(--space-2); }
+
+    .admin-nav-item { display: flex; align-items: center; gap: 8px; padding: 8px 10px; border-radius: var(--radius-sm); color: var(--ink-2); font-size: var(--fs-sm); font-weight: 500; cursor: pointer; transition: background .12s, color .12s; text-decoration: none; border: none; background: transparent; width: 100%; text-align: left; font-family: var(--font-body); }
+
+    .admin-nav-item:hover { background: var(--bg-alt); color: var(--accent); text-decoration: none; }
+
+    .admin-nav-item.active { background: var(--accent-light); color: var(--accent); font-weight: 600; }
+
+    .admin-nav-item-icon { font-size: 14px; flex-shrink: 0; }
+
+    .admin-main { min-width: 0; }
+
+    .admin-section { display: none; }
+
+    .admin-section.visible { display: block; }
+
+    .admin-page-header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: var(--space-3); margin-bottom: var(--space-5); }
+
+    .admin-page-header h1 { margin: 0; font-size: var(--fs-2xl); }
+
+    .admin-kpi-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: var(--space-3); margin-bottom: var(--space-5); }
+
+    @media (min-width: 600px) { .admin-kpi-grid { grid-template-columns: repeat(4, 1fr); } }
+
+    .kpi-card { background: var(--card); border: 1px solid rgba(226,232,240,.6); border-radius: var(--radius); padding: 16px 18px; box-shadow: var(--shadow); }
+
+    .kpi-card-label { font-size: 11px; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: .04em; margin-bottom: 6px; }
+
+    .kpi-card-val { font-size: var(--fs-3xl); font-weight: 700; font-family: var(--font-display); color: var(--ink); letter-spacing: -.02em; line-height: 1; }
+
+    .kpi-card-val.warn { color: var(--hold); }
+
+    .kpi-card-sub { font-size: 11px; color: var(--muted); margin-top: 4px; }
+
+    .action-bar { display: flex; flex-wrap: wrap; gap: var(--space-2); margin-bottom: var(--space-4); }
+
+    .action-btn { display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; border-radius: var(--radius-sm); border: none; font-size: var(--fs-sm); font-weight: 600; font-family: var(--font-body); cursor: pointer; transition: background .12s, transform .12s; }
+
+    .action-btn:hover { transform: translateY(-1px); }
+
+    .action-btn-primary { background: var(--accent); color: #fff; }
+
+    .action-btn-primary:hover { background: var(--accent-dark); }
+
+    .action-btn-ghost { background: var(--bg-alt); color: var(--ink-2); border: 1px solid var(--border); }
+
+    .action-btn-ghost:hover { border-color: var(--accent); color: var(--accent); }
+
+    .status-pill { display: inline-flex; align-items: center; gap: 5px; padding: 3px 10px; border-radius: 20px; font-size: 12px; font-weight: 600; white-space: nowrap; }
+
+    .status-success { background: var(--buy-bg); color: var(--buy); }
+
+    .status-failed { background: var(--sell-bg); color: var(--sell); }
+
+    .status-running { background: var(--type-b-bg); color: var(--type-b); }
+
+    .status-pending { background: #f1f5f9; color: #64748b; }
+
+    .status-skipped { background: var(--locked-bg); color: var(--locked); }
+
+    .status-partial { background: var(--hold-bg); color: var(--hold); }
+
+    .admin-alert { padding: var(--space-3) var(--space-4); border-radius: var(--radius-sm); font-size: var(--fs-sm); margin-bottom: var(--space-4); display: none; }
+
+    .admin-alert-warn { background: var(--hold-bg); border: 1px solid rgba(217,119,6,.25); color: #92400e; }
+
+    .admin-alert-error { background: var(--sell-bg); border: 1px solid rgba(220,38,38,.25); color: #991b1b; }
+
+    .admin-mobile-tabs { display: none; flex-wrap: wrap; gap: 6px; margin-bottom: var(--space-4); }
+
+    @media (max-width: 768px) { .admin-sidebar { display: none; } .admin-mobile-tabs { display: flex; } }
+
+    .admin-mobile-tab { padding: 7px 14px; border-radius: 20px; border: 1px solid var(--border); font-size: var(--fs-xs); font-weight: 600; cursor: pointer; background: var(--card); color: var(--ink-2); transition: all .12s; }
+
+    .admin-mobile-tab.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+
+    .position-mini { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px,1fr)); gap: var(--space-3); }
+
+    .position-mini-item { background: var(--bg-alt); border-radius: var(--radius-sm); padding: 12px 14px; }
+
+    .position-mini-tier { font-size: 11px; color: var(--muted); font-weight: 600; margin-bottom: 4px; }
+
+    .position-mini-val { font-size: var(--fs-2xl); font-weight: 700; font-family: var(--font-display); color: var(--ink); }
+
+    .position-mini-sub { font-size: 11px; color: var(--muted); }
+
+  </style>
+
+</head>
+
+<body>
+
+  {% include "_site_nav.html" %}
+
+
+
+  <main class="container" style="padding-top:var(--space-5)">
+
+
+
+    <!-- 移动端 Tab -->
+
+    <div class="admin-mobile-tabs" id="mobile-tabs">
+
+      <button class="admin-mobile-tab active" onclick="switchSection('overview')">总览</button>
+
+      <button class="admin-mobile-tab" onclick="switchSection('scheduler')">调度</button>
+
+      <button class="admin-mobile-tab" onclick="switchSection('review')">审核</button>
+
+      <button class="admin-mobile-tab" onclick="switchSection('users')">用户</button>
+
+      <button class="admin-mobile-tab" onclick="switchSection('sessions')">Cookie</button>
+
+    </div>
+
+
+
+    <div id="admin-err" class="admin-alert admin-alert-error"></div>
+
+    <div id="admin-warn" class="admin-alert admin-alert-warn"></div>
+
+
+
+    <div class="admin-wrap">
+
+
+
+      <!-- 侧边栏 -->
+
+      <aside class="admin-sidebar">
+
+        <div class="admin-sidebar-header">
+
+          <div class="admin-sidebar-icon">&#9881;</div>
+
+          <div>
+
+            <div class="admin-sidebar-title">管理后台</div>
+
+            <div class="admin-sidebar-sub">Admin Console</div>
+
+          </div>
+
+        </div>
+
+        <nav>
+
+          <div class="admin-nav-group">
+
+            <span class="admin-nav-group-label">总览</span>
+
+            <button class="admin-nav-item active" id="nav-overview" onclick="switchSection('overview')"><span class="admin-nav-item-icon">&#128202;</span> 系统总览</button>
+
+          </div>
+
+          <div class="admin-nav-group">
+
+            <span class="admin-nav-group-label">运营</span>
+
+            <button class="admin-nav-item" id="nav-scheduler" onclick="switchSection('scheduler')"><span class="admin-nav-item-icon">&#9201;</span> 调度任务</button>
+
+            <button class="admin-nav-item" id="nav-review" onclick="switchSection('review')"><span class="admin-nav-item-icon">&#128269;</span> 待审定研报</button>
+
+            <button class="admin-nav-item" id="nav-users" onclick="switchSection('users')"><span class="admin-nav-item-icon">&#128101;</span> 用户概览</button>
+
+            <button class="admin-nav-item" id="nav-sessions" onclick="switchSection('sessions')"><span class="admin-nav-item-icon">&#127850;</span> Cookie 会话</button>
+
+          </div>
+
+          <div class="admin-nav-group">
+
+            <span class="admin-nav-group-label">运行说明</span>
+
+            <div class="muted" style="font-size:12px;line-height:1.6;padding:4px 10px">
+
+              管理页不再提供 DAG 补跑入口；如需补跑，请使用新的内部运维流程并以调度状态为准。
+
+            </div>
+
+          </div>
+
+          <div class="admin-nav-group" style="border-top:1px solid var(--border);padding-top:var(--space-3)">
+
+            <a class="admin-nav-item" href="/"><span class="admin-nav-item-icon">&#127968;</span> 返回首页</a>
+
+            <a class="admin-nav-item" href="/dashboard"><span class="admin-nav-item-icon">&#128200;</span> 统计看板</a>
+
+          </div>
+
+        </nav>
+
+      </aside>
+
+
+
+      <!-- 主内容区 -->
+
+      <div class="admin-main">
+
+
+
+        <!-- 总览 -->
+
+        <section class="admin-section visible" id="section-overview">
+
+          <div class="admin-page-header">
+
+            <h1>系统总览</h1>
+
+            <button class="action-btn action-btn-ghost" onclick="loadAdmin()">&#8635; 刷新数据</button>
+
+          </div>
+
+          <div class="admin-kpi-grid">
+
+            <div class="kpi-card">
+
+              <div class="kpi-card-label">核心池规模</div>
+
+              <div class="kpi-card-val" id="overview-pool-size">&mdash;</div>
+
+              <div class="kpi-card-sub">只股票</div>
+
+            </div>
+
+            <div class="kpi-card">
+
+              <div class="kpi-card-label">今日研报</div>
+
+              <div class="kpi-card-val" id="overview-today-reports">&mdash;</div>
+
+              <div class="kpi-card-sub">含 BUY/HOLD/SELL</div>
+
+            </div>
+
+            <div class="kpi-card">
+
+              <div class="kpi-card-label">今日买入信号</div>
+
+              <div class="kpi-card-val" id="overview-buy-signals">&mdash;</div>
+
+              <div class="kpi-card-sub">BUY 中 confidence≥0.65</div>
+
+            </div>
+
+            <div class="kpi-card">
+
+              <div class="kpi-card-label">待审定</div>
+
+              <div class="kpi-card-val warn" id="overview-pending-review">&mdash;</div>
+
+              <div class="kpi-card-sub">份报告需审批</div>
+
+            </div>
+
+          </div>
+
+          <div class="admin-kpi-grid" style="margin-bottom:var(--space-4)">
+
+            <div class="kpi-card">
+
+              <div class="kpi-card-label">最新K线日期</div>
+
+              <div class="kpi-card-val" id="overview-kline-date" style="font-size:1.1rem">&mdash;</div>
+
+              <div class="kpi-card-sub">kline_daily</div>
+
+            </div>
+
+            <div class="kpi-card">
+
+              <div class="kpi-card-label">最新市场状态</div>
+
+              <div class="kpi-card-val" id="overview-ms-date" style="font-size:1.1rem">&mdash;</div>
+
+              <div class="kpi-card-sub">market_state</div>
+
+            </div>
+
+            <div class="kpi-card">
+
+              <div class="kpi-card-label">研报生成进度</div>
+
+              <div class="kpi-card-val" id="overview-report-progress">&mdash;</div>
+
+              <div class="kpi-card-sub" id="overview-report-progress-sub">已生成/池总数</div>
+
+            </div>
+
+            <div class="kpi-card">
+
+              <div class="kpi-card-label">策略分布 A/B/C</div>
+
+              <div class="kpi-card-val" id="overview-strategy-dist" style="font-size:1.1rem">&mdash;</div>
+
+              <div class="kpi-card-sub">事件/趋势/低波</div>
+
+            </div>
+
+          </div>
+
+          <div class="card" style="margin-bottom:var(--space-4)">
+
+            <h2 class="card-title">页面口径锚点</h2>
+
+            <div id="overview-source-dates" class="muted" style="font-size:var(--fs-sm)">加载中...</div>
+
+          </div>
+
+          <div class="card" style="margin-bottom:var(--space-4)">
+
+            <h2 class="card-title">系统健康信号</h2>
+
+            <div class="position-mini" id="system-status-grid">
+
+              <p class="muted" style="font-size:var(--fs-sm)">加载中...</p>
+
+            </div>
+
+            <div id="system-status-source" class="muted" style="font-size:var(--fs-sm);margin-top:var(--space-3)"></div>
+
+          </div>
+
+          <div class="card" style="margin-bottom:var(--space-4)">
+
+            <h2 class="card-title">流水线阶段进度</h2>
+
+            <div style="overflow-x:auto">
+
+              <table class="data-table data-table-zebra" style="font-size:13px">
+
+                <thead><tr><th>阶段</th><th>状态</th><th>开始时间</th><th>完成时间</th><th>错误</th></tr></thead>
+
+                <tbody id="pipeline-stage-body">
+
+                  <tr><td colspan="5" class="muted" style="text-align:center;padding:16px">加载中...</td></tr>
+
+                </tbody>
+
+              </table>
+
+            </div>
+
+          </div>
+
+          <div class="card">
+
+            <h2 class="card-title">持仓概览</h2>
+
+            <div class="position-mini" id="position-mini-grid">
+
+              <p class="muted" style="font-size:var(--fs-sm)">加载中...</p>
+
+            </div>
+
+          </div>
+
+          <div class="card">
+
+            <h2 class="card-title" style="margin-bottom:var(--space-3)">最近任务摘要</h2>
+
+            <div id="overview-scheduler-mini">
+
+              <p class="muted" style="font-size:var(--fs-sm)">加载中...</p>
+
+            </div>
+
+          </div>
+
+        </section>
+
+
+
+        <!-- 调度任务 -->
+
+        <section class="admin-section" id="section-scheduler">
+
+          <div class="admin-page-header">
+
+            <h1>调度任务</h1>
+
+            <button class="action-btn action-btn-ghost" onclick="loadAdmin()">&#8635; 刷新</button>
+
+          </div>
+
+          <div class="action-bar">
+
+            <div class="muted" style="font-size:13px;line-height:1.6">
+
+              该页只展示最近调度结果与错误原因，已退休的人工补跑入口不再对外开放。
+
+            </div>
+
+          </div>
+
+          <div class="card" style="padding:0">
+
+            <div style="overflow-x:auto">
+
+              <table class="data-table data-table-zebra">
+
+                <thead>
+
+                  <tr><th>任务名</th><th>交易日</th><th>时间窗口</th><th>触发源</th><th>状态</th><th>开始时间</th><th>时长</th><th>重试</th><th>原因</th></tr>
+
+                </thead>
+
+                <tbody id="scheduler-body">
+
+                  <tr><td colspan="9" class="muted" style="text-align:center;padding:24px">加载中...</td></tr>
+
+                </tbody>
+
+              </table>
+
+            </div>
+
+          </div>
+
+        </section>
+
+
+
+        <!-- 待审定研报-->
+
+        <section class="admin-section" id="section-review">
+
+          <div class="admin-page-header">
+
+            <h1>待审定研报</h1>
+
+            <button class="action-btn action-btn-ghost" onclick="loadAdmin()">&#8635; 刷新</button>
+
+          </div>
+
+          <div class="card" style="padding:0">
+
+            <div style="overflow-x:auto">
+
+              <table class="data-table data-table-zebra">
+
+                <thead>
+
+                  <tr><th>研报ID</th><th>股票代码</th><th>交易日</th><th>审核状态</th><th>数据质量</th><th>创建时间</th><th>操作</th></tr>
+
+                </thead>
+
+                <tbody id="review-body">
+
+                  <tr><td colspan="7" class="muted" style="text-align:center;padding:24px">加载中...</td></tr>
+
+                </tbody>
+
+              </table>
+
+            </div>
+
+          </div>
+
+        </section>
+
+
+
+        <!-- 用户管理 -->
+
+        <section class="admin-section" id="section-users">
+
+          <div class="admin-page-header">
+
+            <h1>用户概览</h1>
+
+            <button class="action-btn action-btn-ghost" onclick="loadAdmin()">&#8635; 刷新</button>
+
+          </div>
+
+          <p class="muted" style="margin:6px 0 16px;font-size:var(--fs-sm)">当前页面展示只读用户概览，并补充受审计的角色/会员调整入口。</p>
+
+          <div class="card" style="padding:0">
+
+            <div style="overflow-x:auto">
+
+              <table class="data-table data-table-zebra">
+
+                <thead>
+
+                  <tr><th>用户ID</th><th>邮箱</th><th>角色</th><th>会员等级</th><th>邮箱验证</th><th>操作</th></tr>
+
+                </thead>
+
+                <tbody id="users-body">
+
+                  <tr><td colspan="6" class="muted" style="text-align:center;padding:24px">加载中...</td></tr>
+
+                </tbody>
+
+              </table>
+
+            </div>
+
+          </div>
+
+        </section>
+
+
+
+        <section class="admin-section" id="section-sessions">
+
+          <div class="admin-page-header">
+
+            <h1>Cookie 会话</h1>
+
+            <button class="action-btn action-btn-ghost" onclick="loadAdmin()">&#8635; 刷新</button>
+
+          </div>
+
+          <div class="card" style="padding:0">
+
+            <div style="overflow-x:auto">
+
+              <table class="data-table data-table-zebra">
+
+                <thead>
+
+                  <tr><th>来源</th><th>状态</th><th>状态原因</th><th>最近刷新</th><th>探活接口</th></tr>
+
+                </thead>
+
+                <tbody id="sessions-body">
+
+                  <tr><td colspan="5" class="muted" style="text-align:center;padding:24px">切换到本页时加载 Cookie 会话健康状态</td></tr>
+
+                </tbody>
+
+              </table>
+
+            </div>
+
+          </div>
+
+        </section>
+
+
+
+      </div><!-- /admin-main -->
+
+    </div><!-- /admin-wrap -->
+
+  </main>
+
+
+
+  <footer class="site-footer">
+
+    <div class="footer-inner">
+
+      {% include "_footer_disclaimer.html" %}
+
+    </div>
+
+  </footer>
+
+
+
+  {% include "_app_config.html" %}
+
+  <script src="/static/api-bridge.js?v=20260413"></script>
+
+  <script>
+
+    var currentAdminRole = '{{ current_user.role or "" }}';
+
+    var COOKIE_PROVIDERS = ['weibo', 'douyin', 'xueqiu', 'kuaishou'];
+
+    var activeAdminSection = 'overview';
+
+    var cookieSessionsLoaded = false;
+
+    var cookieSessionsLoading = null;
+    var TASK_CN = {'daily_pipeline':'每日流水线','fr01_stock_pool':'股票池刷新','fr04_data_collect':'数据采集','fr05_market_state':'市场状态','fr05_non_report_truth_materialize':'真相层物化','fr06_report_gen':'研报生成','fr07_settlement':'结算','fr08_sim_positioning':'模拟建仓','fr08_sim_trade':'模拟交易','fr13_notification':'通知派发','fr13_event_notify':'事件通知','billing_poller':'支付对账','tier_expiry_sweep':'会员过期清理','market_state':'市场状态','sim_open_price':'模拟开盘价','sim_settle':'模拟结算','tier9_report':'研报定时'};
+
+    var STATUS_CN = {'SUCCESS':'成功','FAILED':'失败','RUNNING':'运行中','PENDING':'等待中','WAITING_UPSTREAM':'等待上游','SKIPPED':'跳过','PARTIAL_SUCCESS':'部分成功','LOCK_HELD':'锁已占用'};
+
+    var TRIGGER_CN = {'cron':'定时','manual':'手动','dag':'依赖触发','startup':'启动触发','api':'接口触发','event':'事件触发'};
+
+    var ROLE_CN = {'admin':'管理员','super_admin':'超级管理员','user':'普通用户'};
+
+    var TIER_CN = {'Free':'免费','Pro':'专业版','Enterprise':'企业版','10k':'1万','100k':'10万','500k':'50万'};
+
+    var REVIEW_CN = {'PENDING_REVIEW':'待审核','APPROVED':'已通过','REJECTED':'已拒绝','AUTO_APPROVED':'自动通过'};
+
+    var QF_CN = {'ok':'正常','stale_ok':'数据略旧','degraded':'已降级','failed':'失败','llm_degraded':'LLM降级','rule_fallback':'规则兜底'};
+
+    var REASON_CN = {'lock_held':'锁已持有','non_trade_day':'非交易日','upstream_not_ready':'上游未就绪','waiting_upstream':'等待上游完成','upstream_ready':'上游已就绪','timeout':'超时','ok':'正常','no_error':'无错误','kline_fetch_failed':'K线抓取失败','no_items_fetched':'未获取到数据','degraded':'降级','self_lock_bug_cleanup':'自锁修复清理','retries_exhausted':'重试次数已用尽','upstream_timeout_next_open':'上游超时','no_handler':'无处理函数','unexpected_error':'意外错误','idempotent_skip':'幂等跳过','admin_manual_retrigger':'管理员补跑','KLINE_COVERAGE_INSUFFICIENT':'当日行情覆盖不足','home_source_inconsistent':'公开读模型已回退到稳定批次','home_snapshot_not_ready':'公开批次尚未就绪','stats_history_truncated':'历史窗口覆盖不足','stats_source_degraded':'部分历史批次未完整回填'};
+
+    var PUBLIC_STATUS_CN = {'READY':'正常','DEGRADED':'降级','COMPUTING':'计算中','UNKNOWN':'未知'};
+
+
+
+    function taskCn(s) { return TASK_CN[s] || s || '未知'; }
+
+    function statusCn(s) { return STATUS_CN[s] || s || '未知'; }
+
+    function triggerCn(s) { return TRIGGER_CN[s] || s || '未知'; }
+
+    function roleCn(s) { return ROLE_CN[s] || s || '未知'; }
+
+    function tierCn(s) { return TIER_CN[s] || s || '未知'; }
+
+    function reviewCn(s) { return REVIEW_CN[s] || s || '未知'; }
+
+    function qfCn(s) { return QF_CN[s] || s || '未知'; }
+
+    function reasonCn(s) { if (!s || s === 'null') return '—'; return REASON_CN[s] || s.replace(/_/g,' '); }
+
+
+
+    function statusPill(st) {
+
+      var cls = st === 'SUCCESS' ? 'status-success' : st === 'FAILED' ? 'status-failed' : st === 'RUNNING' ? 'status-running' : st === 'SKIPPED' ? 'status-skipped' : st === 'PARTIAL_SUCCESS' ? 'status-partial' : 'status-pending';
+
+      return '<span class="status-pill ' + cls + '">' + statusCn(st) + '</span>';
+
+    }
+
+
+
+    var SECTIONS = ['overview','scheduler','review','users','sessions'];
+
+    function switchSection(name) {
+
+      activeAdminSection = name;
+
+      SECTIONS.forEach(function(s) {
+
+        document.getElementById('section-' + s).classList.remove('visible');
+
+        var nav = document.getElementById('nav-' + s);
+
+        if (nav) nav.classList.remove('active');
+
+      });
+
+      document.getElementById('section-' + name).classList.add('visible');
+
+      var navEl = document.getElementById('nav-' + name);
+
+      if (navEl) navEl.classList.add('active');
+
+      document.querySelectorAll('.admin-mobile-tab').forEach(function(t, i) {
+
+        t.classList.toggle('active', SECTIONS[i] === name);
+
+      });
+
+      if (name === 'sessions') {
+
+        ensureCookieSessionsLoaded(false);
+
+      }
+
+    }
+
+
+
+    function renderOverview(data) {
+
+      document.getElementById('overview-pool-size').textContent = String(data.pool_size || 0);
+
+      document.getElementById('overview-today-reports').textContent = String(data.today_reports || 0);
+
+      document.getElementById('overview-buy-signals').textContent = String(data.today_buy_signals || 0);
+
+      document.getElementById('overview-pending-review').textContent = String(data.pending_review || 0);
+
+      var df = data.data_freshness || {};
+
+      document.getElementById('overview-kline-date').textContent = df.latest_kline_date || '无数据';
+
+      document.getElementById('overview-ms-date').textContent = df.latest_market_state_date || '无数据';
+
+      var rg = data.report_generation || {};
+
+      document.getElementById('overview-report-progress').textContent = (rg.total || 0) + '/' + (rg.pool_size || 0);
+
+      document.getElementById('overview-report-progress-sub').textContent = (rg.progress_pct || 0) + '% 完成';
+
+      var bs = (rg.by_strategy || {});
+
+      document.getElementById('overview-strategy-dist').textContent = (bs.A || 0) + ' / ' + (bs.B || 0) + ' / ' + (bs.C || 0);
+
+      var public_runtime = data.public_runtime || {};
+
+      var attempted_trade_date = public_runtime.attempted_trade_date || '';
+
+      var kline_coverage = public_runtime.kline_coverage;
+
+      var sourceDates = data.source_dates || {};
+
+      var sourceDatePairs = [
+
+        ['运行日', sourceDates.runtime_trade_date],
+
+        ['首页池日期', sourceDates.public_pool_trade_date],
+
+        ['最新已发布研报', sourceDates.latest_published_report_trade_date],
+
+        ['统计快照', sourceDates.stats_snapshot_date],
+
+        ['模拟快照', sourceDates.sim_snapshot_date]
+
+      ].filter(function(item) { return !!item[1]; });
+
+      var alignmentDatePairs = sourceDatePairs.filter(function(item) { return item[0] !== '最新已发布研报'; });
+
+      var uniqueDates = Array.from(new Set(alignmentDatePairs.map(function(item) { return item[1]; })));
+
+      var sourceDatesHtml = sourceDatePairs.length
+
+        ? sourceDatePairs.map(function(item) {
+
+            return '<span style="display:inline-flex;gap:6px;align-items:center;padding:4px 10px;border:1px solid var(--border);border-radius:999px;margin:0 8px 8px 0;background:var(--bg-alt)"><strong>' + item[0] + '</strong><span>' + item[1] + '</span></span>';
+
+          }).join('')
+
+        : '暂无来源日期信息';
+
+      if (uniqueDates.length > 1) {
+
+        sourceDatesHtml += '<div style="margin-top:8px;color:#92400e">当前各项页面日期锚点未完全对齐。</div>';
+
+      }
+
+      sourceDatesHtml += '<div style="margin-top:8px">口径说明：今日研报当日全部已发布研报；今日买入信号=当日 BUY 中 confidence≥0.65。</div>';
+
+      document.getElementById('overview-source-dates').innerHTML = sourceDatesHtml;
+
+      var ps = data.pipeline_stages || {};
+
+      var stageKeys = Object.keys(ps);
+
+      document.getElementById('pipeline-stage-body').innerHTML = stageKeys.length
+
+        ? stageKeys.map(function(k) {
+
+            var s = ps[k];
+
+            return '<tr><td style="font-weight:500">' + taskCn(k) + '</td><td>' + statusPill(s.status) + '</td><td class="muted">' + ((s.started_at || '—').slice(5, 19)) + '</td><td class="muted">' + ((s.completed_at || '—').slice(5, 19)) + '</td><td class="muted" title="' + (s.error || '') + '">' + (s.error || '—') + '</td></tr>';
+
+          }).join('')
+
+        : '<tr><td colspan="5" class="muted" style="text-align:center;padding:16px">今日暂无流水线记录</tr>';
+
+      var active = data.active_positions || {};
+
+      var keys = Object.keys(active);
+
+      document.getElementById('position-mini-grid').innerHTML = keys.length
+
+        ? keys.map(function(tier) {
+
+            return '<div class="position-mini-item"><div class="position-mini-tier">' + tierCn(tier) + '</div><div class="position-mini-val">' + active[tier] + '</div><div class="position-mini-sub">活跃持仓</div></div>';
+
+          }).join('')
+
+        : '<p class="muted" style="font-size:var(--fs-sm)">暂无持仓数据</p>';
+
+    }
+
+
+
+    function renderOverviewError(message) {
+
+      var text = message || '未知错误';
+
+      document.getElementById('overview-pool-size').textContent = '—';
+
+      document.getElementById('overview-today-reports').textContent = '—';
+
+      document.getElementById('overview-buy-signals').textContent = '—';
+
+      document.getElementById('overview-pending-review').textContent = '—';
+
+      document.getElementById('overview-kline-date').textContent = '加载失败';
+
+      document.getElementById('overview-ms-date').textContent = '加载失败';
+
+      document.getElementById('overview-report-progress').textContent = '— / —';
+
+      document.getElementById('overview-report-progress-sub').textContent = '总览接口不可用';
+
+      document.getElementById('overview-strategy-dist').textContent = '— / — / —';
+
+      document.getElementById('overview-source-dates').innerHTML = '<div style="color:#991b1b">总览接口加载失败！' + text + '</div>';
+
+      document.getElementById('pipeline-stage-body').innerHTML = '<tr><td colspan="5" class="muted" style="text-align:center;padding:16px">总览不可用</td></tr>';
+
+      document.getElementById('position-mini-grid').innerHTML = '<p class="muted" style="font-size:var(--fs-sm)">总览不可用/p>';
+
+    }
+
+
+
+    function renderScheduler(data) {
+
+      var items = Array.isArray(data.items) ? data.items : [];
+
+      var html = items.length
+
+        ? items.map(function(item) {
+
+            var dur = (item.started_at && item.finished_at) ? (Math.max(0, Math.round((new Date(item.finished_at) - new Date(item.started_at)) / 1000)) + 's') : '—';
+
+            return '<tr><td style="white-space:nowrap;font-weight:500">' + taskCn(item.task_name) + '</td><td>' + (item.trade_date || '—') + '</td><td>' + (item.schedule_slot || '—') + '</td><td><span class="muted">' + triggerCn(item.trigger_source) + '</span></td><td>' + statusPill(item.status) + '</td><td class="muted" style="white-space:nowrap">' + ((item.started_at || '—').slice(5, 19)) + '</td><td class="muted">' + dur + '</td><td class="muted">' + (item.retry_count != null ? item.retry_count : '—') + '</td><td class="muted" title="' + reasonCn(item.status_reason || item.error_message) + '">' + reasonCn(item.status_reason || item.error_message) + '</td></tr>';
+
+          }).join('')
+
+        : '<tr><td colspan="9" class="muted" style="text-align:center;padding:32px">最近7天暂无调度记录</tr>';
+
+      document.getElementById('scheduler-body').innerHTML = html;
+
+      if (items.length) {
+
+        document.getElementById('overview-scheduler-mini').innerHTML =
+
+          '<div style="overflow-x:auto"><table class="data-table" style="font-size:13px"><thead><tr><th>任务</th><th>状态</th><th>交易日</th><th>结束时间</th></tr></thead><tbody>' +
+
+          items.slice(0,5).map(function(item) {
+
+            return '<tr><td style="font-weight:500">' + taskCn(item.task_name) + '</td><td>' + statusPill(item.status) + '</td><td>' + (item.trade_date||'—') + '</td><td class="muted">' + ((item.finished_at||'—').slice(5,19)) + '</td></tr>';
+
+          }).join('') + '</tbody></table></div>';
+
+      } else {
+
+        document.getElementById('overview-scheduler-mini').innerHTML = '<p class="muted" style="font-size:var(--fs-sm)">暂无任务记录</p>';
+
+      }
+
+    }
+
+
+
+    function renderTableError(bodyId, colspan, label, message) {
+
+      document.getElementById(bodyId).innerHTML = '<tr><td colspan="' + colspan + '" class="muted" style="text-align:center;padding:32px">' + label + '加载失败！' + (message || '未知错误') + '</td></tr>';
+
+    }
+
+
+
+    function renderSystemStatusError(message) {
+
+      document.getElementById('system-status-grid').innerHTML = '<div class="position-mini-item"><div class="position-mini-tier">系统健康</div><div class="position-mini-val" style="font-size:var(--fs-xl)">加载失败</div><div class="position-mini-sub">' + (message || '未知错误') + '</div></div>';
+
+    }
+
+
+
+    function renderSystemStatus(data) {
+
+      var metrics = data.metrics || {};
+
+      var prediction = metrics.prediction || {};
+
+      var report = metrics.report || {};
+
+      var serviceHealth = metrics.service_health || {};
+
+      var businessHealthMeta = metrics.business_health || {};
+
+      var dataQuality = metrics.data_quality || {};
+
+      var sourceRuntime = data.source_runtime || metrics.source_runtime || {};
+
+      var runtimeState = String(metrics.runtime_state || 'unknown').toUpperCase();
+
+      var sourceEntries = Object.keys(sourceRuntime);
+
+      var unhealthySources = sourceEntries.filter(function(name) { return String((sourceRuntime[name] || {}).state || '').toUpperCase() !== 'NORMAL'; });
+
+      var accuracy = prediction.accuracy;
+
+      var accuracyText = accuracy == null ? '—' : (Math.round(Number(accuracy) * 1000) / 10) + '%';
+
+      var degradedRate = report.degraded_rate;
+
+      var degradedText = degradedRate == null ? '—' : (Math.round(Number(degradedRate) * 1000) / 10) + '%';
+
+      var runtimeHealth = serviceHealth.summary || (runtimeState === 'DEGRADED' ? '服务降级' : (runtimeState === 'NORMAL' ? '服务可用' : '状态未知'));
+
+      var businessHealth = businessHealthMeta.summary || '观察中';
+
+      var dataQualityText = dataQuality.summary || (unhealthySources.length ? '存在异常源' : '源状态正常');
+
+      var items = [
+
+        { label: '运行健康', value: runtimeHealth, sub: 'runtime_state=' + runtimeState },
+
+        { label: '业务健康', value: businessHealth, sub: '准确率' + accuracyText + ' · 降级率' + degradedText },
+
+        { label: '数据质量', value: dataQualityText, sub: sourceEntries.length + ' 个数据源' },
+
+        { label: '预测样本', value: String(prediction.judged_total || 0), sub: '仅用于评估' }
+
+      ];
+
+      document.getElementById('system-status-grid').innerHTML = items.map(function(item) {
+
+        return '<div class="position-mini-item"><div class="position-mini-tier">' + item.label + '</div><div class="position-mini-val" style="font-size:var(--fs-xl)">' + item.value + '</div><div class="position-mini-sub">' + item.sub + '</div></div>';
+
+      }).join('');
+
+    }
+
+
+
+    function renderReviewReports(data) {
+
+      var items = Array.isArray(data.items) ? data.items : [];
+
+      document.getElementById('review-body').innerHTML = items.length
+
+        ? items.map(function(item) {
+
+            var rid = item.report_id || '';
+
+            return '<tr><td style="font-family:monospace;font-size:12px">' + rid.slice(0, 8) + '</td><td>' + (item.stock_code || '—') + '</td><td>' + (item.trade_date || '—') + '</td><td>' + reviewCn(item.review_flag) + '</td><td>' + qfCn(item.quality_flag) + '</td><td class="muted">' + ((item.created_at || '').slice(0, 19)) + '</td><td><button onclick="reviewReport(\'' + rid + '\',\'APPROVED\')">通过</button> <button onclick="reviewReport(\'' + rid + '\',\'REJECTED\')">拒绝</button></td></tr>';
+
+          }).join('')
+
+        : '<tr><td colspan="7" class="muted" style="text-align:center;padding:32px">暂无待审定研报</tr>';
+
+    }
+
+
+
+    function renderUsers(data) {
+
+      var items = Array.isArray(data.items) ? data.items : [];
+
+      document.getElementById('users-body').innerHTML = items.length
+
+        ? items.map(function(item) {
+
+            var uid = item.id || item.user_id || '';
+
+            return '<tr><td style="font-family:monospace;font-size:12px">' + uid.slice(0, 8) + '</td><td>' + (item.email || '') + '</td><td>' + roleCn(item.role) + '</td><td>' + tierCn(item.membership_level || item.tier) + '</td><td>' + (item.email_verified ? '已验证' : '未验证') + '</td><td><button onclick="patchAdminUser(\'' + uid + '\', {})">编辑</button></td></tr>';
+
+          }).join('')
+
+        : '<tr><td colspan="6" class="muted" style="text-align:center;padding:32px">暂无用户数据</td></tr>';
+
+    }
+
+
+
+    function renderCookieSessions(items) {
+
+      document.getElementById('sessions-body').innerHTML = items.length
+
+        ? items.map(function(item) {
+
+            return '<tr><td style="font-weight:500">' + item.login_source + '</td><td>' + statusPill(String(item.status || '').toUpperCase() === 'OK' ? 'SUCCESS' : (item.status ? 'PARTIAL_SUCCESS' : 'FAILED')) + '</td><td class="muted">' + (item.status_reason || '—') + '</td><td class="muted">' + (item.last_refresh_at || '—').replace('T', ' ').slice(0, 19) + '</td><td><code>GET /api/v1/admin/cookie-session/health?login_source=' + item.login_source + '</code></td></tr>';
+
+          }).join('')
+
+        : '<tr><td colspan="5" class="muted" style="text-align:center;padding:32px">暂无 Cookie 会话记录</td></tr>';
+
+    }
+
+
+
+    function renderCookieSessionsLoading() {
+
+      document.getElementById('sessions-body').innerHTML = '<tr><td colspan="5" class="muted" style="text-align:center;padding:32px">加载 Cookie 会话健康状态..</td></tr>';
+
+    }
+
+
+
+    async function loadCookieSessions(forceReload) {
+
+      if (cookieSessionsLoading) return cookieSessionsLoading;
+
+      if (cookieSessionsLoaded && !forceReload) return [];
+
+      renderCookieSessionsLoading();
+
+      cookieSessionsLoading = Promise.all(
+
+        COOKIE_PROVIDERS.map(function(source) {
+
+          return getAdminCookieSessionHealth({ login_source: source }).then(function(res) {
+
+            if (res && res.success && res.data) {
+
+              return { login_source: source, status: res.data.status, status_reason: res.data.status_reason, last_refresh_at: res.data.last_refresh_at };
+
+            }
+
+            return { login_source: source, status: 'missing', status_reason: (res && (res.message || res.error_code)) || '未录入', last_refresh_at: null };
+
+          });
+
+        })
+
+      );
+
+      try {
+
+        var results = await cookieSessionsLoading;
+
+        renderCookieSessions(results);
+
+        cookieSessionsLoaded = true;
+
+        return results;
+
+      } finally {
+
+        cookieSessionsLoading = null;
+
+      }
+
+    }
+
+
+
+    function ensureCookieSessionsLoaded(forceReload) {
+
+      if (activeAdminSection !== 'sessions' && !forceReload) return Promise.resolve([]);
+
+      return loadCookieSessions(forceReload);
+
+    }
+
+
+
+    async function loadAdmin() {
+
+      var errEl = document.getElementById('admin-err');
+
+      var warnEl = document.getElementById('admin-warn');
+
+      errEl.style.display = 'none'; warnEl.style.display = 'none';
+
+      errEl.textContent = ''; warnEl.textContent = '';
+
+      var results = await Promise.all([
+
+        getAdminOverview(),
+
+        getAdminSchedulerStatus({ page: 1, page_size: 10 }),
+
+        getAdminUsers({ page: 1, page_size: 20 }),
+
+        getAdminReports({ review_flag: 'PENDING_REVIEW', page: 1, page_size: 20 }),
+
+        getAdminSystemStatus(),
+
+      ]);
+
+      var overviewRes = results[0], schedulerRes = results[1], usersRes = results[2], reviewRes = results[3], systemStatusRes = results[4];
+
+      var warnings = [];
+
+      if (!overviewRes.success) {
+
+        errEl.style.display = 'block';
+
+        errEl.textContent = '⚠ 总览加载失败！' + (overviewRes.error_code || overviewRes.message || '未知错误');
+
+        renderOverviewError(overviewRes.error_code || overviewRes.message || '未知错误');
+
+        warnings.push('总览接口：' + (overviewRes.message || overviewRes.error_code || '失败'));
+
+      } else {
+
+        renderOverview(overviewRes.data || {});
+
+      }
+
+      if (schedulerRes.success) renderScheduler(schedulerRes.data || { items: [] });
+
+      else {
+
+        renderTableError('scheduler-body', 9, '调度任务', schedulerRes.message || schedulerRes.error_code);
+
+        document.getElementById('overview-scheduler-mini').innerHTML = '<p class="muted">调度摘要加载失败</p>';
+
+      }
+
+      if (usersRes.success) renderUsers(usersRes.data || { items: [] });
+
+      else renderTableError('users-body', 6, '用户列表', usersRes.message || usersRes.error_code);
+
+      if (reviewRes.success) renderReviewReports(reviewRes.data || { items: [] });
+
+      else renderTableError('review-body', 7, '待审定研报', reviewRes.message || reviewRes.error_code);
+
+      if (systemStatusRes.success) renderSystemStatus(systemStatusRes.data || {});
+
+      else renderSystemStatusError(systemStatusRes.message || systemStatusRes.error_code);
+
+      if (!schedulerRes.success) warnings.push('调度接口：' + (schedulerRes.message || '失败'));
+
+      if (!usersRes.success) warnings.push('用户接口：' + (usersRes.message || '失败'));
+
+      if (!reviewRes.success) warnings.push('复审接口：' + (reviewRes.message || '失败'));
+
+      if (!systemStatusRes.success) warnings.push('系统健康接口：' + (systemStatusRes.message || '失败'));
+
+      if (activeAdminSection === 'sessions') {
+
+        await ensureCookieSessionsLoaded(true);
+
+      }
+
+      if (warnings.length) { warnEl.style.display = 'block'; warnEl.textContent = '⚠' + warnings.join(' · '); }
+
+    }
+
+
+
+    loadAdmin();
+
+
+
+    async function reviewReport(reportId, flag) {
+
+      reportId = reportId || '';
+
+      var action = flag === 'APPROVED' ? '通过' : '拒绝';
+
+      if (!reportId || !confirm('确认' + action + '研报 ' + reportId.slice(0,8) + '…？')) return;
+
+      try {
+
+        var resp = await fetch('/api/v1/admin/reports/' + reportId, {
+
+          method: 'PATCH',
+
+          headers: {'Content-Type': 'application/json', 'X-Request-ID': buildRequestId()},
+
+          body: JSON.stringify({review_flag: flag}),
+
+          credentials: 'same-origin',
+
+        });
+
+        var data = await resp.json();
+
+        if (data.success) { alert('已' + action + '研报。'); loadAdmin(); }
+
+        else { alert('操作失败！' + (data.message || data.error_code || '未知错误')); }
+
+      } catch (e) { alert('请求失败！' + e.message); }
+    }
+
+  </script>
+
+</body>
+
+</html>

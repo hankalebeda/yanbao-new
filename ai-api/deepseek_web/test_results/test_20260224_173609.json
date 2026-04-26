@@ -1,0 +1,15 @@
+{
+  "passed": 0,
+  "total": 3,
+  "results": {
+    "single": {
+      "error": "DeepSeek session is not logged in. Please log in at https://chat.deepseek.com/ and retry."
+    },
+    "batch": {
+      "error": "DeepSeek session is not logged in. Please log in at https://chat.deepseek.com/ and retry."
+    },
+    "reconnect": {
+      "error": "DeepSeek session is not logged in. Please log in at https://chat.deepseek.com/ and retry."
+    }
+  }
+}

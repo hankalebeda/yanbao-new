@@ -1,0 +1,177 @@
+{
+  "success": true,
+  "message": "ok",
+  "data": {
+    "report_id": "550c7af9-1679-4d3c-9146-3d85282a2878",
+    "stock_code": "688981.SH",
+    "stock_name": "中芯国际",
+    "trade_date": "2026-04-16",
+    "recommendation": "BUY",
+    "confidence": 0.72,
+    "strategy_type": "B",
+    "market_state": "NEUTRAL",
+    "quality_flag": "ok",
+    "llm_fallback_level": "primary",
+    "risk_audit_status": "skipped",
+    "review_flag": "APPROVED",
+    "publish_status": "PUBLISHED",
+    "published": true,
+    "status_reason": null,
+    "degraded_banner": null,
+    "conclusion_text": "中芯国际当前收于104.18元，处于MA5 102.252元与MA20 98.9385元之上，短中期均线呈多头排列，显示趋势仍偏强；当日高低区间为103-105元，收盘接近区间上沿，说明资金承接尚可。结合策略类型B（趋势跟踪）与市场状态NEUTRAL，个股更适合顺势观察偏多机会。技术上ATR为3.24%，20日波动率为0.0253，波动可控但并不低，意味着上涨伴随一定震荡。数据源方面，market_state_input、kline_daily、hotspot_top50、etf_flow_summary、northbound_summary均为ok，数据可信度较高。综合判断，维持偏多结论，但需警惕高波动下的回撤风险。",
+    "citations": [
+      {
+        "citation_id": "04594075-5f01-467c-9d91-df5a79603b5b",
+        "source_name": "tencent",
+        "source_url": "https://quote.eastmoney.com/concept/688981.html",
+        "fetch_time": "2026-04-17T13:27:46.150970",
+        "title": "K线日线数据",
+        "excerpt": "开盘 103.5 收盘 104.18 最高 105 最低 103"
+      },
+      {
+        "citation_id": "acfdb7f1-2c5f-41d7-8535-f664e36a81ee",
+        "source_name": "backfill",
+        "source_url": "https://guba.eastmoney.com/news,cjpl.html",
+        "fetch_time": "2026-04-17T13:20:57.229318",
+        "title": "热点题材数据",
+        "excerpt": "688981.SH hotspot_top50 ok"
+      },
+      {
+        "citation_id": "1082bfb2-b153-4c42-8d92-b24fe24f7b7a",
+        "source_name": "etf_flow",
+        "source_url": "https://data.eastmoney.com/etf/default.html",
+        "fetch_time": "2026-04-17T13:20:50.536715",
+        "title": "ETF资金流向",
+        "excerpt": "688981.SH etf_flow_summary ok"
+      },
+      {
+        "citation_id": "0f258fc0-5b1e-4eef-b0b8-3deb8df803fc",
+        "source_name": "northbound",
+        "source_url": "https://data.eastmoney.com/hsgtcg/stock.html?code=688981",
+        "fetch_time": "2026-04-17T13:20:50.500960",
+        "title": "北向资金",
+        "excerpt": "688981.SH northbound_summary ok"
+      },
+      {
+        "citation_id": "f7d6d1ae-7f69-472f-a2e3-92c97f281574",
+        "source_name": "market_state_cache",
+        "source_url": "https://quote.eastmoney.com/zs000001.html",
+        "fetch_time": "2026-04-17T17:45:52.523716",
+        "title": "市场状态",
+        "excerpt": "市场状态 NEUTRAL 参考日 2026-04-15"
+      }
+    ],
+    "instruction_card": {
+      "signal_entry_price": "¥**.**",
+      "atr_pct": 0.032407,
+      "atr_multiplier": 2.0,
+      "stop_loss": "¥**.**",
+      "target_price": "¥**.**",
+      "stop_loss_calc_mode": "atr_multiplier"
+    },
+    "sim_trade_instruction": null,
+    "used_data": [
+      {
+        "usage_id": "3e4208e5-9fbb-41f8-9ae8-8d2e21ed9385",
+        "trade_date": "2026-04-16",
+        "stock_code": "688981.SH",
+        "dataset_name": "hotspot_top50",
+        "source_name": "backfill",
+        "batch_id": "4f36199b-b0a0-4333-aeb8-64685c6fc605",
+        "fetch_time": "2026-04-17T13:20:57.229318",
+        "status": "ok",
+        "status_reason": null
+      },
+      {
+        "usage_id": "3fa954f4-b8bb-42cd-924d-5d1b2501bada",
+        "trade_date": "2026-04-16",
+        "stock_code": "688981.SH",
+        "dataset_name": "etf_flow_summary",
+        "source_name": "etf_flow",
+        "batch_id": "9ce92367-f8f5-4ba8-b49f-8d1379458cc6",
+        "fetch_time": "2026-04-17T13:20:50.536715",
+        "status": "ok",
+        "status_reason": null
+      },
+      {
+        "usage_id": "cb9a8a62-fb16-41b0-bdf3-743f35ec5119",
+        "trade_date": "2026-04-16",
+        "stock_code": "688981.SH",
+        "dataset_name": "market_state_input",
+        "source_name": "market_state_cache",
+        "batch_id": "f120497e-4052-4eea-b861-c4a6b96affb6",
+        "fetch_time": "2026-04-17T17:45:52.523716",
+        "status": "ok",
+        "status_reason": null
+      },
+      {
+        "usage_id": "763699e4-55de-41ed-aff9-f31f9bd047c0",
+        "trade_date": "2026-04-16",
+        "stock_code": "688981.SH",
+        "dataset_name": "northbound_summary",
+        "source_name": "northbound",
+        "batch_id": "2df1c6ff-c7d5-462b-b753-009d30c14750",
+        "fetch_time": "2026-04-17T13:20:50.500960",
+        "status": "ok",
+        "status_reason": null
+      },
+      {
+        "usage_id": "29b2ace0-bea5-4968-9068-b55d2d855ebf",
+        "trade_date": "2026-04-16",
+        "stock_code": "688981.SH",
+        "dataset_name": "kline_daily",
+        "source_name": "tencent",
+        "batch_id": "206a38e3-69ad-463f-b14b-bcb39e08400c",
+        "fetch_time": "2026-04-17T13:27:46.150970",
+        "status": "ok",
+        "status_reason": null
+      }
+    ],
+    "capital_game_summary": {
+      "headline": "主力资金数据待采集；龙虎榜数据待采集；融资融券数据待采集；北向资金摘要已就绪；ETF 资金流摘要已就绪",
+      "summary_text": "北向资金状态：ok；ETF 资金流状态：ok",
+      "has_real_conclusion": false,
+      "main_force": {
+        "status": "missing",
+        "reason": "main_force_data_not_collected"
+      },
+      "dragon_tiger": {
+        "source": null,
+        "lhb_count_30d": null,
+        "lhb_count_90d": null,
+        "net_buy_total": null,
+        "avg_net_buy_ratio": null,
+        "seat_concentration": null
+      },
+      "margin_financing": {
+        "status": "missing",
+        "reason": "margin_data_not_collected"
+      },
+      "northbound": {
+        "status": "ok",
+        "reason": "数据已接入",
+        "fetch_time": "2026-04-17T13:20:50.500960"
+      },
+      "etf_flow": {
+        "status": "ok",
+        "reason": "数据已接入",
+        "fetch_time": "2026-04-17T13:20:50.536715"
+      }
+    },
+    "term_context": {
+      "recommendation": "买入",
+      "quality_flag": "数据正常",
+      "risk_audit_status": "已跳过",
+      "strategy_type": "趋势跟踪",
+      "market_state": "震荡",
+      "confidence": "0.72",
+      "ATR": "ATR=3.2%，代表该股近期平均每日波动约 3.2%，当前止损按 2.0 倍 ATR 计算。",
+      "atr_pct": "3.2%",
+      "signal_entry_price": "¥**.**",
+      "stop_loss": "¥**.**",
+      "target_price": "¥**.**"
+    }
+  },
+  "request_id": "fa0d696f-c863-48b5-968a-0c7a436ef377",
+  "error": null
+}

@@ -1,0 +1,15 @@
+{
+  "passed": 0,
+  "total": 3,
+  "results": {
+    "single": {
+      "error": "name '_resolve_cdp_ws_url' is not defined"
+    },
+    "batch": {
+      "error": "name '_resolve_cdp_ws_url' is not defined"
+    },
+    "reconnect": {
+      "error": "name '_resolve_cdp_ws_url' is not defined"
+    }
+  }
+}

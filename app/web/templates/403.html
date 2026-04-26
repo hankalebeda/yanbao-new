@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>403 - 无权限访问</title>
+  <link rel="stylesheet" href="/static/demo.css">
+  <style>
+    .error-page { min-height: 60vh; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 48px 24px; }
+    .error-code { font-family: var(--font-display); font-size: clamp(3rem, 12vw, 4.5rem); font-weight: 700; color: var(--accent); line-height: 1; letter-spacing: -0.03em; margin-bottom: 16px; }
+    .error-title { font-family: var(--font-display); font-size: var(--fs-2xl); font-weight: 600; color: var(--ink); letter-spacing: 0; margin-bottom: 8px; }
+    .error-desc { font-size: var(--fs-lg); color: var(--muted); line-height: 1.7; margin-bottom: 32px; }
+    .error-actions { display: flex; gap: 16px; flex-wrap: wrap; justify-content: center; }
+  </style>
+</head>
+<body>
+  <nav class="site-nav">
+    <a href="/" class="nav-brand">A股研报平台</a>
+    <button class="nav-toggle" aria-label="菜单" onclick="document.querySelector('.nav-links').classList.toggle('open')">☰</button>
+    <div class="nav-links">
+      {% include "_nav_links.html" %}
+    </div>
+  </nav>
+  <div class="error-page">
+    <div class="error-code">403</div>
+    <div class="error-title">无权限访问</div>
+    {% if show_admin_login is defined and not show_admin_login %}
+    <div class="error-desc">{{ detail or '当前页面暂不在你的可见范围内。' }}</div>
+    {% else %}
+    <div class="error-desc">{{ detail or '需管理员权限' }}<br>如您为管理员，请使用管理员账号登录后访问。</div>
+    {% endif %}
+    <div class="error-actions">
+      <a href="/" class="btn-primary">回到首页</a>
+      {% if show_admin_login is not defined or show_admin_login %}
+      <a href="/login?next=/admin" class="btn-outline">去登录</a>
+      {% else %}
+      <a href="/reports" class="btn-outline">查看研报列表</a>
+      {% endif %}
+    </div>
+  </div>
+</body>
+</html>

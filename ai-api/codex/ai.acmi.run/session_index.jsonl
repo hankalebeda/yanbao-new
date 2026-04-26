@@ -1,0 +1,56 @@
+{"id":"019d4c45-4c4b-7ea2-81fb-d85591b98de0","thread_name":"优化Escort Team全自治提示词并落地","updated_at":"2026-04-02T03:39:07.2467133Z"}
+{"id":"019d4c46-70f0-7ad0-a29d-d10a0997c7f1","thread_name":"审查 22 总表与代码闭环差异问题扫描","updated_at":"2026-04-02T03:40:20.0459262Z"}
+{"id":"019d4c46-70ae-7710-8cbf-1d9170df1b4b","thread_name":"梳理 LiteLLM 多 Agent 协作模式","updated_at":"2026-04-02T03:40:21.4952359Z"}
+{"id":"019d4c86-3c2a-7652-86ef-3c110808c9ab","thread_name":"分析中文指令结构冗余重复约束与前后覆盖关系","updated_at":"2026-04-02T04:49:32.0337147Z"}
+{"id":"019d4c86-3bdb-7301-b452-55fa51fec80b","thread_name":"分析中文指令冗余与句意重复表达结构次","updated_at":"2026-04-02T04:49:33.8780965Z"}
+{"id":"019d4cca-6eec-7380-a3fe-287365a91049","thread_name":"排查 VSCode 读取旧 Codex 配置","updated_at":"2026-04-02T06:04:36.2595415Z"}
+{"id":"019d4ccb-ae77-72b3-8df0-2500fa0d9587","thread_name":"检查 Codex 配置优先级与加载路径","updated_at":"2026-04-02T06:05:18.2792478Z"}
+{"id":"019d4ccb-c264-7982-b455-463dd9b646f3","thread_name":"排查 VS Code 启动配置读取路径","updated_at":"2026-04-02T06:05:27.7939789Z"}
+{"id":"019d4d52-e5b4-7f40-b2cd-0f53299afaa8","thread_name":"清零 Escort Team 活跃残余问题","updated_at":"2026-04-02T08:33:25.9224504Z"}
+{"id":"019d4ef3-83ea-7fc0-849f-ea974eafb71b","thread_name":"回应你好'} }]}]}]}]}]}]}]}]}]}]}","updated_at":"2026-04-02T16:07:59.1489966Z"}
+{"id":"019d50d4-e45e-7762-a4b5-2f3ac564ee36","thread_name":"回复问候消息任务标题生成需求处理问题","updated_at":"2026-04-03T00:53:45.927969Z"}
+{"id":"019d50d6-422b-7cd2-839d-1718a9f0b869","thread_name":"Assess read.txt run readiness","updated_at":"2026-04-03T00:55:21.5308089Z"}
+{"id":"019d50d6-55f0-74a2-af08-0dff7ee3db89","thread_name":"Inspect runtime prerequisites","updated_at":"2026-04-03T00:55:21.761641Z"}
+{"id":"019d5129-9cea-7d42-b864-43fc0232ea16","thread_name":"Inspect cfmail full-mode prereqs","updated_at":"2026-04-03T02:26:18.7803335Z"}
+{"id":"019d5129-88f0-7903-993b-84ef79c80890","thread_name":"Inspect full+cpa API assumptions","updated_at":"2026-04-03T02:26:21.6840553Z"}
+{"id":"019d5146-a489-7381-bc78-ea5c1d4e599a","thread_name":"Inspect CPA API assumptions","updated_at":"2026-04-03T02:58:08.76387Z"}
+{"id":"019d5146-b886-7190-8199-a6634831e980","thread_name":"Find CPA install clues","updated_at":"2026-04-03T02:58:12.3468092Z"}
+{"id":"019d515d-2df7-76e2-affd-6e5ff4b757ca","thread_name":"Diagnose register 400 failure","updated_at":"2026-04-03T03:22:46.914828Z"}
+{"id":"019d5161-4021-7092-8f88-5975f7345681","thread_name":"Inspect CPA server boundary","updated_at":"2026-04-03T03:27:12.5395051Z"}
+{"id":"019d5167-1f05-7642-8bc7-111e8b9e1984","thread_name":"学习并部署full+cpa测试注册不","updated_at":"2026-04-03T03:33:36.2695512Z"}
+{"id":"019d517b-5fa5-7231-abf6-ab3473fc7b86","thread_name":"检查 Linux 后台启动方式'}]}","updated_at":"2026-04-03T03:55:40.8704135Z"}
+{"id":"019d517b-725d-7bb3-b325-8eadf3d2d6ff","thread_name":"分析注册链400失败原因】}」}ৎস","updated_at":"2026-04-03T03:55:44.4795174Z"}
+{"id":"019d5183-3919-7d20-abf9-8e3e06a7bb53","thread_name":"检查注册密码请求缺失项说明优先级集合","updated_at":"2026-04-03T04:04:18.0140491Z"}
+{"id":"019d5183-4d05-7641-949a-68481990b379","thread_name":"检查远端运行态 CPA兼容与失败日志","updated_at":"2026-04-03T04:04:23.1214469Z"}
+{"id":"019d51a9-71ea-7b43-9296-b57b7d89ac8f","thread_name":"分析 test 子项目依赖与注册链差异","updated_at":"2026-04-03T04:46:05.0572209Z"}
+{"id":"019d51a9-85e9-77c1-998e-21eee80d1dda","thread_name":"评估 test 子项目注册400问题可复用性","updated_at":"2026-04-03T04:46:05.068189Z"}
+{"id":"019d51b5-1285-7d03-96c3-c0367c3a4657","thread_name":"评估子代理自建邮箱部署注册可行性并测试","updated_at":"2026-04-03T04:58:47.2303916Z"}
+{"id":"019d51b5-aeaa-7281-9f8b-8552c3790cbc","thread_name":"分析服务器部署依赖与阻塞项？】}خلص","updated_at":"2026-04-03T04:59:24.0879276Z"}
+{"id":"019d51b5-d3e1-7b82-a38d-9ff3a2ba4cd3","thread_name":"分析邮箱注册链路支持情况的仓库现状报告","updated_at":"2026-04-03T04:59:28.3029061Z"}
+{"id":"019d51bb-68b3-7580-9ea5-e124bda35204","thread_name":"测试子代理服务器邮箱注册部署方案可行性","updated_at":"2026-04-03T05:05:43.0913769Z"}
+{"id":"019d51bb-a047-70c3-83a3-f08864b71a1b","thread_name":"梳理注册流程与依赖信息采集分析类任务","updated_at":"2026-04-03T05:05:53.7205022Z"}
+{"id":"019d51bb-b415-70d2-a9c3-6a5c79f4ae03","thread_name":"分析 ip_read.txt 登录部署信息","updated_at":"2026-04-03T05:05:57.465432Z"}
+{"id":"019d51db-22e1-72c2-bcbb-2c148681b2dc","thread_name":"梳理 Freemail 接入配置与测试链路","updated_at":"2026-04-03T05:40:18.228187Z"}
+{"id":"019d51db-36d2-7d90-ac91-75bf0b4acd26","thread_name":"梳理 Freemail 部署资料梳理","updated_at":"2026-04-03T05:40:18.2303039Z"}
+{"id":"019d51e8-97a1-7313-bd26-d7d8c124c53a","thread_name":"梳理 Email Routing Worker 绑定","updated_at":"2026-04-03T05:54:59.7918897Z"}
+{"id":"019d51e8-ab98-7863-ba6b-5512deae0b99","thread_name":"分析 zhuce6-cfmail 复用成本","updated_at":"2026-04-03T05:55:02.2674538Z"}
+{"id":"019d5205-d2dc-78d3-a44d-9b66138ca4d6","thread_name":"确认 Freemail 子域邮箱支持","updated_at":"2026-04-03T06:26:55.7483183Z"}
+{"id":"019d5205-e6d4-7850-83d6-b67a7514f079","thread_name":"分析 Freemail 子域名切换方案","updated_at":"2026-04-03T06:27:01.2931229Z"}
+{"id":"019d5213-327e-78a2-9036-859706a640ac","thread_name":"整理自建邮箱Freemail使用说明","updated_at":"2026-04-03T06:41:33.3603462Z"}
+{"id":"019d5217-2b74-72d0-abba-63d5c6c5222a","thread_name":"用子代理部署并注册服务器账户'} }","updated_at":"2026-04-03T06:45:51.4424053Z"}
+{"id":"019d5217-a841-7682-8c18-cf545ec0f944","thread_name":"梳理可注册平台与入口配置适配情况分析","updated_at":"2026-04-03T06:46:24.9654167Z"}
+{"id":"019d5217-bc65-77d1-afc5-4c5454e9f430","thread_name":"梳理 Linux 部署方式概要'}ွ","updated_at":"2026-04-03T06:46:30.88371Z"}
+{"id":"019d522a-7c27-7bc0-9d54-9d663c69c716","thread_name":"使用子代理学习项目并在服务器注册ChatGPT账户","updated_at":"2026-04-03T07:06:56.4209096Z"}
+{"id":"019d522b-5016-7d13-8a1d-d8d79f074bc2","thread_name":"使用子代理部署并注册ChatGPT账号","updated_at":"2026-04-03T07:07:47.92463Z"}
+{"id":"019d522c-a898-7983-85b8-81c2e370ff8f","thread_name":"梳理当前仓库的ChatGPT注册流程","updated_at":"2026-04-03T07:09:21.5110924Z"}
+{"id":"019d522c-bc7e-7ef3-90c8-0568d418e862","thread_name":"梳理服务器部署方案'}}]}]}}}]}","updated_at":"2026-04-03T07:09:24.9520961Z"}
+{"id":"019d5249-bb42-71b1-a423-2096eff00ee8","thread_name":"使用子代理部署项目并注册Kiro账户","updated_at":"2026-04-03T07:41:40.6170219Z"}
+{"id":"019d524a-e419-7a01-b19d-d3b4612f089c","thread_name":"整理ip_read.txt中服务器域名邮箱信息","updated_at":"2026-04-03T07:42:17.5213204Z"}
+{"id":"019d524a-d058-7ac3-ae9c-6eaa5b906824","thread_name":"梳理项目架构与Kiro配置位置探查结果","updated_at":"2026-04-03T07:42:17.9503616Z"}
+{"id":"019d524c-6e83-7f22-a605-5271e2945dcd","thread_name":"修复 uvicorn 端口权限错误}","updated_at":"2026-04-03T07:43:59.2018297Z"}
+{"id":"019d524d-2293-7bf3-b58a-68bda4bf56cb","thread_name":"使用子代理部署项目并注册Kiro账号","updated_at":"2026-04-03T07:44:45.6165348Z"}
+{"id":"019d524d-c272-7193-a307-5639569fdd2e","thread_name":"整理服务器部署最小步骤、持久化与阻塞清单","updated_at":"2026-04-03T07:45:30.1995122Z"}
+{"id":"019d524d-ae99-7c61-8d71-f7ff8e360558","thread_name":"梳理 Kiro/Freemail 注册实现与限制","updated_at":"2026-04-03T07:45:30.2059125Z"}
+{"id":"019d5287-d132-78c2-9f11-52fba97b5e9d","thread_name":"解释 run_team 命令行为}】","updated_at":"2026-04-03T08:49:05.0477451Z"}
+{"id":"019d5294-8b92-7dd1-ae59-ed14561bf635","thread_name":"查明本项目本机使用GPT账户API和端口","updated_at":"2026-04-03T09:05:04.2346756Z"}
+{"id":"019d5296-ecc0-7b71-a479-6c069d26ed9a","thread_name":"检查登录账户API key与端口说明","updated_at":"2026-04-03T09:05:24.8394164Z"}

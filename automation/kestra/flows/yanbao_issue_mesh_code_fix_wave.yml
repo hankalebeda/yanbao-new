@@ -1,0 +1,244 @@
+id: yanbao_issue_mesh_code_fix_wave
+namespace: yanbao.ops
+description: >
+  Formal fix -> verify -> writeback stage for the issue-mesh closure.
+  It consumes fix_code / fix_then_rebuild findings from a completed readonly
+  issue-mesh run, synthesizes scoped patches, runs AI triage, executes scoped
+  pytest, and commits through writeback A.
+  It never touches docs/core/22, official shared artifacts, or current-layer
+  promote directly.
+
+inputs:
+  - id: app_base_url
+    type: STRING
+    defaults: "http://host.docker.internal:18100"
+  - id: internal_token
+    type: STRING
+    required: true
+  - id: mesh_runner_base_url
+    type: STRING
+    defaults: "http://host.docker.internal:18193"
+  - id: mesh_runner_token
+    type: STRING
+    required: true
+  - id: promote_prep_base_url
+    type: STRING
+    defaults: "http://host.docker.internal:18194"
+  - id: promote_prep_token
+    type: STRING
+    required: true
+  - id: writeback_a_base_url
+    type: STRING
+    defaults: "http://host.docker.internal:18192"
+  - id: writeback_a_token
+    type: STRING
+    required: true
+  - id: source_run_id
+    type: STRING
+    required: true
+    description: "Completed readonly issue-mesh run_id to pull findings from"
+  - id: fix_run_id
+    type: STRING
+    required: true
+    description: "Unique run_id for this code-fix wave, e.g. code-fix-20260328-001"
+  - id: max_fix_items
+    type: INT
+    defaults: 10
+    description: "Maximum number of findings to process in one wave"
+
+tasks:
+  - id: app_health
+    type: io.kestra.plugin.core.http.Request
+    method: GET
+    uri: "{{ inputs.app_base_url }}/health"
+
+  - id: runtime_gates
+    type: io.kestra.plugin.core.http.Request
+    method: GET
+    uri: "{{ inputs.app_base_url }}/api/v1/internal/runtime/gates"
+    headers:
+      X-Internal-Token: "{{ inputs.internal_token }}"
+
+  - id: audit_context
+    type: io.kestra.plugin.core.http.Request
+    method: GET
+    uri: "{{ inputs.app_base_url }}/api/v1/internal/audit/context"
+    headers:
+      X-Internal-Token: "{{ inputs.internal_token }}"
+
+  - id: fetch_source_bundle
+    type: io.kestra.plugin.core.http.Request
+    method: GET
+    uri: "{{ inputs.mesh_runner_base_url }}/v1/runs/{{ inputs.source_run_id }}/bundle"
+    headers:
+      Authorization: "Bearer {{ inputs.mesh_runner_token }}"
+
+  - id: synthesize_patches
+    type: io.kestra.plugin.core.http.Request
+    timeout: PT5M
+    method: POST
+    uri: "{{ inputs.promote_prep_base_url }}/v1/triage/synthesize-patches"
+    headers:
+      Content-Type: application/json
+      Authorization: "Bearer {{ inputs.promote_prep_token }}"
+    options:
+      readTimeout: PT5M
+      readIdleTimeout: PT5M
+      connectTimeout: PT1M
+    body: |
+      {
+        "source_run_id": "{{ inputs.source_run_id }}",
+        "fix_run_id": "{{ inputs.fix_run_id }}",
+        "max_fix_items": {{ inputs.max_fix_items }},
+        "runtime_gates": {{ outputs.runtime_gates.body | jq('.data') | first | json }},
+        "audit_context": {{ outputs.audit_context.body | jq('.data') | first | json }}
+      }
+
+  - id: check_patches_available
+    type: io.kestra.plugin.core.flow.If
+    condition: "{{ outputs.synthesize_patches.body | jq('.patch_count') | first > 0 }}"
+    then:
+      - id: triage_code_fix
+        type: io.kestra.plugin.core.http.Request
+        timeout: PT5M
+        method: POST
+        uri: "{{ inputs.promote_prep_base_url }}/v1/triage/writeback"
+        headers:
+          Content-Type: application/json
+          Authorization: "Bearer {{ inputs.promote_prep_token }}"
+        options:
+          readTimeout: PT5M
+          readIdleTimeout: PT5M
+          connectTimeout: PT1M
+        body: |
+          {
+            "run_id": "{{ inputs.source_run_id }}",
+            "workflow_id": "code-fix-wave:{{ inputs.fix_run_id }}",
+            "layer": "code-fix",
+            "target_path": "app/",
+            "patch_text": {{ outputs.synthesize_patches.body | jq('.patches | map(.patch_text) | join("\n---\n")') | first | json }},
+            "base_sha256": "multi-file",
+            "runtime_gates": {{ outputs.runtime_gates.body | jq('.data') | first | json }},
+            "audit_context": {{ outputs.audit_context.body | jq('.data') | first | json }},
+            "preview_summary": {{ outputs.fetch_source_bundle.body | jq('.bundle // .') | first | json }},
+            "metadata": {
+              "fix_run_id": "{{ inputs.fix_run_id }}",
+              "source_run_id": "{{ inputs.source_run_id }}",
+              "max_fix_items": {{ inputs.max_fix_items }},
+              "wave_type": "issue_mesh_code_fix",
+              "patch_count": {{ outputs.synthesize_patches.body | jq('.patch_count') | first }}
+            }
+          }
+
+      - id: check_triage_decision
+        type: io.kestra.plugin.core.flow.If
+        condition: "{{ outputs.triage_code_fix.body | jq('.decision') | first == 'allow' }}"
+        then:
+          - id: run_scoped_pytest
+            type: io.kestra.plugin.core.http.Request
+            timeout: PT5M
+            method: POST
+            uri: "{{ inputs.promote_prep_base_url }}/v1/triage/scoped-pytest"
+            headers:
+              Content-Type: application/json
+              Authorization: "Bearer {{ inputs.promote_prep_token }}"
+            options:
+              readTimeout: PT5M
+              readIdleTimeout: PT5M
+              connectTimeout: PT1M
+            body: |
+              {
+                "fix_run_id": "{{ inputs.fix_run_id }}",
+                "changed_files": {{ outputs.synthesize_patches.body | jq('[.patches[] | select(.valid) | .target_path]') | first | json }},
+                "timeout_seconds": 120
+              }
+
+          - id: check_pytest_passed
+            type: io.kestra.plugin.core.flow.If
+            condition: "{{ outputs.run_scoped_pytest.body | jq('.passed') | first == true }}"
+            then:
+              - id: log_batch_apply
+                type: io.kestra.plugin.core.log.Log
+                message: |
+                  action=Applying {{ outputs.synthesize_patches.body | jq('.patch_count') | first }} patches via writeback A batch-commit
+                  triage_record_id={{ outputs.triage_code_fix.body | jq('.triage_record_id') | first }}
+                  pytest_passed=true
+                  pytest_test_count={{ outputs.run_scoped_pytest.body | jq('.test_count') | first }}
+
+              - id: claim_lease
+                type: io.kestra.plugin.core.http.Request
+                method: POST
+                uri: "{{ inputs.writeback_a_base_url }}/v1/lease/claim"
+                headers:
+                  Content-Type: application/json
+                  Authorization: "Bearer {{ inputs.writeback_a_token }}"
+                body: |
+                  {
+                    "round_id": "{{ inputs.fix_run_id }}",
+                    "target_paths": {{ outputs.synthesize_patches.body | jq('[.patches[] | select(.valid == true) | .target_path]') | first | json }},
+                    "lease_seconds": 600
+                  }
+
+              - id: writeback_batch_preview
+                type: io.kestra.plugin.core.http.Request
+                method: POST
+                uri: "{{ inputs.writeback_a_base_url }}/v1/batch-preview"
+                headers:
+                  Content-Type: application/json
+                  Authorization: "Bearer {{ inputs.writeback_a_token }}"
+                body: |
+                  {
+                    "items": {{ outputs.synthesize_patches.body | jq('[.patches[] | select(.valid == true) | {target_path: .target_path, base_sha256: .base_sha256, patch_text: .patch_text}]') | first | json }}
+                  }
+
+              - id: writeback_batch_commit
+                type: io.kestra.plugin.core.http.Request
+                method: POST
+                uri: "{{ inputs.writeback_a_base_url }}/v1/batch-commit"
+                headers:
+                  Content-Type: application/json
+                  Authorization: "Bearer {{ inputs.writeback_a_token }}"
+                body: |
+                  {
+                    "items": {{ outputs.synthesize_patches.body | jq('[.patches[] | select(.valid == true) | {target_path: .target_path, base_sha256: .base_sha256, patch_text: .patch_text}]') | first | json }},
+                    "idempotency_key": "kestra-batch-{{ inputs.fix_run_id }}",
+                    "lease_id": "{{ outputs.claim_lease.body | jq('.lease_id') | first }}",
+                    "fencing_token": {{ outputs.claim_lease.body | jq('.fencing_token') | first }},
+                    "triage_record_ids": ["{{ outputs.triage_code_fix.body | jq('.triage_record_id') | first }}"],
+                    "run_id": "{{ inputs.fix_run_id }}",
+                    "actor": {"type": "kestra", "id": "yanbao_issue_mesh_code_fix_wave"},
+                    "request_id": "batch-commit-{{ inputs.fix_run_id }}"
+                  }
+            else:
+              - id: log_pytest_failed
+                type: io.kestra.plugin.core.log.Log
+                message: |
+                  action=PYTEST_FAILED_SKIP_COMMIT
+                  fix_run_id={{ inputs.fix_run_id }}
+                  pytest_passed=false
+                  failures={{ outputs.run_scoped_pytest.body | jq('.failures') | first }}
+                  stdout_tail={{ outputs.run_scoped_pytest.body | jq('.stdout_tail') | first }}
+        else:
+          - id: log_triage_rejected
+            type: io.kestra.plugin.core.log.Log
+            message: |
+              triage_decision={{ outputs.triage_code_fix.body | jq('.decision') | first }}
+              triage_reason={{ outputs.triage_code_fix.body | jq('.reason') | first }}
+              action=Code-fix wave skipped due to AI triage rejection.
+    else:
+      - id: log_no_patches
+        type: io.kestra.plugin.core.log.Log
+        message: |
+          action=NO_FIXABLE_FINDINGS
+          source_run_id={{ inputs.source_run_id }}
+          skip_reason={{ outputs.synthesize_patches.body | jq('.skip_reason') | first }}
+
+  - id: wave_summary
+    type: io.kestra.plugin.core.log.Log
+    message: |
+      fix_run_id={{ inputs.fix_run_id }}
+      source_run_id={{ inputs.source_run_id }}
+      app_health={{ outputs.app_health.code }}
+      runtime_gates_code={{ outputs.runtime_gates.code }}
+      patch_count={{ outputs.synthesize_patches.body | jq('.patch_count') | first }}
+      manual_approval_required=false

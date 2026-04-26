@@ -1,0 +1,12 @@
+[Unit]
+Description=NewAPI Channel Health Probe Timer (every 10 min)
+Requires=newapi-channel-health.service
+
+[Timer]
+OnBootSec=120
+OnUnitActiveSec=600
+Persistent=true
+RandomizedDelaySec=30
+
+[Install]
+WantedBy=timers.target

@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>自选股 - A股研报平台</title>
+  <link rel="stylesheet" href="/static/demo.css">
+  <style>
+    .watchlist-page { max-width: 960px; margin: 0 auto; padding: 48px 24px; }
+    .watchlist-page h1 { font-family: var(--font-display); font-size: var(--fs-2xl); margin-bottom: 24px; }
+    .empty-tip { text-align: center; padding: 80px 0; color: var(--ink-secondary, #888); }
+  </style>
+</head>
+<body>
+  {% set nav_class = 'site-nav nav-links' %}
+  {% include "_site_nav.html" %}
+  <main class="watchlist-page">
+    <h1>自选股</h1>
+    {% if current_user %}
+    <div class="empty-tip">
+      <p>暂无自选股，请在研报详情页添加关注</p>
+    </div>
+    {% else %}
+    <div class="empty-tip">
+      <p>请先<a href="/login">登录</a>后使用自选股功能</p>
+    </div>
+    {% endif %}
+  </main>
+  {% include "_footer_disclaimer.html" %}
+</body>
+</html>

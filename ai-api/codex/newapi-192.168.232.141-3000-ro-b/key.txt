@@ -1,0 +1,2 @@
+http://192.168.232.141:3000/v1
+D3WZwjKvqpTkCCeg5oNdLpLZnzbQJGmLwuMVVgoaHm07AHML

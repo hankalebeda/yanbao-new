@@ -1,0 +1,9 @@
+{
+    "resource":  "provider",
+    "name":  "ai.acmi.run",
+    "homepage":  "https://ai.acmi.run/v1",
+    "app":  "codex",
+    "model":  "gpt-5.4",
+    "endpoint":  "https://ai.acmi.run/v1",
+    "enabled":  true
+}

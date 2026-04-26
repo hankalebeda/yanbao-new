@@ -1,0 +1,473 @@
+{
+  "audit_date": "2026-04-15T19:38:29.036212",
+  "tests": {
+    "GET /health": {
+      "url": "http://127.0.0.1:8010/health",
+      "method": "GET",
+      "result": {
+        "status": 200,
+        "reason": "OK",
+        "body_preview": "{\"success\":true,\"message\":\"ok\",\"data\":{\"status\":\"ok\",\"database_status\":\"ok\",\"scheduler_status\":\"disabled\",\"llm_router_status\":\"ok\",\"hotspot_status\":\"ok\",\"report_chain_status\":\"ok\",\"checked_at\":\"2026-04-15T11:38:29.062987+00:00\"},\"request_id\":\"cc5898cc-8c1e-48bb-abac-26ba9a44dfc8\",\"error\":null}",
+        "time_ms": 4,
+        "json": {
+          "success": true,
+          "message": "ok",
+          "data": {
+            "status": "ok",
+            "database_status": "ok",
+            "scheduler_status": "disabled",
+            "llm_router_status": "ok",
+            "hotspot_status": "ok",
+            "report_chain_status": "ok",
+            "checked_at": "2026-04-15T11:38:29.062987+00:00"
+          },
+          "request_id": "cc5898cc-8c1e-48bb-abac-26ba9a44dfc8",
+          "error": null
+        }
+      },
+      "status": "PASS"
+    },
+    "GET /api/v1/health": {
+      "url": "http://127.0.0.1:8010/api/v1/health",
+      "method": "GET",
+      "result": {
+        "status": 200,
+        "reason": "OK",
+        "body_preview": "{\"success\":true,\"message\":\"ok\",\"data\":{\"status\":\"ok\",\"database_status\":\"ok\",\"scheduler_status\":\"disabled\",\"llm_router_status\":\"ok\",\"hotspot_status\":\"ok\",\"report_chain_status\":\"ok\",\"checked_at\":\"2026-04-15T11:38:29.067593+00:00\"},\"request_id\":\"62feb958-b169-4464-86a5-b0a45e711532\",\"error\":null}",
+        "time_ms": 2,
+        "json": {
+          "success": true,
+          "message": "ok",
+          "data": {
+            "status": "ok",
+            "database_status": "ok",
+            "scheduler_status": "disabled",
+            "llm_router_status": "ok",
+            "hotspot_status": "ok",
+            "report_chain_status": "ok",
+            "checked_at": "2026-04-15T11:38:29.067593+00:00"
+          },
+          "request_id": "62feb958-b169-4464-86a5-b0a45e711532",
+          "error": null
+        }
+      },
+      "status": "PASS"
+    },
+    "GET /api/v1/reports": {
+      "url": "http://127.0.0.1:8010/api/v1/reports",
+      "method": "GET",
+      "result": {
+        "status": 200,
+        "reason": "OK",
+        "body_preview": "{\"success\":true,\"message\":\"ok\",\"data\":{\"items\":[{\"report_id\":\"1b075fbc-27a1-405d-9426-dfbd0182cb32\",\"stock_code\":\"600519.SH\",\"stock_name\":\"贵州茅台\",\"trade_date\":\"2026-04-15\",\"recommendation\":\"BUY\",\"confidence\":0.68,\"strategy_type\":\"B\",\"market_state\":\"BULL\",\"quality_flag\":\"ok\",\"published\":true,\"review_f",
+        "time_ms": 10,
+        "json": {
+          "success": true,
+          "message": "ok",
+          "data": {
+            "items": [
+              {
+                "report_id": "1b075fbc-27a1-405d-9426-dfbd0182cb32",
+                "stock_code": "600519.SH",
+                "stock_name": "贵州茅台",
+                "trade_date": "2026-04-15",
+                "recommendation": "BUY",
+                "confidence": 0.68,
+                "strategy_type": "B",
+                "market_state": "BULL",
+                "quality_flag": "ok",
+                "published": true,
+                "review_flag": "PENDING_REVIEW",
+                "status_reason": "LLM_FALLBACK",
+                "position_status": null
+              },
+              {
+                "report_id": "c092b61b-d260-417c-b0d1-28181d5469d4",
+                "stock_code": "688001.SH",
+                "stock_name": "华兴源创",
+                "trade_date": "2026-04-14",
+                "recommendation": "BUY",
+                "confidence": 0.79,
+                "strategy_type": "B",
+                "market_state": "BULL",
+                "quality_flag": "ok",
+                "published": true,
+                "review_flag": "APPROVED",
+                "status_reason": null,
+                "position_status": null
+              },
+              {
+                "report_id": "014b84d6-b81c-4fef-8df6-cf9339cfeef8",
+                "stock_code": "600519.SH",
+                "stock_name": "贵州茅台",
+                "trade_date": "2026-04-14",
+                "recommendation": "BUY",
+                "confidence": 0.78,
+                "strategy_type": "B",
+                "market_state": "BULL",
+                "quality_flag": "ok",
+                "published": true,
+                "review_flag": "APPROVED",
+                "status_reason": null,
+                "position_status": null
+              },
+              {
+                "report_id": "6c3e6406-dcde-4443-885b-f0329d583c71",
+                "stock_code": "688199.SH",
+                "stock_name": "久日新材",
+                "trade_date": "2026-04-14",
+                "recommendation": "BUY",
+                "confidence": 0.72,
+                "strategy_type": "B",
+                "market_state": "BULL",
+                "quality_flag": "ok",
+                "published": true,
+                "review_flag": "APPROVED",
+                "status_reason": null,
+                "position_status": null
+              }
+            ],
+            "page": 1,
+            "page_size": 20,
+            "total": 4,
+            "data_status": "READY"
+          },
+          "request_id": "dcd61e0f-b59e-4514-8819-b5cf29d2e1ac",
+          "error": null
+        }
+      },
+      "status": "PASS"
+    },
+    "GET /api/v1/reports?skip=0&limit=5": {
+      "url": "http://127.0.0.1:8010/api/v1/reports?skip=0&limit=5",
+      "method": "GET",
+      "result": {
+        "status": 200,
+        "reason": "OK",
+        "body_preview": "{\"success\":true,\"message\":\"ok\",\"data\":{\"items\":[{\"report_id\":\"1b075fbc-27a1-405d-9426-dfbd0182cb32\",\"stock_code\":\"600519.SH\",\"stock_name\":\"贵州茅台\",\"trade_date\":\"2026-04-15\",\"recommendation\":\"BUY\",\"confidence\":0.68,\"strategy_type\":\"B\",\"market_state\":\"BULL\",\"quality_flag\":\"ok\",\"published\":true,\"review_f",
+        "time_ms": 13,
+        "json": {
+          "success": true,
+          "message": "ok",
+          "data": {
+            "items": [
+              {
+                "report_id": "1b075fbc-27a1-405d-9426-dfbd0182cb32",
+                "stock_code": "600519.SH",
+                "stock_name": "贵州茅台",
+                "trade_date": "2026-04-15",
+                "recommendation": "BUY",
+                "confidence": 0.68,
+                "strategy_type": "B",
+                "market_state": "BULL",
+                "quality_flag": "ok",
+                "published": true,
+                "review_flag": "PENDING_REVIEW",
+                "status_reason": "LLM_FALLBACK",
+                "position_status": null
+              },
+              {
+                "report_id": "c092b61b-d260-417c-b0d1-28181d5469d4",
+                "stock_code": "688001.SH",
+                "stock_name": "华兴源创",
+                "trade_date": "2026-04-14",
+                "recommendation": "BUY",
+                "confidence": 0.79,
+                "strategy_type": "B",
+                "market_state": "BULL",
+                "quality_flag": "ok",
+                "published": true,
+                "review_flag": "APPROVED",
+                "status_reason": null,
+                "position_status": null
+              },
+              {
+                "report_id": "014b84d6-b81c-4fef-8df6-cf9339cfeef8",
+                "stock_code": "600519.SH",
+                "stock_name": "贵州茅台",
+                "trade_date": "2026-04-14",
+                "recommendation": "BUY",
+                "confidence": 0.78,
+                "strategy_type": "B",
+                "market_state": "BULL",
+                "quality_flag": "ok",
+                "published": true,
+                "review_flag": "APPROVED",
+                "status_reason": null,
+                "position_status": null
+              },
+              {
+                "report_id": "6c3e6406-dcde-4443-885b-f0329d583c71",
+                "stock_code": "688199.SH",
+                "stock_name": "久日新材",
+                "trade_date": "2026-04-14",
+                "recommendation": "BUY",
+                "confidence": 0.72,
+                "strategy_type": "B",
+                "market_state": "BULL",
+                "quality_flag": "ok",
+                "published": true,
+                "review_flag": "APPROVED",
+                "status_reason": null,
+                "position_status": null
+              }
+            ],
+            "page": 1,
+            "page_size": 4,
+            "total": 4,
+            "data_status": "READY"
+          },
+          "request_id": "fd22159b-527f-4fe2-ac63-f3ddccc3c257",
+          "error": null
+        }
+      },
+      "status": "PASS"
+    },
+    "GET /api/v1/reports/featured": {
+      "url": "http://127.0.0.1:8010/api/v1/reports/featured",
+      "method": "GET",
+      "result": {
+        "status": 404,
+        "reason": "Not Found",
+        "body_preview": "{\"success\":false,\"message\":\"error\",\"data\":null,\"request_id\":\"316eca7e-f20b-458f-be70-1183cd1cc746\",\"error\":\"REPORT_NOT_AVAILABLE\",\"error_code\":\"REPORT_NOT_AVAILABLE\",\"error_message\":\"REPORT_NOT_AVAILABLE\"}",
+        "time_ms": 14,
+        "json": {
+          "success": false,
+          "message": "error",
+          "data": null,
+          "request_id": "316eca7e-f20b-458f-be70-1183cd1cc746",
+          "error": "REPORT_NOT_AVAILABLE",
+          "error_code": "REPORT_NOT_AVAILABLE",
+          "error_message": "REPORT_NOT_AVAILABLE"
+        }
+      },
+      "status": "PASS"
+    },
+    "GET /api/v1/hot-stocks": {
+      "url": "http://127.0.0.1:8010/api/v1/hot-stocks",
+      "method": "GET",
+      "result": {
+        "status": 404,
+        "reason": "Not Found",
+        "body_preview": "{\"success\":false,\"message\":\"error\",\"data\":null,\"request_id\":\"35481b8c-0d3f-4505-b391-14d2f96690c1\",\"error\":\"Not Found\",\"error_code\":\"NOT_FOUND\",\"error_message\":\"NOT_FOUND\"}",
+        "time_ms": 1,
+        "json": {
+          "success": false,
+          "message": "error",
+          "data": null,
+          "request_id": "35481b8c-0d3f-4505-b391-14d2f96690c1",
+          "error": "Not Found",
+          "error_code": "NOT_FOUND",
+          "error_message": "NOT_FOUND"
+        }
+      },
+      "status": "PASS"
+    },
+    "GET /api/v1/market-overview": {
+      "url": "http://127.0.0.1:8010/api/v1/market-overview",
+      "method": "GET",
+      "result": {
+        "status": 404,
+        "reason": "Not Found",
+        "body_preview": "{\"success\":false,\"message\":\"error\",\"data\":null,\"request_id\":\"5ec0e874-4f4f-4040-a9d4-ae151d0958cd\",\"error\":\"Not Found\",\"error_code\":\"NOT_FOUND\",\"error_message\":\"NOT_FOUND\"}",
+        "time_ms": 26,
+        "json": {
+          "success": false,
+          "message": "error",
+          "data": null,
+          "request_id": "5ec0e874-4f4f-4040-a9d4-ae151d0958cd",
+          "error": "Not Found",
+          "error_code": "NOT_FOUND",
+          "error_message": "NOT_FOUND"
+        }
+      },
+      "status": "PASS"
+    },
+    "GET /api/v1/home": {
+      "url": "http://127.0.0.1:8010/api/v1/home",
+      "method": "GET",
+      "result": {
+        "status": 200,
+        "reason": "OK",
+        "body_preview": "{\"success\":true,\"message\":\"ok\",\"data\":{\"latest_reports\":[],\"hot_stocks\":[{\"stock_code\":\"601888.SH\",\"stock_name\":\"中国中免\",\"topic_title\":null,\"heat_score\":99},{\"stock_code\":\"601988.SH\",\"stock_name\":\"中国银行\",\"topic_title\":null,\"heat_score\":98},{\"stock_code\":\"600177.SH\",\"stock_name\":\"雅戈尔\",\"topic_title\":null",
+        "time_ms": 421,
+        "json": {
+          "success": true,
+          "message": "ok",
+          "data": {
+            "latest_reports": [],
+            "hot_stocks": [
+              {
+                "stock_code": "601888.SH",
+                "stock_name": "中国中免",
+                "topic_title": null,
+                "heat_score": 99
+              },
+              {
+                "stock_code": "601988.SH",
+                "stock_name": "中国银行",
+                "topic_title": null,
+                "heat_score": 98
+              },
+              {
+                "stock_code": "600177.SH",
+                "stock_name": "雅戈尔",
+                "topic_title": null,
+                "heat_score": 97
+              },
+              {
+                "stock_code": "000425.SZ",
+                "stock_name": "徐工机械",
+                "topic_title": null,
+                "heat_score": 96
+              },
+              {
+                "stock_code": "600926.SH",
+                "stock_name": "杭州银行",
+                "topic_title": null,
+                "heat_score": 95
+              },
+              {
+                "stock_code": "601169.SH",
+                "stock_name": "北京银行",
+                "topic_title": null,
+                "heat_score": 94
+              }
+            ],
+            "market_state": "NEUTRAL",
+            "trade_date": "2026-04-06",
+            "pool_size": 200,
+            "data_status": "DEGRADED",
+            "status_reason": "home_source_inconsistent",
+            "display_reason": "来源口径暂未完全对齐，页面已回退到稳定批次。",
+            "today_report_count": 0,
+            "public_performance": {
+              "window_days": 30,
+              "data_status": "DEGRADED",
+              "status_reason": "home_source_inconsistent",
+              "display_hint": "来源口径暂未完全对齐，页面已回退到稳定批次。",
+              "runtime_trade_date": "2026-04-06",
+              "snapshot_date": "2026-04-15",
+              "date_range": {
+                "from": "2026-03-08",
+                "to": "2026-04-06"
+              },
+              "overall_win_rate": null,
+              "overall_profit_loss_ratio": null,
+              "overall_cumulative_return_pct": null,
+              "alpha_vs_baseline": null,
+              "sample_size": 0,
+              "total_settled": 0,
+              "total_reports": 63,
+              "coverage_pct": 0.0,
+              "signal_validity_warning": false,
+              "baseline_random": null,
+              "baseline_ma_cross": null,
+              "trade_date": "2026-04-06",
+              "attempted_trade_date": "2026-04-15",
+              "pool_size": 200,
+              "task_status": "FALLBACK",
+              "fallback_from": "2026-04-03",
+              "kline_coverage": null
+            }
+          },
+          "request_id": "d579d3e9-ea90-44bd-b675-f62f20e55e82",
+          "error": null
+        }
+      },
+      "status": "PASS"
+    },
+    "GET /api/v1/reports/search": {
+      "url": "http://127.0.0.1:8010/api/v1/reports/search?q=test",
+      "method": "GET",
+      "result": {
+        "status": 404,
+        "reason": "Not Found",
+        "body_preview": "{\"success\":false,\"message\":\"error\",\"data\":null,\"request_id\":\"0a4f693e-68ac-4a67-b3b1-4592096472b6\",\"error\":\"REPORT_NOT_AVAILABLE\",\"error_code\":\"REPORT_NOT_AVAILABLE\",\"error_message\":\"REPORT_NOT_AVAILABLE\"}",
+        "time_ms": 12,
+        "json": {
+          "success": false,
+          "message": "error",
+          "data": null,
+          "request_id": "0a4f693e-68ac-4a67-b3b1-4592096472b6",
+          "error": "REPORT_NOT_AVAILABLE",
+          "error_code": "REPORT_NOT_AVAILABLE",
+          "error_message": "REPORT_NOT_AVAILABLE"
+        }
+      },
+      "status": "PASS"
+    },
+    "GET /api/v1/reports/999999": {
+      "url": "http://127.0.0.1:8010/api/v1/reports/999999",
+      "method": "GET",
+      "result": {
+        "status": 404,
+        "reason": "Not Found",
+        "body_preview": "{\"success\":false,\"message\":\"error\",\"data\":null,\"request_id\":\"fa1facdc-0077-4c3f-92d6-49b00a11f129\",\"error\":\"REPORT_NOT_AVAILABLE\",\"error_code\":\"REPORT_NOT_AVAILABLE\",\"error_message\":\"REPORT_NOT_AVAILABLE\"}",
+        "time_ms": 35,
+        "json": {
+          "success": false,
+          "message": "error",
+          "data": null,
+          "request_id": "fa1facdc-0077-4c3f-92d6-49b00a11f129",
+          "error": "REPORT_NOT_AVAILABLE",
+          "error_code": "REPORT_NOT_AVAILABLE",
+          "error_message": "REPORT_NOT_AVAILABLE"
+        }
+      },
+      "status": "PASS"
+    },
+    "GET /api/v1/nonexistent": {
+      "url": "http://127.0.0.1:8010/api/v1/nonexistent",
+      "method": "GET",
+      "result": {
+        "status": 404,
+        "reason": "Not Found",
+        "body_preview": "{\"success\":false,\"message\":\"error\",\"data\":null,\"request_id\":\"7b8c9221-8846-44f5-af3d-b7c63a05406e\",\"error\":\"Not Found\",\"error_code\":\"NOT_FOUND\",\"error_message\":\"NOT_FOUND\"}",
+        "time_ms": 1,
+        "json": {
+          "success": false,
+          "message": "error",
+          "data": null,
+          "request_id": "7b8c9221-8846-44f5-af3d-b7c63a05406e",
+          "error": "Not Found",
+          "error_code": "NOT_FOUND",
+          "error_message": "NOT_FOUND"
+        }
+      },
+      "status": "PASS"
+    },
+    "POST /api/v1/reports (no body)": {
+      "url": "http://127.0.0.1:8010/api/v1/reports",
+      "method": "POST",
+      "result": {
+        "status": 405,
+        "reason": "Method Not Allowed",
+        "body_preview": "{\"success\":false,\"message\":\"error\",\"data\":null,\"request_id\":\"8cd52a09-32f7-4f51-afbc-677872f1c82b\",\"error\":\"Method Not Allowed\",\"error_code\":\"INTERNAL_ERROR\",\"error_message\":\"INTERNAL_ERROR\"}",
+        "time_ms": 1,
+        "json": {
+          "success": false,
+          "message": "error",
+          "data": null,
+          "request_id": "8cd52a09-32f7-4f51-afbc-677872f1c82b",
+          "error": "Method Not Allowed",
+          "error_code": "INTERNAL_ERROR",
+          "error_message": "INTERNAL_ERROR"
+        }
+      },
+      "status": "FAIL"
+    }
+  },
+  "problems": [],
+  "system_snapshot": {
+    "report_total": 2077,
+    "report_visible": 182,
+    "report_quality_ok": 18,
+    "report_quality_stale_ok": 164,
+    "stock_master_total": 5197,
+    "kline_stock_covered": 451,
+    "kline_rows": 60397,
+    "settlement_records": 0,
+    "hotspot_items": 50
+  }
+}

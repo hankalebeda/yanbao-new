@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>订阅套餐 - A股研报平台</title>
+  <link rel="stylesheet" href="/static/demo.css">
+</head>
+<body>
+  <nav class="site-nav">
+    <a href="/" class="nav-brand">A股研报平台</a>
+    <button class="nav-toggle" aria-label="菜单" onclick="document.querySelector('.nav-links').classList.toggle('open')">☰</button>
+    <div class="nav-links">
+      {% include "_nav_links.html" %}
+    </div>
+  </nav>
+
+  <main class="container">
+    <div class="section-intro">
+      <h1>订阅方案</h1>
+      <p class="sub">解锁完整 AI 研报体验</p>
+      <p class="text-lg">每日精选强信号 · 实操价格区间 · 模拟收益追踪</p>
+    </div>
+
+    <div id="subscription-state" class="subscription-state muted">正在确认当前权益…</div>
+
+    <div id="subscribe-grid" class="subscribe-grid">
+      <p class="muted">加载套餐中…</p>
+    </div>
+
+    <details class="collapsible">
+      <summary>功能对比详表</summary>
+      <div class="content">
+        <table class="data-table">
+          <thead>
+            <tr><th>功能</th><th>免费</th><th>月会员</th><th>年会员</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>实操指令卡</td><td>✗</td><td>✓</td><td>✓</td></tr>
+            <tr><td>高级区（推理链/数据清单）</td><td>✗</td><td>✓</td><td>✓</td></tr>
+            <tr><td>模拟收益看板</td><td>✗</td><td>✓</td><td>✓</td></tr>
+            <tr><td>每日推送</td><td>✗</td><td>✓</td><td>✓</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </details>
+
+    <details class="collapsible">
+      <summary>常见问题 FAQ</summary>
+      <div class="content">
+        <p><strong>Q：可以随时取消吗？</strong> A：月会员可随时取消，下个计费周期生效。年会员支持 7 天无理由退款。</p>
+        <p><strong>Q：支付方式？</strong> A：支持微信、支付宝。</p>
+      </div>
+    </details>
+
+    <p class="text-sm muted" style="margin: var(--space-6) 0;">退款政策：7 天无理由退款。</p>
+  </main>
+
+  <footer class="site-footer">
+    <div class="footer-inner">
+      {% include "_footer_disclaimer.html" %}
+    </div>
+  </footer>
+
+  {% include "_app_config.html" %}
+  <script>
+    var subscriptionStatePayload = {{ subscription_state_json | safe }};
+    var subscriptionPlansPayload = {{ subscription_plans_json | safe }};
+    var billingCapability = {{ billing_capability_json | safe }};
+  </script>
+  <script src="/static/api-bridge.js"></script>
+  <script>
+    (async function() {
+      var grid = document.getElementById('subscribe-grid');
+      var stateNode = document.getElementById('subscription-state');
+      var seededState = subscriptionStatePayload || null;
+      var billing = billingCapability || { provider_status: 'unavailable', browser_checkout_ready: false, providers: [] };
+      var checkoutReady = !!billing.browser_checkout_ready;
+      var PLAN_PRO_MONTHLY = 'pro' + '_1m';
+      var PLAN_PRO_QUARTERLY = 'pro' + '_3m';
+      var PLAN_PRO_YEARLY = 'pro' + '_12m';
+      var PLAN_ENTERPRISE_MONTHLY = 'enterprise' + '_1m';
+      var LEGACY_PLAN_MAP = {
+        monthly: PLAN_PRO_MONTHLY,
+        quarterly: PLAN_PRO_QUARTERLY,
+        yearly: PLAN_PRO_YEARLY,
+        annual: PLAN_PRO_YEARLY
+      };
+
+      function normalizeSeededPlan(state) {
+        if (!state) return 'free';
+        var planCode = (state.plan_code || '').toString().trim().toLowerCase();
+        if (planCode) return LEGACY_PLAN_MAP[planCode] || planCode;
+        var tier = (state.tier || '').toString().trim().toLowerCase();
+        if (tier === 'pro' || tier === 'monthly') return PLAN_PRO_MONTHLY;
+        if (tier === 'enterprise') return PLAN_ENTERPRISE_MONTHLY;
+        if (tier === 'annual' || tier === 'yearly') return PLAN_PRO_YEARLY;
+        return 'free';
+      }
+
+      var userPlan = normalizeSeededPlan(seededState);
+      var userActive = !!(seededState && seededState.status === 'active');
+      var userUnknown = !!(seededState && seededState.status === 'unknown');
+      var isLoggedIn = !!seededState;
+
+      if (stateNode) {
+        if (userUnknown) {
+          stateNode.textContent = '当前权益暂未确认，等待权益确认。到期时间仍待核验。';
+        } else if (userActive) {
+          stateNode.textContent = '当前权益已生效，可直接使用会员能力。';
+        } else {
+          stateNode.textContent = '当前使用基础权益，可按需升级。';
+        }
+      }
+
+      var plans = Array.isArray(subscriptionPlansPayload) ? subscriptionPlansPayload : [];
+
+      var html = plans.map(function(p) {
+        var code = (p.code || '').toString().toLowerCase();
+        var periodMonths = Number(p.period_months || 0);
+        var isMonthly = periodMonths === 1;
+        var isYearly = periodMonths === 12;
+        var cls = 'subscribe-card';
+        if (code === PLAN_PRO_MONTHLY) cls += ' recommend';
+        if (code === 'free') cls += ' free';
+
+        var badge = code === PLAN_PRO_MONTHLY ? '<span class="badge-rec">推荐</span>' : '';
+        var hint = p.hint ? '<p class="text-xs ' + (isYearly ? 'text-positive' : 'muted') + '">' + p.hint + '</p>' : '';
+        var items = (p.features || []).map(function(f){ return '<li>· ' + f + '</li>'; }).join('');
+        items += (p.features_deny || []).map(function(f){ return '<li>✗ ' + f + '</li>'; }).join('');
+
+        var isCurrent = (
+          (code === userPlan) ||
+          (isMonthly && userPlan === PLAN_PRO_MONTHLY) ||
+          (isYearly && userPlan === PLAN_PRO_YEARLY) ||
+          (code === 'free' && userPlan === 'free')
+        ) && (userActive || (code === 'free' && userPlan === 'free'));
+        var btnText = '登录后订阅';
+        if (isCurrent) {
+          btnText = '当前权益';
+        } else if (code === 'free') {
+          btnText = '基础权益';
+        } else if (!checkoutReady) {
+          btnText = '暂未开放在线支付';
+        } else if (isLoggedIn) {
+          btnText = isYearly ? '年度优惠' : '立即订阅';
+        }
+
+        var btnHref = '/login?next=/subscribe';
+        if (isCurrent) {
+          btnHref = '/profile';
+        } else if (code === 'free') {
+          btnHref = '/reports';
+        } else if (!checkoutReady) {
+          btnHref = '/subscribe?billing=blocked';
+        } else if (isLoggedIn) {
+          btnHref = '/subscribe?plan=' + encodeURIComponent(p.code || '');
+        }
+
+        var btnCls = isCurrent ? 'btn current' : 'btn';
+        return '<div class="' + cls + '" data-plan="' + p.code + '">' + badge + '<h3>' + p.label + '</h3><div class="price">' + (p.price_display || '¥0') + '</div>' + hint + '<ul>' + items + '</ul><a href="' + btnHref + '" class="' + btnCls + '">' + btnText + '</a></div>';
+      }).join('');
+
+      grid.innerHTML = html || '<p class="muted">套餐暂不可用</p>';
+    })();
+  </script>
+</body>
+</html>

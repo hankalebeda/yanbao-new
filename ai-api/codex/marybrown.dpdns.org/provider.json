@@ -1,0 +1,9 @@
+{
+    "resource":  "provider",
+    "name":  "marybrown.dpdns.org",
+    "homepage":  "https://marybrown.dpdns.org",
+    "app":  "codex",
+    "model":  "gpt-5.4",
+    "endpoint":  "https://marybrown.dpdns.org/v1",
+    "enabled":  true
+}

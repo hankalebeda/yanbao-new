@@ -1,0 +1,39 @@
+{
+  "passed": 3,
+  "total": 3,
+  "results": {
+    "single": {
+      "response": "你好！以下是你要的信息：\n\n🤖 我当前底层的模型版本\n\n我当前运行的基础是 GPT-4o 模型，这是 OpenAI 在 GPT-4 系列之后发布的更先进版本，具备更强的理解、推理和生成能力。\n\n📈 2026年2月24日 A股市场最重要的一条新闻（标题 + 来源链接）\n📰 A股三大交易所今开市 最新一期LPR公布\n\n📍 来源：央视新闻客户端\n🔗 查看原文： A股三大交易所今开市 最新一期LPR公布 — 央视新闻客户端\n\n📌 要点摘要：\n• 2026年2月24日是春节假期后A股节后首个工作日，上交所、深交所和北京证券交易所恢复交易。\n• 同日中国人民银行授权发布的最新贷款市场报价利率（LPR）1年期和5年以上利率均维持不变，这对市场流动性和投资者预期具有重要影响。\nnews.e23.cn\n\n如你还想看相关市场行情数据、板块表现或海外因素对A股的影响，我也可以帮你补充！",
+      "elapsed_s": 6.92,
+      "has_citation": true
+    },
+    "batch": [
+      {
+        "code": "600519",
+        "name": "贵州茅台",
+        "response": "贵州茅台（600519）核心业务：生产与销售高端茅台白酒及系列酒类产品。\nmoutai.com.cn\n+1",
+        "elapsed_s": 3.83,
+        "has_citation": false
+      },
+      {
+        "code": "000858",
+        "name": "五粮液",
+        "response": "五粮液（000858）核心业务是生产与销售白酒及相关酒类产品。\nStockAnalysis",
+        "elapsed_s": 4.34,
+        "has_citation": false
+      },
+      {
+        "code": "300750",
+        "name": "宁德时代",
+        "response": "宁德时代（300750）主营研发生产与销售新能源汽车动力电池及储能电池系统。\nashares.top",
+        "elapsed_s": 3.34,
+        "has_citation": false
+      }
+    ],
+    "reconnect": {
+      "response": "测试通过",
+      "elapsed_s": 6.37,
+      "has_citation": false
+    }
+  }
+}

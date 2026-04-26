@@ -1,0 +1,9 @@
+{
+    "resource":  "provider",
+    "name":  "wududu.edu.kg",
+    "homepage":  "https://wududu.edu.kg",
+    "app":  "codex",
+    "model":  "gpt-5.4",
+    "endpoint":  "https://wududu.edu.kg/v1",
+    "enabled":  true
+}

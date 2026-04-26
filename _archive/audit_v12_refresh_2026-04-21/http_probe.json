@@ -1,0 +1,177 @@
+[
+  {
+    "method": "GET",
+    "path": "/health",
+    "code": 200,
+    "len": 401,
+    "body": "{\"success\":true,\"message\":\"ok\",\"data\":{\"status\":\"ok\",\"database_status\":\"ok\",\"scheduler_status\":\"disabled\",\"llm_router_st"
+  },
+  {
+    "method": "GET",
+    "path": "/api/health",
+    "code": 404,
+    "len": -1,
+    "body": "{\"success\":false,\"message\":\"error\",\"data\":null,\"request_id\":\"aa32fd47-de7c-49c9-89ad-4ababc62f76f\",\"error\":\"Not Found\",\""
+  },
+  {
+    "method": "GET",
+    "path": "/api/reports?page=1&size=20",
+    "code": 404,
+    "len": -1,
+    "body": "{\"success\":false,\"message\":\"error\",\"data\":null,\"request_id\":\"68309029-a5eb-4fa8-a480-d655dfaa887c\",\"error\":\"Not Found\",\""
+  },
+  {
+    "method": "GET",
+    "path": "/api/reports/d220e643-3e67-43ae-8350-c697e4247af6",
+    "code": 404,
+    "len": -1,
+    "body": "{\"success\":false,\"message\":\"error\",\"data\":null,\"request_id\":\"84337e52-ad35-42c5-a6e2-53e993c2468f\",\"error\":\"Not Found\",\""
+  },
+  {
+    "method": "GET",
+    "path": "/api/reports/2d1d892e-4b8f-4405-b586-88afdeba0f01",
+    "code": 404,
+    "len": -1,
+    "body": "{\"success\":false,\"message\":\"error\",\"data\":null,\"request_id\":\"f762e2b5-7670-4a4f-a105-fc10c7251bf0\",\"error\":\"Not Found\",\""
+  },
+  {
+    "method": "GET",
+    "path": "/api/dashboard/home",
+    "code": 404,
+    "len": -1,
+    "body": "{\"success\":false,\"message\":\"error\",\"data\":null,\"request_id\":\"6901856c-e628-466d-a124-4603f7032003\",\"error\":\"Not Found\",\""
+  },
+  {
+    "method": "GET",
+    "path": "/api/dashboard/recent",
+    "code": 404,
+    "len": -1,
+    "body": "{\"success\":false,\"message\":\"error\",\"data\":null,\"request_id\":\"b60ec225-a54e-41d8-b44e-04555b91ef9d\",\"error\":\"Not Found\",\""
+  },
+  {
+    "method": "GET",
+    "path": "/api/dashboard/anchor",
+    "code": 404,
+    "len": -1,
+    "body": "{\"success\":false,\"message\":\"error\",\"data\":null,\"request_id\":\"8f1cb4c9-1c06-4f1c-acca-6df002aef5bb\",\"error\":\"Not Found\",\""
+  },
+  {
+    "method": "GET",
+    "path": "/api/market/state",
+    "code": 404,
+    "len": -1,
+    "body": "{\"success\":false,\"message\":\"error\",\"data\":null,\"request_id\":\"38b19d6f-5dbb-4f0f-8d0b-d4102e8b9844\",\"error\":\"Not Found\",\""
+  },
+  {
+    "method": "GET",
+    "path": "/api/market/state/today",
+    "code": 404,
+    "len": -1,
+    "body": "{\"success\":false,\"message\":\"error\",\"data\":null,\"request_id\":\"9699a063-c913-4cd6-b810-ec500ea407ea\",\"error\":\"Not Found\",\""
+  },
+  {
+    "method": "GET",
+    "path": "/api/hotspot/today",
+    "code": 404,
+    "len": -1,
+    "body": "{\"success\":false,\"message\":\"error\",\"data\":null,\"request_id\":\"feb204f4-b8b5-4a40-b698-30221e32fd50\",\"error\":\"Not Found\",\""
+  },
+  {
+    "method": "GET",
+    "path": "/api/hotspot/top50",
+    "code": 404,
+    "len": -1,
+    "body": "{\"success\":false,\"message\":\"error\",\"data\":null,\"request_id\":\"075f3a6a-56f2-4e85-96b2-be8346aa71bd\",\"error\":\"Not Found\",\""
+  },
+  {
+    "method": "GET",
+    "path": "/api/settlement/results?days=30",
+    "code": 404,
+    "len": -1,
+    "body": "{\"success\":false,\"message\":\"error\",\"data\":null,\"request_id\":\"2ee15289-5010-4878-a252-b13183c7b8e7\",\"error\":\"Not Found\",\""
+  },
+  {
+    "method": "GET",
+    "path": "/api/settlement/coverage",
+    "code": 404,
+    "len": -1,
+    "body": "{\"success\":false,\"message\":\"error\",\"data\":null,\"request_id\":\"078458c1-b3e2-4363-9d2b-1961a2741c08\",\"error\":\"Not Found\",\""
+  },
+  {
+    "method": "GET",
+    "path": "/api/governance/feature-catalog",
+    "code": 404,
+    "len": -1,
+    "body": "{\"success\":false,\"message\":\"error\",\"data\":null,\"request_id\":\"8b67ae13-1c86-4e94-b64b-d74ef7d5054c\",\"error\":\"Not Found\",\""
+  },
+  {
+    "method": "GET",
+    "path": "/api/observability/metrics",
+    "code": 404,
+    "len": -1,
+    "body": "{\"success\":false,\"message\":\"error\",\"data\":null,\"request_id\":\"6a80a6f0-e637-4b5b-b556-df926846a0f7\",\"error\":\"Not Found\",\""
+  },
+  {
+    "method": "GET",
+    "path": "/api/notifications",
+    "code": 404,
+    "len": -1,
+    "body": "{\"success\":false,\"message\":\"error\",\"data\":null,\"request_id\":\"bda74bc5-f314-4bc5-8a0e-e6f777531f6d\",\"error\":\"Not Found\",\""
+  },
+  {
+    "method": "GET",
+    "path": "/api/users/me",
+    "code": 404,
+    "len": -1,
+    "body": "{\"success\":false,\"message\":\"error\",\"data\":null,\"request_id\":\"a79eaa14-843e-4986-acce-5fe456fa87a3\",\"error\":\"Not Found\",\""
+  },
+  {
+    "method": "GET",
+    "path": "/api/admin/pool",
+    "code": 404,
+    "len": -1,
+    "body": "{\"success\":false,\"message\":\"error\",\"data\":null,\"request_id\":\"c90a49f5-e98a-4f7f-a69f-e12794dc23c7\",\"error\":\"Not Found\",\""
+  },
+  {
+    "method": "GET",
+    "path": "/",
+    "code": 200,
+    "len": 23799,
+    "body": "<!DOCTYPE html>\n<html lang=\"zh-CN\">\n<head>\n  <meta charset=\"UTF-8\">\n  <meta name=\"viewport\" content=\"width=device-width,"
+  },
+  {
+    "method": "GET",
+    "path": "/login",
+    "code": 200,
+    "len": 4580,
+    "body": "<!DOCTYPE html>\n<html lang=\"zh-CN\">\n<head>\n  <meta charset=\"UTF-8\">\n  <meta name=\"viewport\" content=\"width=device-width,"
+  },
+  {
+    "method": "GET",
+    "path": "/dashboard",
+    "code": 200,
+    "len": 25227,
+    "body": "<!DOCTYPE html>\n<html lang=\"zh-CN\">\n<head>\n  <meta charset=\"UTF-8\">\n  <meta name=\"viewport\" content=\"width=device-width,"
+  },
+  {
+    "method": "GET",
+    "path": "/reports",
+    "code": 200,
+    "len": 11715,
+    "body": "<!DOCTYPE html>\n<html lang=\"zh-CN\">\n<head>\n  <meta charset=\"UTF-8\">\n  <meta name=\"viewport\" content=\"width=device-width,"
+  },
+  {
+    "method": "GET",
+    "path": "/admin",
+    "code": 200,
+    "len": 4580,
+    "body": "<!DOCTYPE html>\n<html lang=\"zh-CN\">\n<head>\n  <meta charset=\"UTF-8\">\n  <meta name=\"viewport\" content=\"width=device-width,"
+  },
+  {
+    "method": "GET",
+    "path": "/openapi.json",
+    "code": 200,
+    "len": 99857,
+    "body": "{\"openapi\":\"3.1.0\",\"info\":{\"title\":\"A-Share Research Platform\",\"version\":\"0.1.0\"},\"paths\":{\"/api/v1/internal/hotspot/col"
+  }
+]

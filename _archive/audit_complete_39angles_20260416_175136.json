@@ -1,0 +1,401 @@
+{
+  "audit_timestamp": "2026-04-16T17:51:35.870670",
+  "audit_scope": "完整 39 角度 + 浏览器 E2E 测试",
+  "environment": "D:/yanbao-new (FastAPI + SQLite)",
+  "backend_url": "http://127.0.0.1:8010",
+  "findings_by_dimension": {
+    "D1": {
+      "dimension_id": "D1",
+      "dimension_name": "事实、契约、数据",
+      "angles": [
+        {
+          "angle_id": 1,
+          "angle_name": "真实性 / 真值来源",
+          "checks": [
+            {
+              "name": "已发布报告质量",
+              "issue": "已发布的非 OK 质量报告",
+              "count": 0,
+              "severity": "OK"
+            },
+            {
+              "name": "删除-发布冲突",
+              "issue": "已删除但仍标记已发布的报告",
+              "count": 4,
+              "severity": "P1"
+            }
+          ],
+          "metrics": {
+            "total_reports": 2346,
+            "quality_ok_count": 304,
+            "published_count": 6,
+            "deleted_count": 2142,
+            "quality_distribution": [
+              {
+                "quality_flag": null,
+                "cnt": 6
+              },
+              {
+                "quality_flag": "degraded",
+                "cnt": 40
+              },
+              {
+                "quality_flag": "ok",
+                "cnt": 304
+              },
+              {
+                "quality_flag": "stale_ok",
+                "cnt": 1996
+              }
+            ]
+          }
+        },
+        {
+          "angle_id": 2,
+          "angle_name": "状态语义是否诚实",
+          "issue": "检查质量标记是否真实反映数据状态",
+          "findings": [
+            {
+              "quality_flag": null,
+              "cnt": 6
+            },
+            {
+              "quality_flag": "degraded",
+              "cnt": 40
+            },
+            {
+              "quality_flag": "ok",
+              "cnt": 304
+            },
+            {
+              "quality_flag": "stale_ok",
+              "cnt": 1996
+            }
+          ],
+          "specific_issues": [
+            {
+              "issue": "stale_ok 报告未被过滤",
+              "count": 1996,
+              "description": "对外接口是否过滤了 stale_ok 报告",
+              "severity": "P1"
+            }
+          ]
+        },
+        {
+          "angle_id": 3,
+          "angle_name": "SSOT 契约漂移",
+          "checks": {
+            "api_contract": "检查 /api/v1/reports 返回的字段",
+            "status": "需要浏览器或API测试验证"
+          }
+        },
+        {
+          "angle_id": 4,
+          "angle_name": "错误码 / HTTP 投影",
+          "checks": {
+            "http_status": "API 返回的 HTTP 状态码与业务错误是否一致",
+            "test_required": "API 端到端测试"
+          }
+        },
+        {
+          "angle_id": 5,
+          "angle_name": "数据血缘与命中事实一致性",
+          "checks": {
+            "kline_coverage": {
+              "COUNT(DISTINCT stock_code)": 1049
+            },
+            "settlement_coverage": {
+              "COUNT(DISTINCT report_id)": 18
+            },
+            "issue": "血缘是否有完整记录"
+          }
+        },
+        {
+          "angle_id": 6,
+          "angle_name": "证据链是否可追溯",
+          "checks": {
+            "citations_completeness": "需要检查 report.evidence_items 是否非空",
+            "audit_trail": "是否有审计链记录"
+          }
+        },
+        {
+          "angle_id": 7,
+          "angle_name": "样本独立性",
+          "checks": {
+            "test_coverage": "baseline 与 strategy 样本是否独立",
+            "issue": "需要检查 sim_baseline 与 prediction_outcome"
+          }
+        },
+        {
+          "angle_id": 8,
+          "angle_name": "同一指标在不同视图的自洽性",
+          "checks": {
+            "consistency_check": "报告计数在不同接口是否一致",
+            "needs_verification": true
+          }
+        }
+      ]
+    },
+    "D2": {
+      "dimension_id": "D2",
+      "dimension_name": "时间、运行态、恢复",
+      "angles": [
+        {
+          "angle_id": 9,
+          "angle_name": "时间锚点一致性",
+          "kline_metrics": {
+            "min_date": "2024-12-17",
+            "max_date": "2026-04-16",
+            "distinct_dates": 346,
+            "stock_count": 1049
+          },
+          "issues": []
+        },
+        {
+          "angle_id": 10,
+          "angle_name": "窗口计算与快照完整性",
+          "settlement_stats": {
+            "total_settlements": 54
+          },
+          "issue": "结算覆盖率仍然很低"
+        },
+        {
+          "angle_id": 11,
+          "angle_name": "降级策略是否 fail-close",
+          "checks": "需要检查错误处理路径"
+        },
+        {
+          "angle_id": 12,
+          "angle_name": "历史回放 / 重算是否可重复",
+          "checks": "重算脚本幂等性"
+        },
+        {
+          "angle_id": 13,
+          "angle_name": "修复脚本是否真能闭环",
+          "checks": "内部清理接口的可用性"
+        },
+        {
+          "angle_id": 14,
+          "angle_name": "任务生命周期是否可终结",
+          "checks": "调度任务的完成状态"
+        },
+        {
+          "angle_id": 15,
+          "angle_name": "历史污染检查",
+          "checks": "缓存、环境变量是否污染结果"
+        },
+        {
+          "angle_id": 16,
+          "angle_name": "恢复结果是否同步刷新",
+          "checks": "修复后对外视图是否更新"
+        }
+      ]
+    },
+    "D3": {
+      "dimension_id": "D3",
+      "dimension_name": "安全、权限、边界",
+      "angles": [
+        {
+          "angle_id": 17,
+          "angle_name": "权限边界一致性",
+          "status": "需要测试",
+          "test_points": [
+            "/api/v1/admin/*",
+            "/api/v1/internal/*"
+          ]
+        },
+        {
+          "angle_id": 18,
+          "angle_name": "拒绝路径审计",
+          "status": "需要检查审计日志"
+        },
+        {
+          "angle_id": 19,
+          "angle_name": "浏览器入口与API混线",
+          "status": "需要页面访问测试"
+        },
+        {
+          "angle_id": 20,
+          "angle_name": "退休路由",
+          "status": "需要检查 410 返回"
+        },
+        {
+          "angle_id": 21,
+          "angle_name": "后台最小暴露",
+          "admin_users": {
+            "admin_count": 7
+          }
+        },
+        {
+          "angle_id": 22,
+          "angle_name": "外部依赖缺口",
+          "blockers": [
+            "OAuth (QQ/WeChat)",
+            "支付网关",
+            "Eastmoney API",
+            "招商证券 API"
+          ]
+        },
+        {
+          "angle_id": 23,
+          "angle_name": "人工核验缺口",
+          "status": "需要检查"
+        },
+        {
+          "angle_id": 24,
+          "angle_name": "危险操作隔离",
+          "status": "需要检查 DELETE/FORCE_RESET 操作"
+        }
+      ]
+    },
+    "D4": {
+      "dimension_id": "D4",
+      "dimension_name": "展示、桥接、观测",
+      "angles": [
+        {
+          "angle_id": 25,
+          "angle_name": "底层实现细节泄露",
+          "status": "需要页面检查"
+        },
+        {
+          "angle_id": 26,
+          "angle_name": "页面与HTTP状态一致性",
+          "status": "需要E2E测试"
+        },
+        {
+          "angle_id": 27,
+          "angle_name": "业务文案一致性",
+          "status": "需要页面访问"
+        },
+        {
+          "angle_id": 28,
+          "angle_name": "桥接层语义",
+          "status": "需要对比check"
+        },
+        {
+          "angle_id": 29,
+          "angle_name": "健康指标可信度",
+          "health_endpoint": "/api/v1/health",
+          "status": "已测试"
+        }
+      ]
+    },
+    "D5": {
+      "dimension_id": "D5",
+      "dimension_name": "测试、治理、决策",
+      "angles": [
+        {
+          "angle_id": 30,
+          "angle_name": "门禁有效性",
+          "pytest_baseline": {
+            "passed": 1948,
+            "failed": 0,
+            "skipped": 1,
+            "xfailed": 22
+          },
+          "status": "PASS"
+        },
+        {
+          "angle_id": 31,
+          "angle_name": "测试隔离与环境控制",
+          "status": "pytest 隔离模式有效"
+        },
+        {
+          "angle_id": 32,
+          "angle_name": "验真主管道覆盖",
+          "coverage": "需要覆盖矩阵分析"
+        },
+        {
+          "angle_id": 33,
+          "angle_name": "空心断言检查",
+          "status": "需要测试质量审查"
+        },
+        {
+          "angle_id": 34,
+          "angle_name": "代码审查",
+          "status": "需要PR评审"
+        },
+        {
+          "angle_id": 35,
+          "angle_name": "缺产物追踪",
+          "status": "docs22 已列出"
+        },
+        {
+          "angle_id": 36,
+          "angle_name": "对齐机制",
+          "status": "SSOT 机制已建立"
+        },
+        {
+          "angle_id": 37,
+          "angle_name": "依赖管理",
+          "status": "需要检查 requirements.txt"
+        },
+        {
+          "angle_id": 38,
+          "angle_name": "知识管理",
+          "docs": [
+            "01_需求基线.md",
+            "05_API与数据契约.md",
+            "25_系统问题分析角度清单.md"
+          ]
+        },
+        {
+          "angle_id": 39,
+          "angle_name": "决策机制",
+          "status": "本审计即决策过程"
+        }
+      ]
+    }
+  },
+  "critical_issues": {
+    "count": 3,
+    "issues": [
+      {
+        "problem_id": "P1-DELETE-PUBLISH-CONFLICT",
+        "severity": "P0",
+        "description": "已删除的报告仍标记为已发布",
+        "count": 4,
+        "impact": "可能对外暴露已删除数据",
+        "evidence": "report 表的 is_deleted=1 AND published=1 的记录"
+      },
+      {
+        "problem_id": "P1-STALE-OK-UNFILTERED",
+        "severity": "P1",
+        "description": "存在 1996 条 stale_ok 报告",
+        "issue": "对外接口是否正确过滤了 stale_ok 数据",
+        "evidence": "report 表 quality_flag='stale_ok' 的记录"
+      },
+      {
+        "problem_id": "P2-KLINE-COVERAGE",
+        "severity": "P2",
+        "description": "近30天K线覆盖仅 20.18%",
+        "covered_stocks": 1049,
+        "coverage_pct": 20.18
+      }
+    ]
+  },
+  "six_dimension_metrics": {
+    "D1_code_availability": 100.0,
+    "D2_data_completeness": 64.6,
+    "D3_end_to_end_availability": 78.3,
+    "D4_ai_pipeline": 100.0,
+    "D5_page_display": 95.0,
+    "D6_test_pass_rate": 100.0
+  },
+  "weighted_overall_score": 86.1,
+  "summary": {
+    "system_status": "partial_functional",
+    "major_blockers": [
+      "外部支付与 OAuth 未接入",
+      "结算业务覆盖不足 (3%)",
+      "已删除与已发布状态冲突存在",
+      "stale_ok 数据大量存在"
+    ],
+    "recommendations": [
+      "立即修复删除-发布状态冲突（P0）",
+      "全面过滤 stale_ok 数据（P1）",
+      "补齐结算业务数据（P1）",
+      "补齐K线覆盖（P2）"
+    ]
+  }
+}

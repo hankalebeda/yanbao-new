@@ -1,0 +1,23 @@
+model_provider = "OpenAI"
+model = "gpt-5.4-mini"
+review_model = "gpt-5.4-mini"
+model_reasoning_effort = "low"
+disable_response_storage = true
+network_access = "enabled"
+windows_wsl_setup_acknowledged = true
+model_context_window = 1000000
+model_auto_compact_token_limit = 900000
+
+[model_providers.OpenAI]
+name = "OpenAI"
+base_url = "https://api.einzieg.site/v1"
+wire_api = "responses"
+supports_websockets = false
+requires_openai_auth = false
+
+[features]
+responses_websockets_v2 = false
+multi_agent = true
+
+[windows]
+sandbox = "danger-full-access"

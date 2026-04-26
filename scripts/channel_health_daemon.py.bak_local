@@ -1,0 +1,505 @@
+#!/usr/bin/env python3
+"""Channel health daemon for NewAPI gateway.
+
+This script probes upstream channels directly against their declared target
+models instead of trusting NewAPI's built-in channel test result alone.
+It is intended to run as a systemd oneshot service behind a timer.
+"""
+
+from __future__ import annotations
+
+import argparse
+import json
+import logging
+import os
+import sys
+import time
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from datetime import datetime, timezone
+from pathlib import Path
+from typing import Any
+
+import httpx
+
+logger = logging.getLogger("channel_health_daemon")
+
+
+def _env_int(name: str, default: int, *, minimum: int = 0) -> int:
+    raw = str(os.environ.get(name, "")).strip()
+    try:
+        return max(minimum, int(raw))
+    except (TypeError, ValueError):
+        return default
+
+
+def _env_float(name: str, default: float, *, minimum: float = 0.0) -> float:
+    raw = str(os.environ.get(name, "")).strip()
+    try:
+        return max(minimum, float(raw))
+    except (TypeError, ValueError):
+        return default
+
+
+def _env_csv(name: str, default: list[str]) -> list[str]:
+    raw = str(os.environ.get(name, "")).strip()
+    if not raw:
+        return list(default)
+    values = [item.strip() for item in raw.replace("\n", ",").split(",")]
+    result: list[str] = []
+    seen: set[str] = set()
+    for value in values:
+        if not value or value in seen:
+            continue
+        seen.add(value)
+        result.append(value)
+    return result or list(default)
+
+
+NEWAPI_BASE = os.environ.get("NEWAPI_BASE_URL", "http://localhost:3000").strip()
+NEWAPI_USER = os.environ.get("NEWAPI_ADMIN_USER", "naadmin").strip()
+NEWAPI_PASS = os.environ.get("NEWAPI_ADMIN_PASS", "").strip()
+
+PROBE_TIMEOUT = _env_float("CHANNEL_HEALTH_PROBE_TIMEOUT_SECONDS", 45.0, minimum=5.0)
+PROBE_MAX_TOKENS = _env_int("CHANNEL_HEALTH_PROBE_MAX_OUTPUT_TOKENS", 16, minimum=1)
+PROBE_ATTEMPTS = _env_int("CHANNEL_HEALTH_PROBE_ATTEMPTS", 3, minimum=1)
+PROBE_REQUIRED_SUCCESSES = min(
+    PROBE_ATTEMPTS,
+    _env_int("CHANNEL_HEALTH_PROBE_REQUIRED_SUCCESSES", 2, minimum=1),
+)
+PROBE_MAX_WORKERS = _env_int("CHANNEL_HEALTH_PROBE_MAX_WORKERS", 6, minimum=1)
+PROBE_EXPECTED_TEXT = str(os.environ.get("CHANNEL_HEALTH_EXPECTED_TEXT", "LIVE_OK")).strip() or "LIVE_OK"
+PROBE_CANDIDATE_MODELS = _env_csv("CHANNEL_HEALTH_PROBE_MODELS", ["gpt-5.4", "gpt-5.3-codex"])
+
+# Channels with weight <= this are considered unstable and are not auto-recovered.
+UNSTABLE_WEIGHT_THRESHOLD = _env_int("CHANNEL_HEALTH_UNSTABLE_WEIGHT_THRESHOLD", 5, minimum=0)
+
+# Channel IDs to never mutate automatically.
+PROTECTED_CHANNEL_IDS = {
+    int(item)
+    for item in _env_csv("CHANNEL_HEALTH_PROTECTED_CHANNEL_IDS", [])
+    if str(item).isdigit()
+}
+
+# Hard-blocking errors: keep the channel quarantined immediately.
+HARD_BLOCK_PATTERNS = [
+    "invalid_api_key",
+    "unauthorized",
+    "forbidden",
+    "auth_unavailable",
+    "token expired",
+    "token invalidated",
+    "model_not_found",
+    "account_deactivated",
+    "insufficient_quota",
+]
+
+
+def admin_login(client: httpx.Client) -> None:
+    """Login to NewAPI admin and keep the session cookie on the client."""
+    resp = client.post(
+        f"{NEWAPI_BASE}/api/user/login",
+        json={"username": NEWAPI_USER, "password": NEWAPI_PASS},
+    )
+    resp.raise_for_status()
+    data = resp.json()
+    if not data.get("success"):
+        raise RuntimeError(f"Admin login failed: {data.get('message', 'unknown')}")
+    logger.info("Admin login OK (user: %s)", data.get("data", {}).get("username", "?"))
+
+
+def admin_headers() -> dict[str, str]:
+    return {
+        "New-Api-User": "1",
+        "Content-Type": "application/json",
+    }
+
+
+def list_channels(client: httpx.Client) -> list[dict[str, Any]]:
+    """Fetch all channels from the admin API."""
+    channels: list[dict[str, Any]] = []
+    page = 0
+    page_size = 100
+    while True:
+        resp = client.get(
+            f"{NEWAPI_BASE}/api/channel/",
+            params={"p": page, "page_size": page_size},
+            headers=admin_headers(),
+        )
+        resp.raise_for_status()
+        data = resp.json()
+        inner = data.get("data", {})
+        if isinstance(inner, dict):
+            batch = inner.get("items") or []
+        elif isinstance(inner, list):
+            batch = inner
+        else:
+            break
+        if not batch:
+            break
+        channels.extend(batch)
+        if len(batch) < page_size:
+            break
+        page += 1
+    return channels
+
+
+def update_channel_status(client: httpx.Client, channel: dict[str, Any], new_status: int) -> bool:
+    """Update channel status via NewAPI admin PUT API."""
+    payload = {
+        "id": channel["id"],
+        "status": new_status,
+        "name": channel.get("name", ""),
+        "type": channel.get("type", 1),
+        "key": channel.get("key", ""),
+        "base_url": channel.get("base_url", ""),
+        "models": channel.get("models", ""),
+        "model_mapping": channel.get("model_mapping", ""),
+        "groups": channel.get("groups", "default"),
+        "weight": channel.get("weight", 0),
+        "priority": channel.get("priority", 0),
+    }
+    resp = client.put(
+        f"{NEWAPI_BASE}/api/channel/",
+        json=payload,
+        headers=admin_headers(),
+    )
+    if resp.status_code == 200:
+        try:
+            body = resp.json()
+        except ValueError:
+            body = {}
+        if body.get("success"):
+            return True
+    logger.warning(
+        "Failed to update channel %d status to %d: %s",
+        channel["id"],
+        new_status,
+        resp.text[:300],
+    )
+    return False
+
+
+def _split_models(raw: Any) -> list[str]:
+    if isinstance(raw, list):
+        items = raw
+    else:
+        text = str(raw or "")
+        items = text.replace("\n", ",").split(",")
+    result: list[str] = []
+    seen: set[str] = set()
+    for item in items:
+        clean = str(item or "").strip()
+        if not clean or clean in seen:
+            continue
+        seen.add(clean)
+        result.append(clean)
+    return result
+
+
+def _probe_base_urls(base_url: str) -> list[str]:
+    clean = str(base_url or "").strip().rstrip("/")
+    if not clean:
+        return []
+    candidates = [clean]
+    if clean.endswith("/v1"):
+        root = clean[:-3].rstrip("/")
+        if root:
+            candidates.append(root)
+    else:
+        candidates.append(f"{clean}/v1")
+    result: list[str] = []
+    seen: set[str] = set()
+    for item in candidates:
+        if not item or item in seen:
+            continue
+        seen.add(item)
+        result.append(item)
+    return result
+
+
+def _extract_text(payload: dict[str, Any]) -> str:
+    parts: list[str] = []
+    for item in payload.get("output") or []:
+        if not isinstance(item, dict):
+            continue
+        for content in item.get("content") or []:
+            if not isinstance(content, dict):
+                continue
+            text = content.get("text")
+            if isinstance(text, str) and text.strip():
+                parts.append(text.strip())
+    output_text = payload.get("output_text")
+    if isinstance(output_text, str) and output_text.strip():
+        parts.append(output_text.strip())
+    return "\n".join(parts).strip()
+
+
+def _find_pattern(text: str, patterns: list[str]) -> str | None:
+    haystack = str(text or "").lower()
+    for pattern in patterns:
+        if pattern in haystack:
+            return pattern
+    return None
+
+
+def _candidate_models_for_channel(channel: dict[str, Any]) -> list[str]:
+    declared = set(_split_models(channel.get("models")))
+    if not declared or "*" in declared:
+        return list(PROBE_CANDIDATE_MODELS)
+    return [model for model in PROBE_CANDIDATE_MODELS if model in declared]
+
+
+def probe_channel(channel: dict[str, Any]) -> tuple[bool, str, float, str | None]:
+    """Probe the channel directly and validate exact model output."""
+    started = time.monotonic()
+    api_key = str(channel.get("key") or "").strip()
+    candidate_models = _candidate_models_for_channel(channel)
+    base_urls = _probe_base_urls(str(channel.get("base_url") or "").strip())
+
+    if not api_key:
+        return False, "missing_api_key", 0.0, None
+    if not base_urls:
+        return False, "missing_base_url", 0.0, None
+    if not candidate_models:
+        return False, "no_target_models_declared", 0.0, None
+
+    prompt = f"Reply with exactly {PROBE_EXPECTED_TEXT}"
+    last_error = "probe did not complete"
+    with httpx.Client(timeout=PROBE_TIMEOUT, follow_redirects=True, trust_env=False, verify=False) as client:
+        for model_name in candidate_models:
+            for probe_base_url in base_urls:
+                url = probe_base_url.rstrip("/") + "/responses"
+                success_count = 0
+                local_error = "probe did not complete"
+                for attempt in range(PROBE_ATTEMPTS):
+                    try:
+                        response = client.post(
+                            url,
+                            headers={
+                                "Authorization": f"Bearer {api_key}",
+                                "Content-Type": "application/json",
+                            },
+                            json={
+                                "model": model_name,
+                                "input": prompt,
+                                "max_output_tokens": PROBE_MAX_TOKENS,
+                                "store": False,
+                            },
+                        )
+                    except httpx.TimeoutException:
+                        local_error = "timeout"
+                    except Exception as exc:
+                        local_error = f"error:{exc}"
+                    else:
+                        if response.status_code != 200:
+                            snippet = response.text[:300]
+                            pattern = _find_pattern(snippet, HARD_BLOCK_PATTERNS)
+                            if pattern:
+                                elapsed = round((time.monotonic() - started) * 1000, 1)
+                                return False, f"hard_block:{pattern}", elapsed, model_name
+                            local_error = f"http_{response.status_code}:{snippet}"
+                        else:
+                            try:
+                                body = response.json()
+                            except ValueError as exc:
+                                local_error = f"invalid_json:{exc}"
+                            else:
+                                output_text = _extract_text(body)
+                                if output_text == PROBE_EXPECTED_TEXT:
+                                    success_count += 1
+                                    if success_count >= PROBE_REQUIRED_SUCCESSES:
+                                        elapsed = round((time.monotonic() - started) * 1000, 1)
+                                        detail = (
+                                            f"ok(model={model_name}, base_url={probe_base_url}, "
+                                            f"successes={success_count}/{PROBE_ATTEMPTS})"
+                                        )
+                                        return True, detail, elapsed, model_name
+                                else:
+                                    serialized = json.dumps(body, ensure_ascii=False)[:300]
+                                    pattern = _find_pattern(serialized, HARD_BLOCK_PATTERNS)
+                                    if pattern:
+                                        elapsed = round((time.monotonic() - started) * 1000, 1)
+                                        return False, f"hard_block:{pattern}", elapsed, model_name
+                                    local_error = f"unexpected_output:{output_text[:200]!r}"
+                    if attempt + 1 < PROBE_ATTEMPTS:
+                        time.sleep(2**attempt)
+                last_error = (
+                    f"{model_name} @ {probe_base_url}: "
+                    f"{success_count}/{PROBE_ATTEMPTS} successful probes; last_error={local_error}"
+                )
+    elapsed = round((time.monotonic() - started) * 1000, 1)
+    return False, last_error, elapsed, None
+
+
+def run_health_check(dry_run: bool = False, log_dir: str | None = None) -> dict[str, Any]:
+    """Run a full health check cycle and optionally write a JSON audit."""
+    audit: dict[str, Any] = {
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "dry_run": dry_run,
+        "probe_models": list(PROBE_CANDIDATE_MODELS),
+        "probe_expected_text": PROBE_EXPECTED_TEXT,
+        "probe_max_workers": PROBE_MAX_WORKERS,
+        "channels_probed": 0,
+        "channels_enabled": 0,
+        "channels_disabled": 0,
+        "channels_recovered": 0,
+        "channels_healthy": 0,
+        "channels_unhealthy": 0,
+        "details": [],
+    }
+
+    with httpx.Client(timeout=60.0, verify=False, trust_env=False) as admin_client:
+        admin_login(admin_client)
+        channels = list_channels(admin_client)
+        logger.info("Fetched %d channels from NewAPI", len(channels))
+
+        probe_targets: list[dict[str, Any]] = []
+        for channel in channels:
+            channel_id = int(channel.get("id", 0) or 0)
+            status = int(channel.get("status", 0) or 0)
+            if channel_id in PROTECTED_CHANNEL_IDS:
+                continue
+            if status not in (1, 2):
+                continue
+            probe_targets.append(channel)
+
+        logger.info(
+            "Probing %d candidate channels with up to %d workers against models: %s",
+            len(probe_targets),
+            PROBE_MAX_WORKERS,
+            ", ".join(PROBE_CANDIDATE_MODELS),
+        )
+
+        probe_results: dict[int, tuple[bool, str, float, str | None]] = {}
+        if probe_targets:
+            max_workers = min(PROBE_MAX_WORKERS, len(probe_targets))
+            with ThreadPoolExecutor(max_workers=max_workers) as executor:
+                future_to_channel = {
+                    executor.submit(probe_channel, channel): channel for channel in probe_targets
+                }
+                for future in as_completed(future_to_channel):
+                    channel = future_to_channel[future]
+                    channel_id = int(channel.get("id", 0) or 0)
+                    try:
+                        probe_results[channel_id] = future.result()
+                    except Exception as exc:
+                        probe_results[channel_id] = (False, f"worker_error:{exc}", 0.0, None)
+
+        for channel in probe_targets:
+            channel_id = int(channel.get("id", 0) or 0)
+            channel_name = str(channel.get("name") or "?")
+            channel_status = int(channel.get("status", 0) or 0)
+            channel_weight = int(channel.get("weight", 0) or 0)
+            healthy, detail, latency, selected_model = probe_results.get(
+                channel_id,
+                (False, "probe_missing", 0.0, None),
+            )
+
+            audit["channels_probed"] += 1
+            action = "none"
+            if healthy:
+                audit["channels_healthy"] += 1
+                if channel_status == 2:
+                    if channel_weight > UNSTABLE_WEIGHT_THRESHOLD:
+                        action = "recover"
+                        if not dry_run:
+                            if update_channel_status(admin_client, channel, 1):
+                                audit["channels_recovered"] += 1
+                                logger.info(
+                                    "RECOVERED channel %d (%s) model=%s",
+                                    channel_id,
+                                    channel_name,
+                                    selected_model or "?",
+                                )
+                            else:
+                                action = "recover_failed"
+                    else:
+                        action = "skip_unstable"
+            else:
+                audit["channels_unhealthy"] += 1
+                if channel_status == 1:
+                    action = "quarantine"
+                    if not dry_run:
+                        if update_channel_status(admin_client, channel, 2):
+                            audit["channels_disabled"] += 1
+                            logger.warning(
+                                "QUARANTINED channel %d (%s) - %s",
+                                channel_id,
+                                channel_name,
+                                detail,
+                            )
+                        else:
+                            action = "quarantine_failed"
+
+            audit["details"].append(
+                {
+                    "channel_id": channel_id,
+                    "name": channel_name,
+                    "status_before": channel_status,
+                    "weight": channel_weight,
+                    "healthy": healthy,
+                    "detail": detail,
+                    "latency_ms": round(latency, 1),
+                    "selected_model": selected_model,
+                    "action": action,
+                }
+            )
+
+    if log_dir:
+        log_path = Path(log_dir)
+        log_path.mkdir(parents=True, exist_ok=True)
+        timestamp = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
+        audit_file = log_path / f"health_check_{timestamp}.json"
+        audit_file.write_text(json.dumps(audit, ensure_ascii=False, indent=2), encoding="utf-8")
+        all_audits = sorted(log_path.glob("health_check_*.json"))
+        for old_file in all_audits[:-1000]:
+            old_file.unlink(missing_ok=True)
+
+    return audit
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser(description="NewAPI Channel Health Daemon")
+    parser.add_argument("--dry-run", action="store_true", help="Probe only; do not mutate channel status.")
+    parser.add_argument(
+        "--log-dir",
+        default="/var/log/newapi-channel-health",
+        help="Directory for JSON audit logs.",
+    )
+    parser.add_argument("--verbose", "-v", action="store_true")
+    args = parser.parse_args()
+
+    logging.basicConfig(
+        level=logging.DEBUG if args.verbose else logging.INFO,
+        format="%(asctime)s %(levelname)s %(name)s %(message)s",
+    )
+
+    if not NEWAPI_PASS:
+        logger.error("NEWAPI_ADMIN_PASS environment variable is required")
+        sys.exit(1)
+
+    try:
+        audit = run_health_check(dry_run=args.dry_run, log_dir=args.log_dir)
+    except Exception:
+        logger.exception("Health check failed")
+        sys.exit(1)
+
+    logger.info(
+        "Health check complete: probed=%d healthy=%d unhealthy=%d recovered=%d quarantined=%d",
+        audit["channels_probed"],
+        audit["channels_healthy"],
+        audit["channels_unhealthy"],
+        audit["channels_recovered"],
+        audit["channels_disabled"],
+    )
+    if audit["channels_disabled"] or audit["channels_recovered"]:
+        for detail in audit["details"]:
+            if detail["action"] not in ("none", "skip_unstable"):
+                print(
+                    f"  [{detail['action'].upper()}] #{detail['channel_id']} "
+                    f"{detail['name']} - {detail['detail']} ({detail['latency_ms']:.0f}ms)"
+                )
+
+
+if __name__ == "__main__":
+    main()

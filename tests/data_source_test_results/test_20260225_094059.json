@@ -1,0 +1,159 @@
+{
+  "started_at": "2026-02-25T09:40:47.541193",
+  "tests": {
+    "eastmoney_realtime_600519": {
+      "status": "ok",
+      "code": "600519",
+      "name": "贵州茅台",
+      "last_price": 1470.0,
+      "pct_change": 0.22,
+      "high_limit_price": 1613.48,
+      "low_limit_price": 1320.12,
+      "elapsed_s": 0.711,
+      "has_limit_price": true
+    },
+    "eastmoney_realtime_000858": {
+      "status": "ok",
+      "code": "000858",
+      "name": "五 粮 液",
+      "last_price": 105.09,
+      "pct_change": -0.07,
+      "high_limit_price": 115.68,
+      "low_limit_price": 94.64,
+      "elapsed_s": 0.661,
+      "has_limit_price": true
+    },
+    "eastmoney_kline_600519": {
+      "status": "ok",
+      "code": "600519",
+      "count": 30,
+      "latest_record": "2026-02-25,1470.00,1470.00,1481.99,1470.00,3594",
+      "earliest_record": "2026-01-07,1432.88,1423.36,1435.00,1420.20,29684",
+      "elapsed_s": 0.701
+    },
+    "eastmoney_capital_flow_600519": {
+      "status": "ok",
+      "code": "600519",
+      "count": 20,
+      "latest_record": "2026-02-24,-445960704.0,-254544.0,446215248.0,-206392032.0,-239568672.0,-7.19,-0.00,7.20,-3.33,-3.86,1466.80,-1.25,0.00,0.00",
+      "elapsed_s": 0.751
+    },
+    "eastmoney_index_sh000001": {
+      "status": "ok",
+      "index_code": "000001",
+      "name": "上证指数",
+      "count": 30,
+      "latest_record": "2026-02-25,4123.78,4131.78,4133.63,4122.70,119478650",
+      "elapsed_s": 0.691
+    },
+    "eastmoney_index_hs300": {
+      "status": "ok",
+      "index_code": "000300",
+      "name": "沪深300",
+      "count": 30,
+      "latest_record": "2026-02-25,4713.58,4724.28,4724.28,4713.34,37315932",
+      "elapsed_s": 0.766
+    },
+    "eastmoney_news_600519": {
+      "status": "ok",
+      "code": "600519",
+      "count": 0,
+      "latest_title": null,
+      "elapsed_s": 0.734
+    },
+    "margin_realtime_snapshot_600519": {
+      "status": "error",
+      "code": "600519",
+      "error": "[WinError 10054] 远程主机强迫关闭了一个现有的连接。"
+    },
+    "mootdx_network": {
+      "status": "ok",
+      "mode": "network",
+      "count": 1,
+      "sample": {
+        "market": 1,
+        "code": "600519",
+        "active1": 218,
+        "price": 1470.5,
+        "last_close": 1466.8,
+        "open": 1470.0,
+        "high": 1481.99,
+        "low": 1470.0,
+        "servertime": "9:25:52.506",
+        "reversed_bytes0": 9258751,
+        "reversed_bytes1": -147050,
+        "vol": 3629,
+        "cur_vol": 6,
+        "amount": 535333248.0,
+        "s_vol": 1757,
+        "b_vol": 1873,
+        "reversed_bytes2": 50,
+        "reversed_bytes3": 313110,
+        "bid1": 1470.08,
+        "ask1": 1470.5,
+        "bid_vol1": 6,
+        "ask_vol1": 4,
+        "bid2": 1470.0,
+        "ask2": 1470.73,
+        "bid_vol2": 3,
+        "ask_vol2": 1,
+        "bid3": 1469.92,
+        "ask3": 1470.88,
+        "bid_vol3": 1,
+        "ask_vol3": 2,
+        "bid4": 1469.82,
+        "ask4": 1470.99,
+        "bid_vol4": 1,
+        "ask_vol4": 3,
+        "bid5": 1469.66,
+        "ask5": 1471.0,
+        "bid_vol5": 10,
+        "ask_vol5": 46,
+        "reversed_bytes4": [
+          5324
+        ],
+        "reversed_bytes5": 0,
+        "reversed_bytes6": 0,
+        "reversed_bytes7": 0,
+        "reversed_bytes8": 0,
+        "reversed_bytes9": -0.16,
+        "active2": 218,
+        "volume": 3629
+      },
+      "elapsed_s": 0.268
+    },
+    "tdx_local_file": {
+      "status": "ok",
+      "found": [
+        {
+          "base_dir": "C:\\new_tdx",
+          "sh_file_count": 5867,
+          "sz_file_count": 5696,
+          "sample_sh": [
+            "sh000001.day",
+            "sh000002.day",
+            "sh000003.day"
+          ]
+        }
+      ]
+    },
+    "weibo_hot_search": {
+      "status": "ok",
+      "count": 50,
+      "top3": [
+        "平顶山再通报打人事件",
+        "宝马7系降价约27万",
+        "九组数据感受万马奔腾的活力春节"
+      ],
+      "has_cookie": false,
+      "note": "需要微博Cookie(SUB字段)才能获取完整数据",
+      "elapsed_s": 0.938
+    }
+  },
+  "summary": {
+    "passed": 10,
+    "total": 11,
+    "pass_rate": "10/11",
+    "critical_issues": []
+  }
+}

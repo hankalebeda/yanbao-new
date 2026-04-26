@@ -1,0 +1,140 @@
+id: yanbao_master_loop
+namespace: yanbao.ops
+description: >
+  Formal Kestra issue-mesh closure orchestrator.
+  It keeps health/runtime snapshots in Kestra, then delegates the actual
+  audit -> fix -> verify -> promote round to the internal autonomy loop.
+  The loop_controller is the single scheduling authority; Kestra only starts
+  a round, waits for completion, and records the resulting control-plane state.
+
+concurrency:
+  limit: 1
+
+triggers:
+  - id: scheduled_loop
+    type: io.kestra.plugin.core.trigger.Schedule
+    cron: "0 */5 * * *"
+    conditions:
+      - type: io.kestra.plugin.core.condition.ExecutionFlowCondition
+        namespace: yanbao.ops
+        flowId: yanbao_master_loop
+        statuses:
+          - SUCCESS
+          - FAILED
+    inputs:
+      internal_token: "{{ secret('INTERNAL_TOKEN') }}"
+      new_api_token: "{{ secret('NEW_API_TOKEN') }}"
+      round_id: "{{ now() | dateAdd(-0, 'HOURS') | date('yyyyMMdd') }}-{{ execution.id | slice(0, 3) }}"
+
+inputs:
+  - id: app_base_url
+    type: STRING
+    defaults: "http://host.docker.internal:18100"
+  - id: internal_token
+    type: STRING
+    required: true
+  - id: new_api_base_url
+    type: STRING
+    defaults: "http://192.168.232.141:3000"
+  - id: new_api_token
+    type: STRING
+    required: true
+  - id: mesh_runner_base_url
+    type: STRING
+    defaults: "http://host.docker.internal:18193"
+  - id: promote_prep_base_url
+    type: STRING
+    defaults: "http://host.docker.internal:18194"
+  - id: writeback_a_base_url
+    type: STRING
+    defaults: "http://host.docker.internal:18192"
+  - id: writeback_b_base_url
+    type: STRING
+    defaults: "http://host.docker.internal:18195"
+  - id: autonomy_mode
+    type: STRING
+    defaults: "fix"
+  - id: fix_goal
+    type: INT
+    defaults: 10
+  - id: await_timeout_seconds
+    type: INT
+    defaults: 3600
+  - id: round_id
+    type: STRING
+    required: true
+    description: "Canonical round suffix in YYYYMMDD-NNN form"
+
+tasks:
+  - id: master_runtime_gates
+    type: io.kestra.plugin.core.http.Request
+    method: GET
+    uri: "{{ inputs.app_base_url }}/api/v1/internal/runtime/gates"
+    headers:
+      X-Internal-Token: "{{ inputs.internal_token }}"
+
+  - id: master_audit_context
+    type: io.kestra.plugin.core.http.Request
+    method: GET
+    uri: "{{ inputs.app_base_url }}/api/v1/internal/audit/context"
+    headers:
+      X-Internal-Token: "{{ inputs.internal_token }}"
+
+  - id: health_check_formal_closure
+    type: io.kestra.plugin.core.flow.Subflow
+    namespace: yanbao.ops
+    flowId: yanbao_health_checks
+    wait: true
+    transmitFailed: true
+    inputs:
+      app_base_url: "{{ inputs.app_base_url }}"
+      internal_token: "{{ inputs.internal_token }}"
+      new_api_base_url: "{{ inputs.new_api_base_url }}"
+      new_api_token: "{{ inputs.new_api_token }}"
+      mesh_runner_base_url: "{{ inputs.mesh_runner_base_url }}"
+      promote_prep_base_url: "{{ inputs.promote_prep_base_url }}"
+      writeback_a_base_url: "{{ inputs.writeback_a_base_url }}"
+      writeback_b_base_url: "{{ inputs.writeback_b_base_url }}"
+
+  - id: start_autonomy_round
+    type: io.kestra.plugin.core.http.Request
+    method: POST
+    uri: "{{ inputs.app_base_url }}/api/v1/internal/autonomy/loop/start"
+    headers:
+      X-Internal-Token: "{{ inputs.internal_token }}"
+      Content-Type: application/json
+    body: |
+      {
+        "mode": "{{ inputs.autonomy_mode }}",
+        "fix_goal": {{ inputs.fix_goal }},
+        "force_new_round": true
+      }
+
+  - id: await_autonomy_round
+    type: io.kestra.plugin.core.http.Request
+    method: GET
+    uri: "{{ inputs.app_base_url }}/api/v1/internal/autonomy/loop/await-round?timeout_seconds={{ inputs.await_timeout_seconds }}"
+    headers:
+      X-Internal-Token: "{{ inputs.internal_token }}"
+
+  - id: collect_autonomy_status
+    type: io.kestra.plugin.core.http.Request
+    method: GET
+    uri: "{{ inputs.app_base_url }}/api/v1/internal/autonomy/loop"
+    headers:
+      X-Internal-Token: "{{ inputs.internal_token }}"
+
+  - id: master_summary
+    type: io.kestra.plugin.core.log.Log
+    message: |
+      requested_round_id={{ inputs.round_id }}
+      runtime_gate_status={{ outputs.master_runtime_gates.body | jq('.data.status') | first }}
+      promote_readiness_status={{ outputs.master_audit_context.body | jq('.data.automation.promote_readiness.status') | first }}
+      start_status={{ outputs.start_autonomy_round.body | jq('.data.status') | first }}
+      current_round_id={{ outputs.collect_autonomy_status.body | jq('.data.current_round_id') | first }}
+      await_status={{ outputs.await_autonomy_round.body | jq('.data.status') | first }}
+      await_round_id={{ outputs.await_autonomy_round.body | jq('.data.round_id') | first }}
+      await_timed_out={{ outputs.await_autonomy_round.body | jq('.data.timed_out') | first }}
+      goal_reached={{ outputs.collect_autonomy_status.body | jq('.data.goal_reached') | first }}
+      autonomy_loop_code={{ outputs.collect_autonomy_status.code }}
+      formal_autonomy_closure=true

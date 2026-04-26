@@ -1,0 +1,39 @@
+{
+  "passed": 3,
+  "total": 3,
+  "results": {
+    "single": {
+      "response": "📊 今日（2026-02-24）A股重要新闻要点\n\n马年开门红！A股三大股指集体上涨\n\n– 今日是 马年第一个交易日，A股主要股指全线走强。截至收盘，沪指上涨约0.87%，深证成指上涨约1.36%，创业板指数上涨约0.99%，市场交投活跃，超 4000只个股上涨，显示节后资金情绪积极。 \n中国新闻网\n\n👉 这表明A股节后重启交易后整体情绪向好，被市场视为“开门红”行情的初步体现。\n\n📎 来源链接（可访问）：\n🔗 马年开门红！A股三大股指集体上涨（中国新闻网）\n\n如需查看今日A股盘面热点（分板块或个股），我也可以再提供更详细的行情信息。",
+      "elapsed_s": 5.95,
+      "has_citation": true
+    },
+    "batch": [
+      {
+        "code": "600519",
+        "name": "Kweichow Moutai",
+        "response": "贵州茅台主营高端白酒生产销售。",
+        "elapsed_s": 4.36,
+        "has_citation": false
+      },
+      {
+        "code": "000858",
+        "name": "Wuliangye",
+        "response": "五粮液主营浓香型白酒生产销售及相关业务。",
+        "elapsed_s": 10.0,
+        "has_citation": false
+      },
+      {
+        "code": "300750",
+        "name": "CATL",
+        "response": "宁德时代主营锂离子电池及储能系统的研发、生产与销售，主要为电动汽车和能源存储提供动力电池和能源解决方案。\nes.wikipedia.org\n+1",
+        "elapsed_s": 4.88,
+        "has_citation": false
+      }
+    ],
+    "reconnect": {
+      "response": "测试通过",
+      "elapsed_s": 3.36,
+      "has_citation": false
+    }
+  }
+}

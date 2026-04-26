@@ -1,0 +1,15 @@
+{
+  "passed": 0,
+  "total": 3,
+  "results": {
+    "single": {
+      "error": "Qwen returned invalid output: prompt echo"
+    },
+    "batch": {
+      "error": "Wuliangye failed: Qwen returned invalid output: prompt echo"
+    },
+    "reconnect": {
+      "error": "response too short"
+    }
+  }
+}

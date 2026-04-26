@@ -1,0 +1,301 @@
+{
+  "audit_timestamp": "2026-04-16T11:27:21.647864",
+  "audit_environment": "D:/yanbao-new",
+  "base_url": "http://127.0.0.1:8010",
+  "backend_status": "running",
+  "metrics": {
+    "reports": [
+      {
+        "total": 2077,
+        "published": 182,
+        "quality_ok": 95,
+        "deleted": 2057
+      }
+    ],
+    "kline": [
+      {
+        "total_rows": 84455,
+        "stock_count": 1051,
+        "date_count": 370
+      }
+    ],
+    "settlement": [
+      {
+        "total": 54,
+        "covered_reports": 18
+      }
+    ],
+    "users": [
+      {
+        "total": 38
+      }
+    ],
+    "data_usage": []
+  },
+  "api_audit": {
+    "timestamp": "2026-04-16T11:27:21.647864",
+    "base_url": "http://127.0.0.1:8010",
+    "tests": [
+      {
+        "method": "GET",
+        "path": "/",
+        "status_code": 200,
+        "success": true,
+        "response_length": 22000,
+        "response": "<!DOCTYPE html>\n<html lang=\"zh-CN\">\n<head>\n  <meta charset=\"UTF-8\">\n  <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n  <title>A股研报平台 - 首页</title>\n  <link rel=\"stylesheet\" href=\"/static/demo.css\">\n</head>\n<body>\n  <nav class=\"site-nav\">\n    <a href=\"/\" class=\"nav-brand\">A股研报平台</a>\n    <button class=\"nav-toggle\" aria-label=\"菜单\" onclick=\"document.querySelector('.nav-links').classList.toggle('open')\">☰</button>\n    <div class=\"nav-links\">\n      \n\n\n\n\n\n\n<a href=\"/\" class=\"active\""
+      },
+      {
+        "method": "GET",
+        "path": "/api/v1/reports",
+        "status_code": 200,
+        "success": true,
+        "response_length": 1439,
+        "response": {
+          "success": true,
+          "message": "ok",
+          "data": {
+            "items": [
+              {
+                "report_id": "1b075fbc-27a1-405d-9426-dfbd0182cb32",
+                "stock_code": "600519.SH",
+                "stock_name": "贵州茅台",
+                "trade_date": "2026-04-15",
+                "recommendation": "BUY",
+                "confidence": 0.68,
+                "strategy_type": "B",
+                "market_state": "BULL",
+                "quality_flag": "ok",
+                "published": true,
+                "review_flag": "PENDING_REVIEW",
+                "status_reason": "LLM_FALLBACK",
+                "position_status": null
+              },
+              {
+                "report_id": "c092b61b-d260-417c-b0d1-28181d5469d4",
+                "stock_code": "688001.SH",
+                "stock_name": "华兴源创",
+                "trade_date": "2026-04-14",
+                "recommendation": "BUY",
+                "confidence": 0.79,
+                "strategy_type": "B",
+                "market_state": "BULL",
+                "quality_flag": "ok",
+                "published": true,
+                "review_flag": "APPROVED",
+                "status_reason": null,
+                "position_status": null
+              },
+              {
+                "report_id": "014b84d6-b81c-4fef-8df6-cf9339cfeef8",
+                "stock_code": "600519.SH",
+                "stock_name": "贵州茅台",
+                "trade_date": "2026-04-14",
+                "recommendation": "BUY",
+                "confidence": 0.78,
+                "strategy_type": "B",
+                "market_state": "BULL",
+                "quality_flag": "ok",
+                "published": true,
+                "review_flag": "APPROVED",
+                "status_reason": null,
+                "position_status": null
+              },
+              {
+                "report_id": "6c3e6406-dcde-4443-885b-f0329d583c71",
+                "stock_code": "688199.SH",
+                "stock_name": "久日新材",
+                "trade_date": "2026-04-14",
+                "recommendation": "BUY",
+                "confidence": 0.72,
+                "strategy_type": "B",
+                "market_state": "BULL",
+                "quality_flag": "ok",
+                "published": true,
+                "review_flag": "APPROVED",
+                "status_reason": null,
+                "position_status": null
+              }
+            ],
+            "page": 1,
+            "page_size": 20,
+            "total": 4,
+            "data_status": "READY"
+          },
+          "request_id": "d6e155b6-d90a-4810-b9e5-195ff8e813cc",
+          "error": null
+        }
+      },
+      {
+        "method": "GET",
+        "path": "/api/v1/health",
+        "status_code": 200,
+        "success": true,
+        "response_length": 397,
+        "response": {
+          "success": true,
+          "message": "ok",
+          "data": {
+            "status": "ok",
+            "database_status": "ok",
+            "scheduler_status": "disabled",
+            "llm_router_status": "ok",
+            "hotspot_status": "ok",
+            "report_chain_status": "ok",
+            "settlement_status": "ok",
+            "settlement_coverage_pct": 100.0,
+            "kline_status": "ok",
+            "kline_coverage_pct": 20.2,
+            "checked_at": "2026-04-16T03:27:21.880334+00:00"
+          },
+          "request_id": "bb7b74d5-98a5-4eae-8288-867678a2a716",
+          "error": null
+        }
+      },
+      {
+        "method": "POST",
+        "path": "/api/v1/reports/search",
+        "status_code": 405,
+        "success": false,
+        "response_length": 191,
+        "response": {
+          "success": false,
+          "message": "error",
+          "data": null,
+          "request_id": "d7d9914f-cc87-4257-aa62-45f1f482204b",
+          "error": "Method Not Allowed",
+          "error_code": "INTERNAL_ERROR",
+          "error_message": "INTERNAL_ERROR"
+        }
+      },
+      {
+        "method": "GET",
+        "path": "/api/v1/admin/status",
+        "status_code": 404,
+        "success": false,
+        "response_length": 172,
+        "response": {
+          "success": false,
+          "message": "error",
+          "data": null,
+          "request_id": "67cc61d5-3770-4f18-8efc-f14ce697ef97",
+          "error": "Not Found",
+          "error_code": "NOT_FOUND",
+          "error_message": "NOT_FOUND"
+        }
+      }
+    ]
+  },
+  "angles_findings": [
+    {
+      "angle_id": 1,
+      "angle_name": "真实性 / 真值来源",
+      "focus": "系统是否把本地状态、推断结果或占位数据误写成真实事实",
+      "checks": [
+        {
+          "name": "citations 完整性",
+          "test": "检查发布报告的 citations 是否含真实链接",
+          "result": "发现 0 条合格报告含 citations",
+          "evidence": []
+        },
+        {
+          "name": "质量标记一致性",
+          "test": "检查 quality_flag 分布是否合理",
+          "result": "找到 3 种标记",
+          "evidence": [
+            {
+              "quality_flag": null,
+              "cnt": 6
+            },
+            {
+              "quality_flag": "ok",
+              "cnt": 95
+            },
+            {
+              "quality_flag": "stale_ok",
+              "cnt": 1976
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "angle_id": 2,
+      "angle_name": "状态语义是否诚实",
+      "focus": "状态是否真实反映业务阶段",
+      "checks": [
+        {
+          "name": "发布状态",
+          "result": "发现 2 种发布状态",
+          "evidence": [
+            {
+              "published": 0,
+              "cnt": 1895
+            },
+            {
+              "published": 1,
+              "cnt": 182
+            }
+          ]
+        },
+        {
+          "name": "删除标记",
+          "result": "删除标记一致性检查",
+          "evidence": [
+            {
+              "is_deleted": 0,
+              "cnt": 20
+            },
+            {
+              "is_deleted": 1,
+              "cnt": 2057
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "angle_id": 9,
+      "angle_name": "时间锚点 / 日期口径一致性",
+      "focus": "trade_day、due_trade_day 等是否混用",
+      "checks": [
+        {
+          "name": "结算日期",
+          "result": "结算记录日期一致性",
+          "evidence": []
+        },
+        {
+          "name": "K线日期范围",
+          "result": "K 线覆盖时间范围",
+          "evidence": [
+            {
+              "total": 84455,
+              "distinct_dates": 370,
+              "min_date": "2024-12-17",
+              "max_date": "2026-05-10",
+              "stock_count": 1051
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "angle_id": 30,
+      "angle_name": "门禁有效性",
+      "focus": "测试、浏览器门禁是否真正覆盖",
+      "checks": [
+        {
+          "name": "pytest 基线",
+          "result": "全量测试覆盖程度",
+          "evidence": {
+            "total_tests": 1948,
+            "passed": 1948,
+            "failed": 0,
+            "skipped": 1,
+            "xfailed": 22
+          },
+          "assessment": "门禁有效且无新失败"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>研报暂不可用 - A股研报平台</title>
+  <link rel="stylesheet" href="/static/demo.css">
+</head>
+<body>
+  {% include "_site_nav.html" %}
+
+  <main class="container" style="max-width:640px">
+    <div class="card" style="text-align:center;padding:var(--space-8) var(--card-pad)">
+      <div style="font-size:48px;margin-bottom:var(--space-4)">报</div>
+      <h2 class="card-title" style="text-align:center">{{ stock_code }} {{ page_title or '研报暂时不可用' }}</h2>
+
+      <p style="color:var(--muted);line-height:1.7;margin-bottom:var(--space-5)">
+        {{ page_message or '当前这只股票的研报仍在准备中，请稍后再来查看。' }}
+      </p>
+
+      <p class="muted" style="line-height:1.7;margin:-8px 0 var(--space-5)">
+        {{ page_hint or '您可以先返回研报列表查看已发布内容，稍后再刷新本页。' }}
+      </p>
+
+      <div style="display:flex;gap:var(--space-3);justify-content:center;flex-wrap:wrap">
+        <a href="/" class="auth-btn-primary" style="display:inline-block;padding:10px 24px;text-decoration:none;border-radius:var(--radius-sm)">返回首页</a>
+        <a href="/reports" class="auth-btn-primary" style="display:inline-block;padding:10px 24px;text-decoration:none;border-radius:var(--radius-sm);background:var(--bg-alt);color:var(--ink)">查看研报列表</a>
+        {% if is_admin %}
+        <a href="/admin" class="auth-btn-primary" style="display:inline-block;padding:10px 24px;text-decoration:none;border-radius:var(--radius-sm);background:var(--c-accent-2,#3b82f6)">前往后台处理</a>
+        {% endif %}
+      </div>
+    </div>
+  </main>
+
+  <footer class="site-footer">
+    <div class="footer-inner">
+      {% include "_footer_disclaimer.html" %}
+    </div>
+  </footer>
+</body>
+</html>

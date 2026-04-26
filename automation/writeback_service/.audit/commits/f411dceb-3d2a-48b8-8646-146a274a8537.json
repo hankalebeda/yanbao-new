@@ -1,0 +1,21 @@
+{
+  "actor": {
+    "id": "remote-test",
+    "type": "workflow"
+  },
+  "base_sha256": "6aa59bac4babc081e31896038cbf9a9b154484d2b10d21f664e19d5e1eb10ce5",
+  "commit_id": "f411dceb-3d2a-48b8-8646-146a274a8537",
+  "created_at": "2026-03-27T02:05:33.724294+00:00",
+  "idempotency_key": "remote-probe-rollback-1",
+  "new_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "operation": "rollback",
+  "patch_hash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "previous_content_b64": "cmVtb3RlX3dyaXRlYmFja19wcm9iZQo=",
+  "relative_path": "docs/_temp/kestra_remote_probe.md",
+  "request_id": "req-remote-probe-rollback-1",
+  "rollback_commit_id": null,
+  "rollback_of": "d859ba68-6c7e-47fc-b80a-d2b1ea327b4b",
+  "rolled_back_at": null,
+  "run_id": "run-remote-probe-1",
+  "target_path": "D:\\yanbao\\docs\\_temp\\kestra_remote_probe.md"
+}

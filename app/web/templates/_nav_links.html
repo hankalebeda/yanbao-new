@@ -1,0 +1,26 @@
+{# 全站导航链接 SSOT：17_用户系统设计 §2.6 登录前后与角色差异 #}
+{# 依赖：current_user（路由注入）；request.url.path 用于 active 高亮 #}
+{% set is_admin = current_user and (current_user.role or '')|lower in ('admin', 'super_admin') %}
+{% set is_paid = current_user and (current_user.membership_level or '')|lower in ('monthly', 'annual') %}
+{% set can_show_sim = current_user and (is_admin or is_paid) %}
+
+{# 公共导航 #}
+<a href="/"{% if request.url.path == '/' %} class="active"{% endif %}>首页</a>
+<a href="/reports"{% if request.url.path == '/reports' %} class="active"{% endif %}>研报列表</a>
+<a href="/dashboard"{% if request.url.path == '/dashboard' %} class="active"{% endif %}>统计看板</a>
+{% if can_show_sim %}
+<a href="/portfolio/sim-dashboard"{% if request.url.path == '/portfolio/sim-dashboard' %} class="active"{% endif %}>模拟收益</a>
+{% endif %}
+<a href="/subscribe"{% if request.url.path == '/subscribe' %} class="active"{% endif %}>订阅</a>
+
+{# 登录状态：个人中心 + 管理后台(仅admin) + 退出；未登录：登录 + 注册 #}
+{% if current_user %}
+  <a href="/profile"{% if request.url.path == '/profile' %} class="active"{% endif %}>个人中心</a>
+  {% if is_admin %}
+  <a href="/admin"{% if request.url.path == '/admin' %} class="active"{% endif %}>管理后台</a>
+  {% endif %}
+  <a href="/logout">退出登录</a>
+{% else %}
+  <a href="/login"{% if request.url.path == '/login' %} class="active"{% endif %}>登录</a>
+  <a href="/register"{% if request.url.path == '/register' %} class="active"{% endif %}>注册</a>
+{% endif %}

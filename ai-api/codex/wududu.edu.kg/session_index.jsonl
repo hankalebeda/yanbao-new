@@ -1,0 +1,30 @@
+{"id":"019d240d-aa55-7e70-b0d7-0ac972753f98","thread_name":"配置D:\\yanbao命令行免代理 10808","updated_at":"2026-03-25T08:14:34.992629Z"}
+{"id":"019d240f-8a68-7093-b07f-9260695ed2cc","thread_name":"检查 VS Code 代理与终端分流可行性","updated_at":"2026-03-25T08:15:00.7799655Z"}
+{"id":"019d241b-11ef-7be1-bc8d-5a21782e9c26","thread_name":"扫描工作区代理与AI工具启动入口配置","updated_at":"2026-03-25T08:27:37.5192361Z"}
+{"id":"019d241b-25cb-7762-a3da-e4c392c4ece6","thread_name":"分析 VS Code 内置终端代理分流方案","updated_at":"2026-03-25T08:27:41.2098618Z"}
+{"id":"019d2450-441e-7893-8005-393749fca7f2","thread_name":"审查代理分流改动风险'}]}]}]}","updated_at":"2026-03-25T09:25:43.3108043Z"}
+{"id":"019d2982-247a-7131-a58b-086a3571ecfe","thread_name":"修复 Claude 未登录问题及密钥配置","updated_at":"2026-03-26T09:39:08.8506396Z"}
+{"id":"019d2984-3835-7040-ad33-8e2909faba79","thread_name":"检查 Claude CLI 认证配置","updated_at":"2026-03-26T09:40:32.8835006Z"}
+{"id":"019d2fbf-179f-78b0-9068-43491d8d3969","thread_name":"优化Kestra+New API落地方案","updated_at":"2026-03-27T14:42:37.2152114Z"}
+{"id":"019d3c6d-1b90-71b3-9f8c-7e0e6cecaa1d","thread_name":"测试key并生成VSCode启动CMD","updated_at":"2026-03-30T01:49:30.2944211Z"}
+{"id":"019d3c6e-9c68-75a0-9dc2-055c8d580aac","thread_name":"查找 VS Code 与 Codex 启动脚本","updated_at":"2026-03-30T01:49:48.0985053Z"}
+{"id":"019d3c85-8815-7a30-abff-5de3069ca027","thread_name":"建议新增codex双击启动脚本名اض","updated_at":"2026-03-30T02:14:50.1066549Z"}
+{"id":"019d3e92-bcaf-75e1-8ad7-453db086b4a2","thread_name":"分析 Kestra New API 写回体系差距","updated_at":"2026-03-30T11:48:23.4100101Z"}
+{"id":"019d3e93-7930-7640-83ab-c8ef0b739aef","thread_name":"审查 Kestra 闭环与生产态证据","updated_at":"2026-03-30T11:49:15.766686Z"}
+{"id":"019d3e93-8d05-7f11-9772-4ddff4db9528","thread_name":"检查 New API 主网关落地与闭环阻塞问题","updated_at":"2026-03-30T11:49:27.0672947Z"}
+{"id":"019d3e93-a0d9-72a0-8f76-0bd98a6b2124","thread_name":"检查写回幂等与promote实现'}","updated_at":"2026-03-30T11:49:28.8662961Z"}
+{"id":"019d3e93-b4b6-76b0-bac2-7cab2725e519","thread_name":"分析SSOT宣称目标与实现真相差距清单","updated_at":"2026-03-30T11:49:30.3996527Z"}
+{"id":"019d3ea0-903f-76f0-92a4-2042cd6d8b1f","thread_name":"分析 Kestra 与控制面问题清单","updated_at":"2026-03-30T12:03:33.6743628Z"}
+{"id":"019d3ea0-a421-78f2-bad3-8626d8dded83","thread_name":"梳理 New API 稳定性问题与修复建议","updated_at":"2026-03-30T12:03:42.1754424Z"}
+{"id":"019d3ea0-b802-7c82-9e74-cde5a17ac0c5","thread_name":"分析独立写回与promote阻断问题","updated_at":"2026-03-30T12:03:50.6574911Z"}
+{"id":"019d3edf-d048-7df0-abbf-1984c4c7dbbd","thread_name":"评估 Kestra+New API 自治闭环可用性","updated_at":"2026-03-30T13:15:38.5477874Z"}
+{"id":"019d3ee3-da58-7ea0-9b53-1d67532a39f5","thread_name":"审查全自治多智能体护航闭环与阈值机制","updated_at":"2026-03-30T13:27:19.0990169Z"}
+{"id":"019d3ee3-d972-7302-baa7-7b013592a7d5","thread_name":"审查 New API 路由稳定性与SSOT","updated_at":"2026-03-30T13:27:20.2740579Z"}
+{"id":"019d3ee3-da22-7c83-aa4a-66b81aaa789b","thread_name":"审查独立写回Promote闭环与幂等护栏","updated_at":"2026-03-30T13:30:18.0420879Z"}
+{"id":"019d3f13-cab9-7bf1-b253-4050b7846c65","thread_name":"评估 Kestra 自治写回体系真完成态","updated_at":"2026-03-30T14:09:21.3414034Z"}
+{"id":"019d3f14-e225-7c90-b74c-e8971aa3a7f3","thread_name":"审查自治闭环控制器是否满足长驻闭环要求","updated_at":"2026-03-30T14:10:39.2729388Z"}
+{"id":"019d3f14-f5ed-7310-9d7d-e341dd80dc69","thread_name":"审查独立写回服务幂等并发文档约束提闸","updated_at":"2026-03-30T14:10:41.0032229Z"}
+{"id":"019d3f15-09c0-7500-a825-17586a417c7d","thread_name":"审查 Kestra/New API 闭环","updated_at":"2026-03-30T14:10:56.2264576Z"}
+{"id":"019d3f33-867a-7d21-8edf-b045d8ef662c","thread_name":"审查默认长驻自治未闭环问题/analysis to=functions","updated_at":"2026-03-30T14:44:11.2662934Z"}
+{"id":"019d3f33-9a94-7521-875b-b838fc03e49d","thread_name":"审查 internal token 收敛问题","updated_at":"2026-03-30T14:44:13.357994Z"}
+{"id":"019d3f33-aeaa-7d12-a400-900c1a62a144","thread_name":"审查自治链剩余协议漂移与弱验证缺口问题","updated_at":"2026-03-30T14:44:14.7366934Z"}

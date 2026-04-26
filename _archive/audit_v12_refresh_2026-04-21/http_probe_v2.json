@@ -1,0 +1,289 @@
+[
+  {
+    "method": "GET",
+    "path": "/api/v1/health",
+    "code": 200,
+    "len": 401,
+    "body": "{\"success\":true,\"message\":\"ok\",\"data\":{\"status\":\"ok\",\"database_status\":\"ok\",\"scheduler_status\":\"disabled\",\"llm_router_status\":\"ok\",\"hotspot_status\":\"degraded\",\""
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/home",
+    "code": 200,
+    "len": 2624,
+    "body": "{\"success\":true,\"message\":\"ok\",\"data\":{\"latest_reports\":[{\"report_id\":\"304d6c09-d984-4af8-b441-c351f1c301ed\",\"stock_code\":\"600519.SH\",\"stock_name\":\"贵州茅台"
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/dashboard/stats",
+    "code": 200,
+    "len": 1269,
+    "body": "{\"success\":true,\"message\":\"ok\",\"data\":{\"window_days\":30,\"total_reports\":0,\"total_settled\":0,\"overall_win_rate\":null,\"overall_profit_loss_ratio\":null,\"overall_cu"
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/reports",
+    "code": 200,
+    "len": 1142,
+    "body": "{\"success\":true,\"message\":\"ok\",\"data\":{\"items\":[{\"report_id\":\"304d6c09-d984-4af8-b441-c351f1c301ed\",\"stock_code\":\"600519.SH\",\"stock_name\":\"贵州茅台\",\"trade_"
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/reports/featured",
+    "code": 200,
+    "len": 1118,
+    "body": "{\"success\":true,\"message\":\"ok\",\"data\":{\"items\":[{\"report_id\":\"304d6c09-d984-4af8-b441-c351f1c301ed\",\"stock_code\":\"600519.SH\",\"stock_name\":\"贵州茅台\",\"trade_"
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/reports/d220e643-3e67-43ae-8350-c697e4247af6",
+    "code": 200,
+    "len": 15868,
+    "body": "{\"success\":true,\"message\":\"ok\",\"data\":{\"report_id\":\"d220e643-3e67-43ae-8350-c697e4247af6\",\"stock_code\":\"000858.SZ\",\"stock_name\":\"五 粮 液\",\"trade_date\":\"2026"
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/reports/d220e643-3e67-43ae-8350-c697e4247af6/advanced",
+    "code": 401,
+    "len": -1,
+    "body": "{\"success\":false,\"message\":\"error\",\"data\":null,\"request_id\":\"b913c475-2a22-41ad-a021-4bd3f547692e\",\"error\":\"UNAUTHORIZED\",\"error_code\":\"UNAUTHORIZED\",\"error_mes"
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/reports/2d1d892e-4b8f-4405-b586-88afdeba0f01",
+    "code": 200,
+    "len": 5641,
+    "body": "{\"success\":true,\"message\":\"ok\",\"data\":{\"term_context\":[{\"term\":\"MA5\",\"plain_explain\":\"5日均线反映短期趋势。\"},{\"term\":\"MA20\",\"plain_explain\":\"20日均"
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/market/state",
+    "code": 200,
+    "len": 500,
+    "body": "{\"success\":true,\"message\":\"ok\",\"data\":{\"trade_date\":\"2026-04-21\",\"market_state_date\":\"2026-04-21\",\"market_state\":\"BULL\",\"reference_date\":\"2026-04-21\",\"state_rea"
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/market-overview",
+    "code": 200,
+    "len": 789,
+    "body": "{\"success\":true,\"message\":\"ok\",\"data\":{\"market_state\":\"NEUTRAL\",\"pool_size\":200,\"today_report_count\":0,\"data_status\":\"DEGRADED\",\"status_reason\":\"home_source_inc"
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/market/hot-stocks",
+    "code": 200,
+    "len": 726,
+    "body": "{\"success\":true,\"message\":\"ok\",\"data\":{\"items\":[{\"stock_code\":\"601888.SH\",\"stock_name\":\"601888.SH\",\"rank\":1,\"topic_title\":null,\"source_name\":\"pool\",\"heat_score\""
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/hot-stocks",
+    "code": 200,
+    "len": 623,
+    "body": "{\"success\":true,\"message\":\"ok\",\"data\":{\"items\":[{\"stock_code\":\"601888.SH\",\"stock_name\":\"601888.SH\",\"rank\":1,\"source_name\":\"pool\"},{\"stock_code\":\"601988.SH\",\"sto"
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/stocks",
+    "code": 200,
+    "len": 116,
+    "body": "{\"success\":true,\"message\":\"ok\",\"data\":{\"items\":[]},\"request_id\":\"32c35fe8-db7d-4657-8450-9941c3de5576\",\"error\":null}"
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/stocks/autocomplete?q=600",
+    "code": 200,
+    "len": 973,
+    "body": "{\"success\":true,\"message\":\"ok\",\"data\":{\"items\":[{\"stock_code\":\"600000.SH\",\"stock_name\":\"浦发银行\",\"exchange\":\"SH\",\"display\":\"600000.SH 浦发银行\"},{\"stoc"
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/pool/stocks",
+    "code": 200,
+    "len": 11117,
+    "body": "{\"success\":true,\"message\":\"ok\",\"data\":{\"trade_date\":\"2026-04-07\",\"total\":200,\"items\":[{\"stock_code\":\"601888.SH\",\"stock_name\":\"中国中免\"},{\"stock_code\":\"6019"
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/predictions/stats",
+    "code": 200,
+    "len": 1212,
+    "body": "{\"success\":true,\"message\":\"ok\",\"data\":{\"total_judged\":61,\"judged\":61,\"accuracy\":0.6885,\"by_window\":[{\"window_days\":1,\"accuracy\":0.5,\"samples\":18,\"coverage\":0.29"
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/portfolio/sim-dashboard",
+    "code": 401,
+    "len": -1,
+    "body": "{\"success\":false,\"message\":\"error\",\"data\":null,\"request_id\":\"7bdecc70-c33e-4781-8c4e-9fce7a405596\",\"error\":\"UNAUTHORIZED\",\"error_code\":\"UNAUTHORIZED\",\"error_mes"
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/sim/account/summary",
+    "code": 401,
+    "len": -1,
+    "body": "{\"success\":false,\"message\":\"error\",\"data\":null,\"request_id\":\"7924392d-4fe1-4a5c-9254-96cab757cbf7\",\"error\":\"UNAUTHORIZED\",\"error_code\":\"UNAUTHORIZED\",\"error_mes"
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/sim/positions",
+    "code": 401,
+    "len": -1,
+    "body": "{\"success\":false,\"message\":\"error\",\"data\":null,\"request_id\":\"0c25f4d0-0e2f-4118-80df-7169b391f139\",\"error\":\"UNAUTHORIZED\",\"error_code\":\"UNAUTHORIZED\",\"error_mes"
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/membership/subscription/status",
+    "code": 410,
+    "len": -1,
+    "body": "{\"success\":false,\"message\":\"error\",\"data\":null,\"request_id\":\"6b46c574-7065-48f5-a4d7-3f0ac6787fc4\",\"error\":\"ROUTE_RETIRED\",\"error_code\":\"ROUTE_RETIRED\",\"error_m"
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/platform/config",
+    "code": 200,
+    "len": 649,
+    "body": "{\"success\":true,\"message\":\"ok\",\"data\":{\"api_base\":\"/api/v1\",\"capital_tiers\":{\"10k\":{\"label\":\"1 万档\",\"amount\":10000},\"100k\":{\"label\":\"10 万档\",\"amount\":1000"
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/platform/plans",
+    "code": 200,
+    "len": 1593,
+    "body": "{\"success\":true,\"message\":\"ok\",\"data\":{\"plans\":[{\"code\":\"free\",\"tier_id\":\"Free\",\"period_months\":0,\"label\":\"免费\",\"price_display\":\"¥0\",\"features\":[\"研报摘�"
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/platform/summary",
+    "code": 200,
+    "len": 593,
+    "body": "{\"success\":true,\"message\":\"ok\",\"data\":{\"win_rate\":null,\"pnl_ratio\":null,\"alpha\":null,\"baseline_random\":null,\"baseline_ma_cross\":null,\"total_trades\":0,\"period_st"
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/governance/catalog",
+    "code": 401,
+    "len": -1,
+    "body": "{\"success\":false,\"message\":\"error\",\"data\":null,\"request_id\":\"4f02cdd1-51a3-408c-9ff2-088fb85f9dda\",\"error\":\"UNAUTHORIZED\",\"error_code\":\"UNAUTHORIZED\",\"error_mes"
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/features/catalog",
+    "code": 401,
+    "len": -1,
+    "body": "{\"success\":false,\"message\":\"error\",\"data\":null,\"request_id\":\"4539b3c1-0a5f-4bd0-857c-1fa4bf8d54aa\",\"error\":\"UNAUTHORIZED\",\"error_code\":\"UNAUTHORIZED\",\"error_mes"
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/internal/hotspot/health",
+    "code": 401,
+    "len": -1,
+    "body": "{\"success\":false,\"message\":\"error\",\"data\":null,\"request_id\":\"afcfb28a-5df3-4fd0-af66-e2216bbf00b4\",\"error\":\"UNAUTHORIZED\",\"error_code\":\"UNAUTHORIZED\",\"error_mes"
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/internal/llm/health",
+    "code": 401,
+    "len": -1,
+    "body": "{\"success\":false,\"message\":\"error\",\"data\":null,\"request_id\":\"a0259043-e735-4da9-88af-934fffc9eb55\",\"error\":\"UNAUTHORIZED\",\"error_code\":\"UNAUTHORIZED\",\"error_mes"
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/internal/llm/version",
+    "code": 401,
+    "len": -1,
+    "body": "{\"success\":false,\"message\":\"error\",\"data\":null,\"request_id\":\"adeae650-710f-4f09-bf18-b137190e122b\",\"error\":\"UNAUTHORIZED\",\"error_code\":\"UNAUTHORIZED\",\"error_mes"
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/internal/runtime/gates",
+    "code": 401,
+    "len": -1,
+    "body": "{\"success\":false,\"message\":\"error\",\"data\":null,\"request_id\":\"c64f8e03-1666-4ef9-8271-cf91f9aaf68e\",\"error\":\"UNAUTHORIZED\",\"error_code\":\"UNAUTHORIZED\",\"error_mes"
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/internal/source/fallback-status",
+    "code": 401,
+    "len": -1,
+    "body": "{\"success\":false,\"message\":\"error\",\"data\":null,\"request_id\":\"98060665-a875-41c8-b33b-b32fd1d03332\",\"error\":\"UNAUTHORIZED\",\"error_code\":\"UNAUTHORIZED\",\"error_mes"
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/internal/metrics/summary",
+    "code": 401,
+    "len": -1,
+    "body": "{\"success\":false,\"message\":\"error\",\"data\":null,\"request_id\":\"4748e455-5b35-42fa-80dd-2638b0255d97\",\"error\":\"UNAUTHORIZED\",\"error_code\":\"UNAUTHORIZED\",\"error_mes"
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/internal/audit/context",
+    "code": 401,
+    "len": -1,
+    "body": "{\"success\":false,\"message\":\"error\",\"data\":null,\"request_id\":\"d9b66d6d-706e-4de7-8166-f3d855277b5d\",\"error\":\"UNAUTHORIZED\",\"error_code\":\"UNAUTHORIZED\",\"error_mes"
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/internal/reports/incomplete-status",
+    "code": 401,
+    "len": -1,
+    "body": "{\"success\":false,\"message\":\"error\",\"data\":null,\"request_id\":\"353a4951-04d9-484b-8e7b-083fa778798a\",\"error\":\"UNAUTHORIZED\",\"error_code\":\"UNAUTHORIZED\",\"error_mes"
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/admin/overview",
+    "code": 401,
+    "len": -1,
+    "body": "{\"success\":false,\"message\":\"error\",\"data\":null,\"request_id\":\"473d673d-eaa4-4ed5-9395-07629ed037cc\",\"error\":\"UNAUTHORIZED\",\"error_code\":\"UNAUTHORIZED\",\"error_mes"
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/admin/system-status",
+    "code": 401,
+    "len": -1,
+    "body": "{\"success\":false,\"message\":\"error\",\"data\":null,\"request_id\":\"00f7eb51-42df-4a92-aeb9-9920e9602430\",\"error\":\"UNAUTHORIZED\",\"error_code\":\"UNAUTHORIZED\",\"error_mes"
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/admin/scheduler/status",
+    "code": 401,
+    "len": -1,
+    "body": "{\"success\":false,\"message\":\"error\",\"data\":null,\"request_id\":\"0cd8d750-0aaa-497c-b7ee-204ba1e90d0f\",\"error\":\"UNAUTHORIZED\",\"error_code\":\"UNAUTHORIZED\",\"error_mes"
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/admin/cookie-session/health",
+    "code": 401,
+    "len": -1,
+    "body": "{\"success\":false,\"message\":\"error\",\"data\":null,\"request_id\":\"966a8c1d-3d95-4387-b00d-781ba94c123b\",\"error\":\"UNAUTHORIZED\",\"error_code\":\"UNAUTHORIZED\",\"error_mes"
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/admin/reports",
+    "code": 401,
+    "len": -1,
+    "body": "{\"success\":false,\"message\":\"error\",\"data\":null,\"request_id\":\"b8ca014b-8195-4b20-a5e0-a873bfe0674a\",\"error\":\"UNAUTHORIZED\",\"error_code\":\"UNAUTHORIZED\",\"error_mes"
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/admin/users",
+    "code": 401,
+    "len": -1,
+    "body": "{\"success\":false,\"message\":\"error\",\"data\":null,\"request_id\":\"5079e23d-ce2f-4549-8009-6241e78eefd6\",\"error\":\"UNAUTHORIZED\",\"error_code\":\"UNAUTHORIZED\",\"error_mes"
+  },
+  {
+    "method": "GET",
+    "path": "/auth/me",
+    "code": 401,
+    "len": -1,
+    "body": "{\"success\":false,\"message\":\"error\",\"data\":null,\"request_id\":\"d3083667-c5bb-469a-8a6d-4d174d215fa4\",\"error\":\"未登录\",\"error_code\":\"UNAUTHORIZED\",\"error_messag"
+  },
+  {
+    "method": "GET",
+    "path": "/auth/oauth/providers",
+    "code": 200,
+    "len": 309,
+    "body": "{\"success\":true,\"message\":\"ok\",\"data\":{\"contract_status\":\"contract-ready\",\"provider_status\":\"provider-not-configured\",\"live_verified\":false,\"providers\":[],\"mess"
+  }
+]

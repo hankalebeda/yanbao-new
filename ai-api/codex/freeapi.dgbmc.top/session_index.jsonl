@@ -1,0 +1,47 @@
+{"id":"019d1db8-8420-7da3-9ea9-0cdf81447879","thread_name":"确认子代理Codex调用进度 已完成情况","updated_at":"2026-03-24T02:42:41.0179409Z"}
+{"id":"019d1dc2-d251-79e1-8c59-4f421297029b","thread_name":"Summarize latest review findings","updated_at":"2026-03-24T02:53:38.4585123Z"}
+{"id":"019d1dc2-e61c-7b20-8175-137ba78f7547","thread_name":"Assess codex subagent usage","updated_at":"2026-03-24T02:53:41.1749162Z"}
+{"id":"019d1dc3-d2a1-72b2-870b-f84bfe9040cc","thread_name":"Run mesh delegate mode once","updated_at":"2026-03-24T02:54:39.6567195Z"}
+{"id":"019d1dd7-cfa2-7602-a609-be95b9321332","thread_name":"Investigate codex mesh failure","updated_at":"2026-03-24T03:16:28.0956317Z"}
+{"id":"019d1e60-7a8e-7fd0-bde0-0609f3708063","thread_name":"Align governance doc-driven pipeline","updated_at":"2026-03-24T05:45:39.7633345Z"}
+{"id":"019d1e62-7172-7530-a258-df5b21cd5ff9","thread_name":"Update doc pipeline sources","updated_at":"2026-03-24T05:47:54.7971741Z"}
+{"id":"019d1e62-8546-7063-9d6b-0643fecde828","thread_name":"对齐治理期待和审计规则文件集成化覆盖","updated_at":"2026-03-24T05:47:56.841692Z"}
+{"id":"019d1e93-7b27-73e2-9d72-c0754780279c","thread_name":"Integrate A/B/C/D final results","updated_at":"2026-03-24T06:41:21.6771733Z"}
+{"id":"019d1f0f-00b0-70f3-9c5c-7458446bc227","thread_name":"Clean legacy docs and code","updated_at":"2026-03-24T08:56:29.5185379Z"}
+{"id":"019d1f10-ebb6-7b02-aa29-ae21996f0f33","thread_name":"整理文档归档建议」} incorrect due weird char","updated_at":"2026-03-24T08:58:27.4922505Z"}
+{"id":"019d1f10-ff91-74c0-873d-6e3f2fea44b6","thread_name":"审查现行与旧实施脚本并报告风险与归档","updated_at":"2026-03-24T08:58:36.1432898Z"}
+{"id":"019d1f3e-a240-7022-9923-84efdabd9cab","thread_name":"识别需归档的旧文档资产路径」}]}ERROR Model output","updated_at":"2026-03-24T09:48:24.3838005Z"}
+{"id":"019d1f3e-b63b-7ff0-9685-24262ffd9105","thread_name":"审查旧资产并区分处理路径」} Sorry but had to. The","updated_at":"2026-03-24T09:48:28.9285018Z"}
+{"id":"019d22b3-41f0-7de3-a0f0-1a4759da39c2","thread_name":"使用子代理执行02_upstream_runtime_report","updated_at":"2026-03-25T01:54:42.701842Z"}
+{"id":"019d22b4-8306-7710-8568-081bdd33ec6b","thread_name":"审查FR-01至FR-05运行时问题","updated_at":"2026-03-25T02:01:27.2984627Z"}
+{"id":"019d22b4-83a4-7273-abe7-6a931d895e3d","thread_name":"审查 FR-06 与 NFR-15 风险","updated_at":"2026-03-25T02:01:32.0470811Z"}
+{"id":"019d22cf-05e5-7820-b507-18657590bb41","thread_name":"使用子代理执行提示词更新22文档任务","updated_at":"2026-03-25T02:24:54.3224938Z"}
+{"id":"019d22d0-1723-7570-a821-520a00d8ae4d","thread_name":"分析22条目归并、存活与过时判断及落位建议","updated_at":"2026-03-25T02:26:10.4129553Z"}
+{"id":"019d22d0-2afa-7152-a220-fac092544159","thread_name":"分析 direct4 问题归并与写回建议","updated_at":"2026-03-25T02:26:14.2220592Z"}
+{"id":"019d22e9-1843-73e1-82b3-50b50cee8210","thread_name":"执行02_fix_upstream_generation","updated_at":"2026-03-25T02:53:21.6242077Z"}
+{"id":"019d22ea-a3b6-7bb3-b3cd-817e98ed4841","thread_name":"核查FR01-04可修复代码缺口总结","updated_at":"2026-03-25T02:55:09.8780639Z"}
+{"id":"019d22ea-b789-7583-b80f-24367f1f6fc5","thread_name":"核查FR-06主生成链可修复缺口与门禁","updated_at":"2026-03-25T02:55:14.5010232Z"}
+{"id":"019d23d5-9044-7d30-8d25-bd1e079ab27c","thread_name":"执行四路并行复用母提示词 slot02","updated_at":"2026-03-25T07:11:42.5876125Z"}
+{"id":"019d23d6-ef0e-7193-9c00-196a407a8272","thread_name":"排查 FR-06 LLM 回退失败根因","updated_at":"2026-03-25T07:13:13.0784776Z"}
+{"id":"019d23f9-8a06-7f80-b199-e60158031256","thread_name":"生成子代理四路并行复用母提示词模板】","updated_at":"2026-03-25T07:51:12.3041111Z"}
+{"id":"019d2400-1964-7d01-b8f3-dbe66c02291f","thread_name":"确认 slot-1 统一 run_label","updated_at":"2026-03-25T07:59:09.2874048Z"}
+{"id":"019d242e-9403-7251-94c2-8bcb32d85931","thread_name":"收口四路worker结果并产出synthesis","updated_at":"2026-03-25T08:49:09.1432575Z"}
+{"id":"019d2457-477a-7f22-9ec5-d40b60084e13","thread_name":"回复你好'} }]} Wait need only title. I,","updated_at":"2026-03-25T09:33:41.4417195Z"}
+{"id":"019d27a2-1d35-75a2-beb2-bf086c619179","thread_name":"为 openai.api-test.us.ci 添加启动CMD","updated_at":"2026-03-26T00:54:24.4525748Z"}
+{"id":"019d27a2-f07d-7422-84bf-7119984dd13f","thread_name":"复核 open-with-freeapi 启动路径","updated_at":"2026-03-26T00:54:54.2438116Z"}
+{"id":"019d27dd-7c63-7bf0-9083-d4297e03aa03","thread_name":"分析provider使用gpt-5.2原因","updated_at":"2026-03-26T01:58:54.3849785Z"}
+{"id":"019d281b-3ea4-74b1-b1e2-f9b8bb303d1d","thread_name":"部署LiteLLM并接入可用代理密钥","updated_at":"2026-03-26T03:10:36.4790748Z"}
+{"id":"019d281f-cbb9-7731-b535-47cb0a7975c7","thread_name":"梳理 codex key 配置结构'}","updated_at":"2026-03-26T03:11:20.4652594Z"}
+{"id":"019d281f-dfa2-7e03-9ca3-616f86e3f9d4","thread_name":"制定 LiteLLM 最小部署方案 عام","updated_at":"2026-03-26T03:11:24.893999Z"}
+{"id":"019d28dc-fabe-7a23-a49d-3b5d3482c2c1","thread_name":"更新内网门户模板与Codex并发基准脚本","updated_at":"2026-03-26T06:38:00.9794793Z"}
+{"id":"019d28dd-0ebe-7703-8e96-4f71635a0fc9","thread_name":"梳理 Codex 并发压测与目录冲突","updated_at":"2026-03-26T06:38:02.0766952Z"}
+{"id":"019d3764-1bbc-7a73-80eb-618f2917595f","thread_name":"核查Kestra自治护航体系实现情况","updated_at":"2026-03-29T02:20:22.1707638Z"}
+{"id":"019d41d2-c995-7290-951f-3e750765f100","thread_name":"复核 Kestra 体系完成度证据链","updated_at":"2026-03-31T02:57:21.5889715Z"}
+{"id":"019d46e7-3d4c-76b3-b388-747424889982","thread_name":"用子代理按25清单审查22全量总表问题","updated_at":"2026-04-01T02:37:41.719372Z"}
+{"id":"019d46e8-c463-7f92-b0cd-f65f8810bb6d","thread_name":"排查 LiteLLM 供应商失效仍添加","updated_at":"2026-04-01T02:41:04.7979092Z"}
+{"id":"019d46ea-d90f-7423-9519-eb948b470f61","thread_name":"分析LiteLLM供应商管理与同步机制","updated_at":"2026-04-01T02:41:40.4070146Z"}
+{"id":"019d46ea-ecd7-72c3-bfad-977531d70889","thread_name":"探测 LiteLLM 供应商接口与状态","updated_at":"2026-04-01T02:41:49.4258503Z"}
+{"id":"019d470b-fc5e-7290-b469-595a9d025fd6","thread_name":"分析 NewAPI 渠道治理与测试补强点","updated_at":"2026-04-01T03:18:01.0857902Z"}
+{"id":"019d470c-1034-7ab0-abb0-7a4f8aa0f4b6","thread_name":"梳理运维观测落地层一期二期补强方案}","updated_at":"2026-04-01T03:18:02.9617655Z"}
+{"id":"019d4730-7b37-7443-a3fd-f6b904552cb4","thread_name":"强化 channel_governor 只读治理","updated_at":"2026-04-01T03:57:44.7728941Z"}
+{"id":"019d4730-8f30-7991-a6d5-4257988f68bd","thread_name":"更新只读部署语义与文档验证】to=functions.shell命令","updated_at":"2026-04-01T03:57:49.369677Z"}

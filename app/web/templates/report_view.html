@@ -1,0 +1,1117 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>{{ (report.company_overview or {}).company_name or report.stock_code }} ({{ report.stock_code[:6] if report.stock_code else '' }}) 研报</title>
+  <link rel="stylesheet" href="/static/demo.css" />
+  <style>
+    :root {
+      --bg: #f0f4f8;
+      --ink: #1e2a3a;
+      --muted: #64748b;
+      --line: #e2e8f0;
+      --card: #ffffff;
+      --ok: #10b981;
+      --warn: #f59e0b;
+      --danger: #ef4444;
+      --accent: #3b82f6;
+      --accent-dark: #1d4ed8;
+      --hero-bg: #0f1f38;
+      --hero-bg2: #162d4e;
+      --up: #10b981;
+      --down: #ef4444;
+      --flat: #94a3b8;
+      --radius: 14px;
+      --shadow: 0 2px 12px rgba(15,31,56,.08);
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: "PingFang SC","Microsoft YaHei","Source Han Sans SC",sans-serif;
+      background: var(--bg);
+      color: var(--ink);
+      line-height: 1.6;
+      font-size: 15px;
+    }
+
+    /* ── Layout ── */
+    .page { max-width: 780px; margin: 0 auto; padding: 0 16px 56px; }
+
+    /* ── Top nav ── */
+    .topbar {
+      display: flex; align-items: center; gap: 6px;
+      padding: 10px 0; margin-bottom: 20px;
+      border-bottom: 1px solid var(--line);
+      font-size: 13px;
+    }
+    .topbar a { color: var(--accent); text-decoration: none; }
+    .topbar a:hover { text-decoration: underline; }
+    .topbar .sep { color: var(--line); }
+
+    /* ── Hero Card ── */
+    .hero {
+      background: linear-gradient(135deg, var(--hero-bg) 0%, var(--hero-bg2) 100%);
+      border-radius: var(--radius);
+      padding: 28px 28px 22px;
+      color: #fff;
+      margin-bottom: 16px;
+      position: relative;
+      overflow: hidden;
+    }
+    .hero::before {
+      content: '';
+      position: absolute; inset: 0;
+      background: radial-gradient(ellipse at 80% 20%, rgba(59,130,246,.18) 0%, transparent 60%);
+      pointer-events: none;
+    }
+    .hero-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; }
+    .hero-left { flex: 1; min-width: 0; }
+    .hero-title { font-size: 22px; font-weight: 700; line-height: 1.2; margin-bottom: 4px; }
+    .hero-meta { font-size: 12px; color: rgba(255,255,255,.55); }
+    .hero-right { text-align: right; flex-shrink: 0; }
+    .hero-price { font-size: 34px; font-weight: 800; letter-spacing: -1px; line-height: 1.1; }
+    .hero-price-label { font-size: 11px; color: rgba(255,255,255,.5); margin-top: 2px; }
+    .hero-divider { height: 1px; background: rgba(255,255,255,.1); margin: 18px 0 14px; }
+    .hero-verdict { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+    .hero-verdict-text { font-size: 16px; font-weight: 500; }
+    .badge {
+      display: inline-flex; align-items: center;
+      padding: 4px 12px; border-radius: 20px;
+      font-size: 13px; font-weight: 600;
+      white-space: nowrap;
+    }
+    .badge.buy  { background: rgba(16,185,129,.2); color: #34d399; border: 1px solid rgba(16,185,129,.3); }
+    .badge.sell { background: rgba(239,68,68,.2);  color: #f87171; border: 1px solid rgba(239,68,68,.3); }
+    .badge.hold { background: rgba(148,163,184,.2); color: #cbd5e1; border: 1px solid rgba(148,163,184,.3); }
+    .badge.up   { background: rgba(16,185,129,.15); color: #34d399; }
+    .badge.down { background: rgba(239,68,68,.15);  color: #f87171; }
+    .badge.flat { background: rgba(148,163,184,.15); color: #94a3b8; }
+    .badge.warn { background: rgba(245,158,11,.15);  color: #fbbf24; }
+    .badge-type-a { background: rgba(124,58,237,.15); color: #7c3aed; }
+    .badge-type-b { background: rgba(37,99,235,.15);  color: #2563eb; }
+    .badge-type-c { background: rgba(8,145,178,.15);   color: #0891b2; }
+    .pos-status { padding: 4px 12px; border-radius: 20px; font-size: 13px; font-weight: 600; }
+    .pos-status.pos-open { background: #eff6ff; color: #2563eb; }
+    .pos-status.pos-win { background: #ecfdf5; color: #059669; }
+    .pos-status.pos-sl { background: #fef2f2; color: #dc2626; }
+    .pos-status.pos-expired { background: #f3f4f6; color: #6b7280; }
+    .hero-note { font-size: 11px; color: rgba(255,255,255,.45); margin-top: 10px; line-height: 1.5; }
+
+    /* ── Cards ── */
+    .card {
+      background: var(--card);
+      border-radius: var(--radius);
+      padding: 20px 22px;
+      margin-bottom: 14px;
+      box-shadow: var(--shadow);
+    }
+    .card-title {
+      font-size: 15px; font-weight: 700; color: var(--ink);
+      margin-bottom: 16px;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .card-title::before {
+      content: '';
+      display: inline-block;
+      width: 4px; height: 16px;
+      background: var(--accent);
+      border-radius: 2px;
+      flex-shrink: 0;
+    }
+    .card-note { font-size: 12px; color: var(--muted); margin-bottom: 14px; }
+
+    /* ── Data table ── */
+    .dt { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+    .dt thead th {
+      color: var(--muted); font-weight: 600; font-size: 12px;
+      padding: 8px 10px; border-bottom: 2px solid var(--line);
+      text-align: left; white-space: nowrap;
+    }
+    .dt tbody tr:hover { background: #f8fafc; }
+    .dt td { padding: 9px 10px; border-bottom: 1px solid var(--line); vertical-align: middle; }
+    .dt td:first-child { font-weight: 500; white-space: nowrap; }
+
+    /* ── KV grid ── */
+    .kv-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+      gap: 1px;
+      background: var(--line);
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      overflow: hidden;
+    }
+    .kv-item { background: var(--card); padding: 10px 14px; }
+    .kv-label { font-size: 11px; color: var(--muted); margin-bottom: 3px; }
+    .kv-val { font-size: 14px; font-weight: 600; color: var(--ink); }
+
+    /* ── Direction colors ── */
+    .up   { color: var(--up); font-weight: 600; }
+    .down { color: var(--down); font-weight: 600; }
+    .flat { color: var(--flat); }
+
+    /* ── Confidence bar ── */
+    .conf-bar-wrap { display: flex; align-items: center; gap: 8px; }
+    .conf-bar {
+      flex: 1; height: 6px;
+      background: var(--line);
+      border-radius: 3px; overflow: hidden;
+      min-width: 50px;
+    }
+    .conf-bar-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--accent), #60a5fa);
+      border-radius: 3px;
+      transition: width .3s;
+    }
+    .conf-bar-fill.hi { background: linear-gradient(90deg, var(--ok), #34d399); }
+    .conf-pct { font-size: 13px; font-weight: 600; min-width: 36px; text-align: right; }
+
+    /* ── Evidence cards ── */
+    .ev-list { display: flex; flex-direction: column; gap: 10px; }
+    .ev-item {
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 14px 16px;
+      background: #f8fafc;
+      transition: box-shadow .2s;
+    }
+    .ev-item:hover { box-shadow: 0 2px 8px rgba(0,0,0,.08); }
+    .ev-header { display: flex; align-items: center; gap: 10px; margin-bottom: 6px; }
+    .ev-num {
+      width: 24px; height: 24px; border-radius: 50%;
+      background: var(--accent); color: #fff;
+      font-size: 12px; font-weight: 700;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+    .ev-title { font-weight: 600; font-size: 14px; flex: 1; }
+    .ev-basis { font-size: 13px; color: #374151; line-height: 1.55; margin-bottom: 7px; }
+    .ev-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+    .ev-chip {
+      font-size: 12px; padding: 2px 9px;
+      background: #fff; border: 1px solid var(--line);
+      border-radius: 20px; color: var(--muted);
+    }
+
+    /* ── Two column layout ── */
+    .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    @media (max-width: 520px) { .two-col { grid-template-columns: 1fr; } }
+
+    /* ── 移动端适配（11 §6：375px 无横向溢出、实操指令卡竖排、预测表折叠）── */
+    .forecast-mobile-hint { display: none; }
+    @media (max-width: 640px) {
+      .page { padding: 0 12px 56px; min-width: 0; }
+      html, body { overflow-x: hidden; max-width: 100vw; }
+      .hero { padding: 20px 16px; }
+      .hero-row { flex-direction: column; gap: 12px; }
+      .hero-price { font-size: 28px; }
+      .instruction-grid { grid-template-columns: 1fr !important; }
+      .kv-grid { grid-template-columns: repeat(2, 1fr); }
+      @media (max-width: 375px) { .kv-grid { grid-template-columns: 1fr; } }
+      .forecast-table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+      .forecast-table-wrap .dt tbody tr:nth-child(n+3) { display: none; }
+      .forecast-mobile-hint { display: block; margin-top: 8px; font-size: 12px; color: var(--muted); }
+      .topbar { flex-wrap: wrap; gap: 4px; }
+      .dt { font-size: 12px; }
+      .dt th, .dt td { padding: 6px 8px; }
+      .dt th:last-child, .dt td:last-child { min-width: 120px; }
+    }
+    .col-head { font-size: 12px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; margin-bottom: 8px; }
+    .opp-item {
+      padding: 9px 13px; background: #f0fdf4;
+      border-left: 3px solid var(--ok);
+      border-radius: 0 8px 8px 0;
+      margin-bottom: 8px; font-size: 13px; line-height: 1.5;
+    }
+    .risk-item {
+      padding: 9px 13px; background: #fff7f7;
+      border-left: 3px solid var(--danger);
+      border-radius: 0 8px 8px 0;
+      margin-bottom: 8px; font-size: 13px; line-height: 1.5;
+    }
+
+    /* ── Capital chips ── */
+    .cap-chips { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; }
+    .cap-chip {
+      display: flex; flex-direction: column;
+      background: #f8fafc; border: 1px solid var(--line);
+      border-radius: 10px; padding: 9px 14px;
+      min-width: 110px;
+    }
+    .cap-chip-label { font-size: 11px; color: var(--muted); margin-bottom: 3px; }
+    .cap-chip-val { font-size: 14px; font-weight: 600; }
+    .data-tag { display:inline-block; font-size:9px; font-weight:500; padding:1px 4px; border-radius:3px; margin-left:4px; vertical-align:middle; }
+    .data-tag.real { background:rgba(74,222,128,.15); color:var(--ok); border:1px solid rgba(74,222,128,.3); }
+    .data-tag.proxy { background:rgba(251,191,36,.15); color:var(--warn); border:1px solid rgba(251,191,36,.3); }
+    .data-tag.missing { background:rgba(239,68,68,.1); color:var(--down); border:1px solid rgba(239,68,68,.25); }
+
+    /* ── Pos badges ── */
+    .pos-tag { display: inline-block; font-size: 11px; font-weight: 600; padding: 1px 8px; border-radius: 12px; margin-left: 6px; vertical-align: middle; }
+    .pos-low { background: #dcfce7; color: #15803d; }
+    .pos-mid { background: #fef9c3; color: #a16207; }
+    .pos-high { background: #fee2e2; color: #b91c1c; }
+    .risk-lv { display: inline-block; font-size: 12px; font-weight: 600; padding: 3px 12px; border-radius: 20px; }
+    .risk-lv.low { background: #dcfce7; color: #15803d; }
+    .risk-lv.mid { background: #fef9c3; color: #a16207; }
+    .risk-lv.high { background: #fee2e2; color: #b91c1c; }
+
+    /* ── Accordions ── */
+    details { margin-top: 12px; }
+    details summary {
+      cursor: pointer; user-select: none;
+      padding: 10px 14px;
+      background: var(--bg); border: 1px solid var(--line);
+      border-radius: 8px;
+      font-size: 13px; font-weight: 500; color: var(--muted);
+      list-style: none;
+      display: flex; align-items: center; gap: 6px;
+    }
+    details summary::before { content: '▶'; font-size: 10px; transition: transform .2s; }
+    details[open] summary::before { transform: rotate(90deg); }
+    details summary:hover { background: #e8eef7; }
+    details .inner {
+      padding: 16px 18px;
+      background: var(--card);
+      border: 1px solid var(--line); border-top: none;
+      border-radius: 0 0 8px 8px;
+      font-size: 13px;
+    }
+    details .inner h4 {
+      font-size: 11px; font-weight: 700; color: var(--muted);
+      text-transform: uppercase; letter-spacing: .6px;
+      margin: 14px 0 7px;
+    }
+    details .inner h4:first-child { margin-top: 0; }
+
+    /* ── Citations ── */
+    .cite-list { list-style: none; }
+    .cite-list li {
+      padding: 8px 12px; margin-bottom: 6px;
+      background: var(--bg);
+      border-left: 3px solid var(--accent);
+      border-radius: 0 8px 8px 0;
+      font-size: 13px;
+    }
+    .cite-list a { color: var(--accent); text-decoration: none; }
+
+    /* ── Historical accuracy block ── */
+    .acc-block {
+      background: var(--card);
+      border-radius: var(--radius);
+      padding: 20px 22px;
+      margin-bottom: 14px;
+      box-shadow: var(--shadow);
+    }
+    .acc-block .card-title { margin-bottom: 8px; }
+    .acc-note { font-size: 12px; color: var(--muted); margin-bottom: 14px; line-height: 1.5; }
+    .acc-content { font-size: 13.5px; }
+    .acc-row { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+    .acc-row .label { color: var(--muted); font-size: 13px; min-width: 70px; }
+    .acc-row .val { font-weight: 600; }
+    .floor-tag { font-size: 11px; padding: 2px 8px; border-radius: 12px; margin-left: 6px; }
+    .floor-ok  { background: #dcfce7; color: #15803d; }
+    .floor-bad { background: #fee2e2; color: #b91c1c; }
+
+    /* ── Muted text ── */
+    .muted { color: var(--muted); font-size: 13px; }
+    .tip { font-size: 12px; color: var(--muted); margin-top: 6px; line-height: 1.5; }
+    .k { color: var(--muted); font-size: 13px; }
+
+    /* ── Action list ── */
+    .action-list { list-style: none; }
+    .action-list li {
+      padding: 7px 0; border-bottom: 1px solid var(--line); font-size: 13.5px;
+      display: flex; align-items: flex-start; gap: 8px;
+    }
+    .action-list li::before { content: '→'; color: var(--accent); font-size: 13px; flex-shrink: 0; margin-top: 1px; }
+    .action-list li:last-child { border-bottom: none; }
+
+    /* ── Site footer ── */
+    .site-footer {
+      background: #1e2a3a;
+      margin-top: 40px;
+      padding: 24px 0 20px;
+      border-radius: 12px 12px 0 0;
+    }
+    .footer-inner { max-width: 780px; margin: 0 auto; padding: 0 20px; }
+    .footer-inner h4 { font-size: 13px; color: rgba(255,255,255,.6); margin-bottom: 8px; font-weight: 600; letter-spacing: .5px; }
+    .footer-inner p { font-size: 12px; color: rgba(255,255,255,.45); line-height: 1.65; margin-bottom: 6px; }
+    .footer-inner p.muted { font-size: 11px; color: rgba(255,255,255,.3); }
+
+    /* ── Feedback buttons (E5.1) ── */
+    .btn-feedback {
+      padding: 8px 18px;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      border: 1px solid var(--line);
+      background: var(--card);
+      color: var(--ink);
+      transition: background .2s, border-color .2s;
+    }
+    .btn-feedback:hover { background: var(--bg); border-color: var(--muted); }
+    .btn-feedback:disabled { opacity: 0.6; cursor: not-allowed; }
+    .btn-feedback.btn-yes:hover { border-color: var(--ok); background: rgba(16,185,129,.08); }
+    .btn-feedback.btn-no:hover { border-color: var(--danger); background: rgba(239,68,68,.06); }
+
+    /* ── Responsive ── */
+    @media (max-width: 560px) {
+      .hero { padding: 20px 18px 16px; }
+      .hero-price { font-size: 26px; }
+      .page { padding: 0 12px 40px; }
+      .card { padding: 16px 14px; }
+    }
+  </style>
+</head>
+<body>
+<nav class="site-nav">
+  <a href="/" class="nav-brand">A股研报平台</a>
+  <button class="nav-toggle" aria-label="菜单" onclick="document.querySelector('.nav-links').classList.toggle('open')">☰</button>
+  <div class="nav-links">
+    {% include "_nav_links.html" %}
+  </div>
+</nav>
+
+<main class="container">
+
+  {# ─── 会员展示控制 (17 §4.1) ─── #}
+  {% set show_instruction_full = can_see_instruction_full | default(false) %}
+  {% set show_forecast_14_60 = can_see_forecast_14_60 | default(false) %}
+  {% set show_advanced = can_see_advanced | default(false) %}
+  {% set is_logged_in = current_user is defined and current_user %}
+
+  {# ─── Template variables ─── #}
+  {% set co   = report.company_overview or {} %}
+  {% set va   = report.valuation or {} %}
+  {% set fa   = report.financial_analysis or {} %}
+  {% set ic   = report.industry_competition or {} %}
+  {% set dims = report.dimensions or {} %}
+  {% set snap = dims.get('market_snapshot') or {} %}
+  {% set dual = (report.plain_report or {}).dual_source_market or dims.get('market_dual_source') or {} %}
+  {% set pf   = report.price_forecast or {} %}
+  {% set pf_windows = pf.get('windows') or [] %}
+  {% set df   = report.direction_forecast or {} %}
+  {% set horizons = df.get('horizons') or [] %}
+  {% set plain = report.plain_report or {} %}
+  {% set ep   = plain.execution_plan or {} %}
+  {% set ng   = report.novice_guide or {} %}
+  {% set qg   = report.quality_gate or {} %}
+  {% set thesis = report.thesis or {} %}
+  {% set evs  = plain.evidence_backing_points or [] %}
+  {% set trade_date = report.trade_date or (report.created_at[:10] if report.created_at else '') %}
+  {% set bt3  = df.get('backtest_recent_3m') or [] %}
+
+  {# Best 7d forecast from LLM windows #}
+  {% set ns7 = namespace(w7=none) %}
+  {% for w in pf_windows %}{% if w.get('horizon_days') == 7 and ns7.w7 is none %}{% set ns7.w7 = w %}{% endif %}{% endfor %}
+  {% set w7 = ns7.w7 %}
+
+  <!-- ═══ HERO ═══ -->
+  <section class="report-hero report-hero-wrap hero rv-hero">
+    <div class="hero-row">
+      <div class="hero-left">
+        <div class="hero-title">{{ co.company_name or plain.title or report.stock_code }}</div>
+        <div class="hero-meta">{{ report.stock_code }} · {{ co.industry or va.industry or '—' }} · {{ co.exchange or '' }}{% if co.market_type %} / {{ co.market_type }}{% endif %}</div>
+      </div>
+      <div class="hero-right">
+        <div class="hero-price">¥{{ snap.last_price | round(2) if snap.last_price is defined and snap.last_price is not none else '—' }}</div>
+        {% set pct_val = snap.pct_change if snap.pct_change is defined else none %}
+        {% if pct_val is not none %}
+        <div class="hero-price-label" style="color:{% if pct_val > 0 %}#6ee7b7{% elif pct_val < 0 %}#fca5a5{% else %}rgba(255,255,255,.5){% endif %};">
+          {{ '+' if pct_val > 0 else '' }}{{ pct_val | round(2) }}% · {{ trade_date }} 收盘
+        </div>
+        {% else %}
+        <div class="hero-price-label">{{ trade_date }} 收盘</div>
+        {% endif %}
+      </div>
+    </div>
+    <div class="hero-divider"></div>
+    <div class="hero-verdict rv-conclusion rv-conf-row">
+      <span class="hero-verdict-text">
+        未来一周
+        <strong class="{{ 'up' if (w7 or {}).get('llm_direction') and ('上涨' in (w7 or {}).get('llm_direction') or '上行' in (w7 or {}).get('llm_direction')) else 'down' if (w7 or {}).get('llm_direction') and ('下跌' in (w7 or {}).get('llm_direction') or '下行' in (w7 or {}).get('llm_direction')) else 'flat' }}">
+          {{ (w7 or {}).get('llm_direction') or report.recommendation_cn or '震荡' }}
+        </strong>
+      </span>
+      <span class="badge {{ 'buy' if report.recommendation == 'BUY' else 'sell' if report.recommendation == 'SELL' else 'hold' }}">
+        {{ report.recommendation_cn or '观望等待' }}
+      </span>
+      {% set conf_pct = ((w7 or {}).get('llm_confidence') or report.confidence or 0.65) %}
+      <span class="badge {{ 'buy' if conf_pct >= 0.65 else 'hold' }}" title="高置信度">置信度 {{ (conf_pct * 100)|round|int }}%</span>
+    </div>
+    <p class="hero-note">结论由 AI（{{ report.llm_actual_model or '未知模型' }}{% if report.llm_provider_name %} / {{ report.llm_provider_name }}{% endif %}）综合技术面、资金面与消息面得出 · 仅供参考，不构成投资建议 · 生成时间：{{ report.created_at[:10] if report.created_at else '' }}</p>
+    <button type="button" class="share-btn" onclick="shareReport()" style="margin-top:12px;padding:6px 14px;font-size:13px;border-radius:8px;border:1px solid rgba(255,255,255,.3);background:rgba(255,255,255,.1);color:#fff;cursor:pointer;">分享</button>
+    {% if report.degraded_banner %}
+    <div id="degraded-banner" class="degraded-banner" role="alert" style="margin-top:10px;padding:8px 14px;background:rgba(250,173,20,.15);border:1px solid rgba(250,173,20,.5);border-radius:8px;color:#faad14;font-size:13px;">
+      {{ report.degraded_banner }}
+    </div>
+    {% endif %}
+  </section>
+
+  <!-- ═══ 未来趋势预测 ═══ -->
+  <div class="card">
+    <div class="card-title">未来趋势预测</div>
+    <p class="card-note">由 AI（{{ report.llm_actual_model or '未知模型' }}）综合技术面、资金面与消息面生成结构化预测。当前页面固定展示 1/7/14/30/60 日预测；当长周期缺少直接模型输出时，使用趋势与波动率 fallback 补齐。置信度为模型对当前判断的自评确信程度，需结合真实结算结果验证。</p>
+    <div class="forecast-table-wrap" style="overflow-x:auto;">
+      <table class="dt">
+        <thead>
+          <tr>
+            <th>周期</th>
+            <th>AI 方向</th>
+            <th>预计幅度</th>
+            <th>建议动作</th>
+            <th>置信度</th>
+            <th style="min-width:200px;">AI 核心依据</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for day in [1, 7, 14, 30, 60] %}
+          {% set nw = namespace(w=none) %}
+          {% for w in pf_windows %}{% if w.get('horizon_days') == day and nw.w is none %}{% set nw.w = w %}{% endif %}{% endfor %}
+          {% set wr = nw.w %}
+          {% set has_window = wr is not none %}
+          {% set dir = (wr or {}).get('llm_direction') or '震荡' %}
+          {% set act = (wr or {}).get('llm_action') or 'HOLD' %}
+          {% set pct = (wr or {}).get('llm_pct_range') or '' %}
+          {% set cf  = (wr or {}).get('llm_confidence') %}
+          {% set reason = (wr or {}).get('llm_reason') or '' %}
+          <tr>
+            <td style="white-space:nowrap;">{{ day }} 日</td>
+            <td class="{{ 'up' if '上涨' in dir or '上行' in dir else 'down' if '下跌' in dir or '下行' in dir else 'flat' }}" style="white-space:nowrap;">{% if has_window %}{{ dir }}{% else %}震荡{% endif %}</td>
+            <td style="white-space:nowrap;">{% if has_window %}{{ pct }}{% endif %}</td>
+            <td style="white-space:nowrap;">{% if has_window %}{% if act == 'BUY' %}持有/加仓{% elif act == 'SELL' %}减仓/卖出{% else %}观望{% endif %}{% else %}观望{% endif %}</td>
+            <td style="white-space:nowrap;">
+              {% if has_window and cf is not none %}
+              <div class="conf-bar-wrap">
+                <div class="conf-bar"><div class="conf-bar-fill {{ 'hi' if cf >= 0.65 else '' }}" style="width:{{ (cf*100)|round|int }}%"></div></div>
+                <span class="conf-pct" style="color:{% if cf >= 0.65 %}var(--ok){% else %}var(--warn){% endif %};">{{ (cf*100)|round|int }}%</span>
+              </div>
+              {% endif %}
+            </td>
+            <td class="muted" style="font-size:12px; line-height:1.5;">{% if has_window %}{{ reason }}{% endif %}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <p class="forecast-mobile-hint">14/30/60 日预测在移动端已折叠，完整表格可横滑上方区域或使用桌面端查看。</p>
+    <p class="tip" style="margin-top:10px;">以上分析均由 AI 模型基于真实数据独立生成，不同周期可得出不同结论。涨跌幅为估算区间，不构成投资承诺。</p>
+
+  </div>
+
+  <!-- ═══ 标的概况 ═══ -->
+  <div class="card">
+    <div class="card-title">标的概况</div>
+    <div class="kv-grid" style="margin-bottom:12px;">
+      <div class="kv-item"><div class="kv-label">公司名称</div><div class="kv-val">{{ co.company_name or report.stock_code }}</div></div>
+      <div class="kv-item"><div class="kv-label">股票代码</div><div class="kv-val">{{ report.stock_code }}</div></div>
+      <div class="kv-item"><div class="kv-label">行业</div><div class="kv-val">{{ co.industry or va.industry or '—' }}</div></div>
+      <div class="kv-item"><div class="kv-label">证监会行业</div><div class="kv-val">{{ co.industry_csrc or '—' }}</div></div>
+      <div class="kv-item"><div class="kv-label">交易所</div><div class="kv-val">{{ co.exchange or '—' }}{% if co.market_type %} / {{ co.market_type }}{% endif %}</div></div>
+      <div class="kv-item"><div class="kv-label">上市日期</div><div class="kv-val">{{ co.listed_date or '—' }}</div></div>
+      <div class="kv-item"><div class="kv-label">PE（市盈率）</div><div class="kv-val">{{ va.pe_ttm if va.pe_ttm is not none else '—' }}</div></div>
+      <div class="kv-item"><div class="kv-label">PB（市净率）</div><div class="kv-val">{{ va.pb if va.pb is not none else '—' }}</div></div>
+      <div class="kv-item"><div class="kv-label">总市值</div><div class="kv-val">{% set _mc = (va or {}).get('market_cap') or (va or {}).get('total_market_cap') or (fa.total_market_cap if fa else none) %}{% if _mc is not none %}{% set _mc_yi = (_mc / 1e8) | round(2) %}{% if _mc_yi >= 10000 %}{{ (_mc_yi / 10000) | round(2) }}万亿元{% else %}{{ _mc_yi }}亿元{% endif %}{% else %}—{% endif %}</div></div>
+      <div class="kv-item"><div class="kv-label">所属地区</div><div class="kv-val">{{ va.region or '—' }}</div></div>
+    </div>
+    {# 历史价格位置 #}
+    {% set hpl = ((pf or {}).get('explain') or {}).get('historical_position_long') or {} %}
+    {% set p3 = hpl.get('percentile_3y') %}
+    {% set p5 = hpl.get('percentile_5y') %}
+    {% if p3 is not none or p5 is not none %}
+    <p style="font-size:13px; margin-bottom:8px;">
+      <span class="k">历史价格位置：</span>
+      {% if p3 is not none %}近3年比约 {{ ((1-p3)*100)|round|int }}% 的时间都便宜<span class="pos-tag pos-{{ 'low' if p3<0.4 else 'mid' if p3<0.7 else 'high' }}">{% if p3<0.4 %}偏低位{% elif p3<0.7 %}中位{% else %}偏高位{% endif %}</span>；{% endif %}
+      {% if p5 is not none %}近5年比约 {{ ((1-p5)*100)|round|int }}% 的时间都便宜<span class="pos-tag pos-{{ 'low' if p5<0.4 else 'mid' if p5<0.7 else 'high' }}">{% if p5<0.4 %}偏低位{% elif p5<0.7 %}中位{% else %}偏高位{% endif %}</span>{% endif %}
+    </p>
+    {% endif %}
+    <p style="font-size:13px; margin-bottom:6px;"><span class="k">公司简介：</span>{{ co.intro or '暂无' }}</p>
+    {% if co.intro and '原始文本暂缺' in co.intro %}
+    <p class="muted" style="font-size:12px; margin-bottom:8px;">注：当前为结构化概要，建议结合公司公告与年报进一步核验。</p>
+    {% endif %}
+    {% if ic.peers %}
+    <p style="font-size:13px;"><span class="k">同业公司：</span>{% for p in (ic.peers or [])[:6] %}{{ p.stock_name or '—' }}（{{ p.stock_code or '—' }}）{% if not loop.last %}、{% endif %}{% endfor %}</p>
+    {% endif %}
+  </div>
+
+  {# 实操指令卡 + 持仓追踪状态（仅 BUY 强信号，07 §4.1；17 §4.1 未登录→整块锁定，免费→¥**.**，付费→完整；E8.6 strategy_paused 提示） #}
+  {% set sti = report.sim_trade_instruction or {} %}
+  {% set is_strong_buy = report.recommendation == 'BUY' and (report.confidence or 0) >= 0.65 and sti %}
+  {% set st = sti.strategy_type or 'B' %}
+  {% set ti_by_tier = sti.trade_instruction_by_tier or {} %}
+  {% set no_clear_buy_signal = ti_by_tier and ti_by_tier.get('10k', {}).get('status') == 'SKIPPED' and ti_by_tier.get('100k', {}).get('status') == 'SKIPPED' and ti_by_tier.get('500k', {}).get('status') == 'SKIPPED' %}
+  {% set strategy_paused = strategy_paused | default([]) %}
+  {% if is_strong_buy and st in strategy_paused %}
+  <div class="card" style="background:#fffbeb;border:1px solid #f59e0b;">
+    <p class="card-note" style="margin:0;color:#92400e;">⚠ 本类型信号当前处于观察期，仅供参考</p>
+  </div>
+  {% endif %}
+  {% if no_clear_buy_signal %}
+  <div class="card">
+    <p class="card-note" style="margin:0;">当前暂无明确买入信号</p>
+  </div>
+  {% endif %}
+  {% if is_strong_buy %}
+  <div class="card" style="position:relative;">
+    {% if not is_logged_in %}
+    {# 未登录：整块锁定 #}
+    <div class="locked-block" style="position:absolute;inset:0;background:rgba(255,255,255,.9);backdrop-filter:blur(4px);border-radius:var(--radius);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:2;">
+      <p style="margin:0 0 12px;color:var(--muted);">登录后可查看完整实操指令</p>
+      <a href="/login?next={{ request.url.path | urlencode }}" class="btn-unlock" style="display:inline-block;background:var(--accent);color:#fff;padding:10px 20px;border-radius:8px;text-decoration:none;font-size:14px;">立即登录</a>
+    </div>
+    {% endif %}
+    <div class="card-title">🎯 实操指令</div>
+    {% set st_label = {'A':'A类·事件驱动','B':'B类·趋势跟踪','C':'C类·低波套利'}.get(st, 'B类') %}
+    <p class="card-note">本研报为 BUY 强信号，附带可操作指令。信号类型：<span class="badge badge-type-{{ st|lower }}">{{ st_label }}</span>；有效至 {{ sti.valid_until or '—' }}</p>
+    <div class="instruction-grid instr-grid" style="display:grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap:12px; margin-bottom:12px;">
+      <div class="kv-item"><div class="kv-label">入场价区间</div><div class="kv-val">{% if show_instruction_full %}¥{{ sti.entry_price_min | round(2) if sti.entry_price_min is not none else '—' }}～¥{{ sti.entry_price_max | round(2) if sti.entry_price_max is not none else '—' }}{% else %}登录后可见{% endif %}</div></div>
+      <div class="kv-item"><div class="kv-label">止损价</div><div class="kv-val">{% if show_instruction_full %}¥{{ sti.stop_loss_price | round(2) if sti.stop_loss_price is not none else '—' }}{% else %}登录后可见{% endif %}</div></div>
+      <div class="kv-item"><div class="kv-label">目标价1</div><div class="kv-val">{% if show_instruction_full %}¥{{ sti.target_price_1 | round(2) if sti.target_price_1 is not none else '—' }}{% else %}登录后可见{% endif %}</div></div>
+      <div class="kv-item"><div class="kv-label">目标价2</div><div class="kv-val">{% if show_instruction_full %}¥{{ sti.target_price_2 | round(2) if sti.target_price_2 is not none else '—' }}{% else %}登录后可见{% endif %}</div></div>
+    </div>
+    {% set pa = sti.position_advice or {} %}
+    {% if show_instruction_full and (pa.tier_1w or pa.tier_10w or pa.tier_50w) %}
+    <p style="font-size:13px; margin-bottom:6px;"><span class="k">仓位建议：</span>
+      {% if pa.tier_1w %}1W档 {{ ((pa.tier_1w.position_pct or 0)*100)|round|int }}%{% endif %}
+      {% if pa.tier_10w %} · 10W档 {{ ((pa.tier_10w.position_pct or 0)*100)|round|int }}%{% endif %}
+      {% if pa.tier_50w %} · 50W档 {{ ((pa.tier_50w.position_pct or 0)*100)|round|int }}%{% endif %}
+    </p>
+    {% elif not show_instruction_full and is_logged_in %}
+    <p class="tip">付费解锁完整仓位建议</p>
+    {% endif %}
+    {% if sti.invalidation_condition and show_instruction_full %}
+    <p class="tip" style="margin-top:6px;">失效条件：{{ sti.invalidation_condition }}</p>
+    {% endif %}
+    {% if show_instruction_full %}
+    <div id="pos-status-block" style="margin-top:12px; padding:10px; background:var(--bg); border-radius:8px;">
+      <span class="k">当前持仓状态：</span><span id="pos-status-text" class="muted">加载中…</span>
+    </div>
+    {% endif %}
+  </div>
+  {% endif %}
+
+  <!-- ═══ 操作建议 ═══ -->
+  <div class="card">
+    <div class="card-title">操作建议</div>
+    <div style="margin-bottom:12px; display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
+      <div>
+        <span class="k">风险等级：</span>
+        <span class="risk-lv {{ 'low' if ng.risk_level == '低' else 'high' if ng.risk_level == '高' else 'mid' }}">{{ ng.risk_level or '中' }}</span>
+      </div>
+      {% if ng.one_line_decision %}
+      <span class="muted">{{ ng.one_line_decision }}</span>
+      {% endif %}
+    </div>
+    <p style="font-size:13px; margin-bottom:10px;"><span class="k">仓位与风控：</span>{{ ep.position_suggestion or '维持现有仓位；若连续两日放量跌破关键均线则减仓。' }}</p>
+    <ul class="action-list">
+      {% for x in plain.what_to_do_now or [] %}
+      <li>{{ x }}</li>
+      {% endfor %}
+      {% if not (plain.what_to_do_now or []) %}
+      <li>短期不追高，持有观察，量能出现明显放大时再调仓</li>
+      <li>若出现放量下跌或跌破关键均线，优先执行防守</li>
+      {% endif %}
+    </ul>
+    {% if ng.next_watch_points %}
+    <p style="margin-top:10px; font-size:13px;"><span class="k">后续关注：</span>{% for w in ng.next_watch_points %}{{ w.rstrip('。；') }}{% if not loop.last %}；{% endif %}{% endfor %}</p>
+    {% endif %}
+  </div>
+
+  <!-- ═══ 结论依据（动态） ═══ -->
+  <div class="card">
+    <div class="card-title">结论依据</div>
+    <p class="card-note">以下维度共同支撑上述趋势结论，点击「展开分析细节」查看完整推理链。</p>
+    <div class="ev-list ev-grid">
+      {% if evs %}
+        {% for ev in evs %}
+        <div class="ev-item">
+          <div class="ev-header">
+            <span class="ev-num">{{ loop.index }}</span>
+            <span class="ev-title">{{ ev.title }}</span>
+            <span class="badge {{ ev.badge_type or 'flat' }}">{{ ev.badge or '—' }}</span>
+          </div>
+          <p class="ev-basis">{{ ev.basis or '' }}</p>
+          {% if ev.nums %}
+          <div class="ev-chips">
+            {% for n in ev.nums %}
+            <span class="ev-chip">{{ n }}</span>
+            {% endfor %}
+          </div>
+          {% endif %}
+        </div>
+        {% endfor %}
+      {% else %}
+        {# Fallback: show technical trend only #}
+        {% set feats = ((dims.get('market_features') or {}).get('features')) or {} %}
+        <div class="ev-item">
+          <div class="ev-header">
+            <span class="ev-num">1</span>
+            <span class="ev-title">技术趋势</span>
+            <span class="badge flat">{{ feats.get('trend') or '—' }}</span>
+          </div>
+          <p class="ev-basis">MA5={{ feats.get('ma5') or '—' }}，MA20={{ feats.get('ma20') or '—' }}，近5日收益={{ feats.get('ret5') if feats.get('ret5') is not none else '—' }}%</p>
+          <div class="ev-chips">
+            <span class="ev-chip">MA5={{ feats.get('ma5') or '—' }}</span>
+            <span class="ev-chip">MA20={{ feats.get('ma20') or '—' }}</span>
+          </div>
+        </div>
+      {% endif %}
+    </div>
+    <details id="advanced-area">
+      <summary>{% if show_advanced %}展开分析细节{% else %}展开分析细节（付费会员可见）{% endif %}</summary>
+      {% if show_advanced %}
+      <div class="inner" id="advanced-inner">
+        <p class="muted">正在加载分析细节…</p>
+      </div>
+      {% else %}
+      <div class="inner">
+        <p class="muted">当前仅展示前 200 字预览，完整推理链仅对订阅用户开放。</p>
+        <p class="muted">🔒 完整推理过程仅对订阅用户可见 &nbsp;·&nbsp; <a href="/subscribe">升级会员</a></p>
+        <p class="muted">订阅月会员或年会员后可查看完整推理链与所用数据。<a href="/login">登录</a> | <a href="/subscribe">了解套餐</a></p>
+      </div>
+      {% endif %}
+    </details>
+  </div>
+
+  <!-- ═══ 机会与风险 ═══ -->
+  {% if (thesis.investment_points or []) or (thesis.key_risks or []) %}
+  <div class="card">
+    <div class="card-title">机会与风险</div>
+    {# If investment_points has only 1 long item (analysis summary reused), show as context instead of opportunity #}
+    {% set ips = thesis.investment_points or [] %}
+    {% set rks = thesis.key_risks or [] %}
+    {% set ip_is_summary = (ips | length == 1 and (ips[0] | length) > 60) %}
+    {% if ip_is_summary and rks %}
+    {# Single long investment_point is actually an AI analysis paragraph, show separately #}
+    <p style="font-size:13px; margin-bottom:12px; color:var(--muted);">{{ ips[0] }}</p>
+    <div>
+      <div class="col-head">主要风险</div>
+      {% for rk in rks %}
+      <div class="risk-item">{{ rk }}</div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="two-col">
+      <div>
+        <div class="col-head">机会</div>
+        {% for pt in ips %}
+        <div class="opp-item">{{ pt }}</div>
+        {% endfor %}
+        {% if not ips %}
+        <div class="opp-item">技术趋势与价格位置提供风险收益参考</div>
+        {% endif %}
+      </div>
+      <div>
+        <div class="col-head">风险</div>
+        {% for rk in rks %}
+        <div class="risk-item">{{ rk }}</div>
+        {% endfor %}
+        {% if not rks %}
+        <div class="risk-item">政策与监管变化导致估值压缩</div>
+        {% endif %}
+      </div>
+    </div>
+    {% endif %}
+    {% if plain.stock_specific_note or (thesis or {}).get('stock_context') %}
+    <p class="tip" style="margin-top:10px;"><strong>与本股相关：</strong>{{ plain.stock_specific_note or (thesis or {}).get('stock_context') }}</p>
+    {% endif %}
+  </div>
+  {% endif %}
+
+  <!-- ═══ 资金面 ═══ -->
+  <div class="card">
+    <div class="card-title">资金面</div>
+    <p class="muted" style="font-size:13px;">资金数据状态：{{ (plain.capital_game_summary or {}).get('data_status') or '正常' }} · 数据接入概况</p>
+    {% set cgs = plain.capital_game_summary or {} %}
+    {% set mf_d = cgs.main_force or {} %}
+    {% set dg_d = cgs.dragon_tiger or {} %}
+    {% set mg_d = cgs.margin_financing or {} %}
+    {% set nb_d = cgs.northbound or {} %}
+    {% set etf_d = cgs.etf_flow or {} %}
+    <div class="cap-chips">
+      <div class="cap-chip">
+        <span class="cap-chip-label">
+          主力净流（5日）
+          {% set mf_status = mf_d.get('status') if mf_d is mapping else '' %}
+          {% if mf_status == 'proxy_ok' %}<span class="data-tag proxy" title="来源：K线量价代理计算">代理</span>
+          {% elif mf_status == 'stale_ok' %}<span class="data-tag proxy" title="来源：本地TDX历史估算">估算</span>
+          {% elif mf_status == 'ok' %}<span class="data-tag real" title="来源：东财fflow真实数据">真实</span>
+          {% endif %}
+        </span>
+        {% set mf5_val = mf_d.get('net_inflow_5d') if mf_d is mapping else none %}
+        {% set mf5_display = (mf_d.get('display_net_inflow_5d') if mf_d is mapping else none) or (mf_d.get('net_inflow_5d_fmt') if mf_d is mapping else none) or '' %}
+        <span class="cap-chip-val {{ 'up' if mf5_val is not none and mf5_val > 0 else 'down' if mf5_val is not none and mf5_val < 0 else 'flat' }}">
+          {{ mf5_display }}
+        </span>
+      </div>
+      <div class="cap-chip">
+        <span class="cap-chip-label">龙虎榜（30日）</span>
+        <span class="cap-chip-val">{{ (dg_d.get('display_lhb_count_30d') if dg_d is mapping else none) or '' }}</span>
+      </div>
+      <div class="cap-chip">
+        <span class="cap-chip-label">
+          两融余额（融资）
+          {% set mg_status = mg_d.get('status') if mg_d is mapping else '' %}
+          {% if mg_status in ('ok', 'realtime_only') %}<span class="data-tag real" title="来源：东财实时">真实</span>
+          {% elif mg_status == 'stale_ok' %}<span class="data-tag proxy" title="来源：本地TDX估算">估算</span>
+          {% elif mg_status == 'missing' %}<span class="data-tag missing" title="数据缺失">缺失</span>
+          {% endif %}
+        </span>
+        {% set rzye_val = mg_d.get('latest_rzye') if mg_d is mapping else none %}
+        {% set rzye_display = (mg_d.get('display_latest_rzye') if mg_d is mapping else none) or '' %}
+        <span class="cap-chip-val {{ 'flat' }}">
+          {{ rzye_display }}
+        </span>
+      </div>
+      <div class="cap-chip">
+        <span class="cap-chip-label">两融余额变化（5日）</span>
+        {% set rz5_val = mg_d.get('rzye_delta_5d') if mg_d is mapping else none %}
+        {% set rz5_display = (mg_d.get('display_rzye_delta_5d') if mg_d is mapping else none) or (mg_d.get('rzye_delta_5d_fmt') if mg_d is mapping else none) or '' %}
+        <span class="cap-chip-val {{ 'up' if rz5_val is not none and rz5_val > 0 else 'down' if rz5_val is not none and rz5_val < 0 else 'flat' }}">
+          {{ rz5_display }}
+        </span>
+      </div>
+      <div class="cap-chip">
+        <span class="cap-chip-label">
+          北向5日净流
+          {% if nb_d.get('status') == 'ok' and nb_d.get('net_inflow_5d') is not none %}<span class="data-tag real" title="来源：akshare/东方财富">真实</span>
+          {% elif nb_d.get('status') in ('ok', 'stale_ok') %}<span class="data-tag proxy" title="已接入状态概况">概况</span>
+          {% else %}<span class="data-tag missing" title="数据暂不可用">缺失</span>{% endif %}
+        </span>
+        {% set nb_display = (nb_d.get('display_net_inflow_5d') if nb_d is mapping else none) or '' %}
+        <span class="cap-chip-val {{ 'up' if nb_d.get('net_inflow_5d') is not none and nb_d.get('net_inflow_5d') > 0 else 'down' if nb_d.get('net_inflow_5d') is not none and nb_d.get('net_inflow_5d') < 0 else 'flat' }}" title="{{ nb_d.get('reason') or nb_display }}">
+          {{ nb_display }}
+        </span>
+      </div>
+      <div class="cap-chip">
+        <span class="cap-chip-label">ETF 5日申赎</span>
+        {% set etf_display = (etf_d.get('display_net_creation_redemption_5d') if etf_d is mapping else none) or '' %}
+        <span class="cap-chip-val {{ 'up' if etf_d.get('net_creation_redemption_5d') is not none and etf_d.get('net_creation_redemption_5d') > 0 else 'down' if etf_d.get('net_creation_redemption_5d') is not none and etf_d.get('net_creation_redemption_5d') < 0 else 'flat' }}" title="{{ etf_d.get('reason') or etf_display }}">
+          {{ etf_display }}
+        </span>
+      </div>
+    </div>
+    {% if cgs.summary_text %}
+    <p style="font-size:13px; margin-bottom:8px;">{{ cgs.summary_text }}</p>
+    {% endif %}
+    {% if cgs.get('render_complete') %}
+    <p class="tip">公开详情页当前展示的是已通过完整性门控的资金面数据。标注“真实”为直接数据，标注“概况/估算”为可追溯摘要或代理值。</p>
+    {% else %}
+    <p class="tip">当前研报资金面为{{ cgs.get('completeness_level') or 'partial' }}，页面仅展示可追溯数据，并对缺失维度做显式标注；缺失维度不会伪装为完整结论。</p>
+    {% endif %}
+  </div>
+
+  <!-- ═══ 证据与引用 ═══ -->
+  {% if report.citations %}
+  <div class="card">
+    <div class="card-title">证据与引用</div>
+    <ul class="cite-list">
+      {% for c in report.citations %}
+      <li>
+        <a href="{{ c.source_url }}" target="_blank" rel="noopener">{{ c.title or c.source_name or c.source_url }}</a>
+        <span class="muted" style="margin-left:6px;">· {{ c.source_name }}</span>
+      </li>
+      {% endfor %}
+    </ul>
+  </div>
+  {% endif %}
+
+  <!-- ═══ 附录（高级区，付费可见）══════════════════════════════ -->
+  <details>
+    <summary>附录：AI 推理全过程 · 数据来源 · 回测详情{% if not show_advanced %}（付费会员可见）{% endif %}</summary>
+    <div class="inner">
+      {% if show_advanced %}
+      {# --- AI 推理完整数据 --- #}
+      <h4 style="margin-top:0;">AI 推理数据（可供其他 AI 分析）</h4>
+      {% set llm_prompt_text = pf.get('llm_prompt') or '' %}
+      {% set llm_raw_resp = pf.get('llm_raw_response') or '' %}
+      {% set llm_err = pf.get('llm_forecast_error') or '' %}
+
+      {# Prompt原文 #}
+      {% if llm_prompt_text %}
+      <details style="margin-bottom:10px;">
+        <summary style="font-size:13px; cursor:pointer; color:var(--accent);">① 发送给 AI 的完整 Prompt（点击展开）</summary>
+        <pre style="background:var(--bg2); border:1px solid var(--line); border-radius:6px; padding:12px; font-size:11px; line-height:1.6; white-space:pre-wrap; word-break:break-all; max-height:500px; overflow-y:auto; margin-top:8px;">{{ llm_prompt_text | e }}</pre>
+      </details>
+      {% else %}
+      <p class="muted" style="font-size:12px;">① Prompt：本报告生成时未记录（请重新生成报告以获取）。</p>
+      {% endif %}
+
+      {# LLM原始响应 #}
+      {% if llm_raw_resp %}
+      <details style="margin-bottom:10px;">
+        <summary style="font-size:13px; cursor:pointer; color:var(--accent);">② AI 原始输出（含思维链，点击展开）</summary>
+        <pre style="background:var(--bg2); border:1px solid var(--line); border-radius:6px; padding:12px; font-size:11px; line-height:1.6; white-space:pre-wrap; word-break:break-all; max-height:600px; overflow-y:auto; margin-top:8px;">{{ llm_raw_resp | e }}</pre>
+      </details>
+      {% elif llm_err %}
+      <p class="muted" style="font-size:12px;">② AI 原始输出：解析错误 — {{ llm_err }}</p>
+      {% else %}
+      <p class="muted" style="font-size:12px;">② AI 原始输出：本报告生成时未记录（请重新生成报告以获取）。</p>
+      {% endif %}
+
+      {# 解析后结构化结果 #}
+      {% set llm_raw_dict = pf.get('llm_forecast_raw') or {} %}
+      {% if llm_raw_dict %}
+      <details style="margin-bottom:10px;">
+        <summary style="font-size:13px; cursor:pointer; color:var(--accent);">③ AI 解析后的结构化预测结果（点击展开）</summary>
+        <table class="dt" style="margin-top:8px; font-size:12px;">
+          <thead><tr><th>周期</th><th>方向</th><th>幅度</th><th>置信度</th><th>依据</th></tr></thead>
+          <tbody>
+            {% for lbl, ldata in llm_raw_dict.items() %}
+            <tr>
+              <td>{{ lbl }}</td>
+              <td class="{{ 'up' if '上涨' in (ldata.get('direction') or '') else 'down' if '下跌' in (ldata.get('direction') or '') else 'flat' }}">{{ ldata.get('direction') or '—' }}</td>
+              <td>{{ ldata.get('pct_range') or '—' }}</td>
+              <td>{{ ldata.get('confidence') or '—' }}</td>
+              <td style="font-size:11px;">{{ ldata.get('reason') or '—' }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </details>
+      {% endif %}
+
+      {# 原始输入数据摘要 #}
+      {% set rt = report.reasoning_trace or {} %}
+      {% set ri = rt.get('raw_inputs') or {} %}
+      {% if ri %}
+      <details style="margin-bottom:10px;">
+        <summary style="font-size:13px; cursor:pointer; color:var(--accent);">④ AI 分析所用原始输入数据摘要（点击展开）</summary>
+        <div style="font-size:12px; margin-top:8px; line-height:1.8;">
+          {% set ms = ri.get('market_snapshot') or {} %}
+          {% if ms %}
+          <p><span class="k">行情快照：</span>{{ ms.get('name','') }}（{{ ms.get('stock_code','') }}）现价 {{ ms.get('last_price','—') }}，今日 {{ ms.get('pct_change','—') }}%，成交额 {{ ms.get('amount','—') }}</p>
+          {% endif %}
+          {% set mf2 = ri.get('market_features') or {} %}
+          {% set feat = (mf2.get('features') or {}) %}
+          {% if feat %}
+          <p><span class="k">技术指标：</span>MA5={{ feat.get('ma5','—') }}，MA20={{ feat.get('ma20','—') }}，RSI14={{ feat.get('rsi14','—') }}，MACD={{ feat.get('macd',{}).get('dif','—') }}/{{ feat.get('macd',{}).get('dea','—') }}</p>
+          {% endif %}
+          {% set cap_ri = ri.get('capital_flow') or {} %}
+          {% set mf_ri = (cap_ri.get('main_force') or {}) %}
+          <p><span class="k">主力资金：</span>状态={{ mf_ri.get('status','—') }}，5日净流入={{ mf_ri.get('net_inflow_5d','—') }}，代理={{ mf_ri.get('proxy','否') }}</p>
+          {% set mg_ri = ri.get('margin_financing') or {} %}
+          <p><span class="k">融资融券：</span>状态={{ mg_ri.get('status','—') }}，融资余额={{ mg_ri.get('latest_rzye','—') }}</p>
+          {% set ni = ri.get('news_items') or [] %}
+          {% if ni %}
+          <p><span class="k">新闻（{{ ni|length }} 条）：</span>{% for n in ni[:3] %}{{ n.get('title','') }}{% if not loop.last %}；{% endif %}{% endfor %}{% if ni|length > 3 %}…{% endif %}</p>
+          {% endif %}
+          {% set si = ri.get('social_items') or [] %}
+          <p><span class="k">社媒热搜：</span>{{ si|length }} 条{% if not si %}（缺失）{% endif %}</p>
+          {% set err_cap = ri.get('capital_errors') or [] %}
+          {% if err_cap %}
+          <p><span class="k">资金面异常：</span>{{ err_cap | join('；') }}</p>
+          {% endif %}
+        </div>
+      </details>
+      {% endif %}
+
+      {# reasoning_trace 推理摘要 #}
+      {% if rt.inference_summary %}
+      <p style="font-size:13px; margin-top:4px;"><span class="k">推理摘要：</span>{{ rt.inference_summary }}</p>
+      {% endif %}
+
+      <hr style="border:none; border-top:1px solid var(--line); margin:16px 0;">
+
+      {# --- 三方审计（E2）--- #}
+      {% set af = report.audit_flag or 'not_triggered' %}
+      {% set ad = report.audit_detail or '' %}
+      {% if af != 'not_triggered' %}
+      <h4>三方投票审计</h4>
+      <p><span class="k">审计结果：</span>
+        {% if af == 'audit_skipped' %}
+        <span class="badge warn">未执行</span>
+        {% else %}
+        {{ ad or '已通过审计' }}
+        <span class="badge {{ 'buy' if af in ['unanimous_buy'] else 'sell' if af in ['unanimous_sell'] else 'warn' if af in ['high_risk_flag','votes_uncertain'] else 'hold' }}">{{ {'unanimous_buy':'三票一致看多','unanimous_sell':'三票一致看空','majority_agree':'多数同意','high_risk_flag':'高风险提示','votes_uncertain':'票数分歧'}.get(af, af) }}</span>
+        {% endif %}
+      </p>
+      {% endif %}
+
+      {# --- 数据来源 --- #}
+      <h4>行情与数据来源</h4>
+      <p><span class="k">行情来源：</span>{{ dual.selected_source or 'eastmoney' }}；东财价 {{ dual.eastmoney_price or snap.last_price or '—' }}，通达信价 {{ dual.tdx_price or '—' }}；{% if dual.price_consistent is sameas true %}两源一致{% else %}两源存在差异或无法比较{% endif %}。</p>
+      {% set rdu = report.report_data_usage or {} %}
+      {% if rdu.sources %}
+      <h4>本报告数据</h4>
+      <table class="dt">
+        <thead><tr><th>来源</th><th>时间范围</th><th>条数</th><th>状态</th></tr></thead>
+        <tbody>
+          {% for s in rdu.sources %}
+          <tr><td>{{ s.name }}</td><td>{{ s.time_range }}</td><td>{{ s.record_count }}</td><td>{{ s.status }}</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      {% endif %}
+
+      {% else %}
+      <p class="muted">订阅月会员或年会员后可查看附录：AI 推理全过程、数据来源、回测详情。<a href="/login">登录</a> | <a href="/subscribe">了解套餐</a></p>
+      {% endif %}
+
+    </div>
+  </details>
+
+  <!-- 有帮助/有问题 快捷反馈（E5.1，FR-07） -->
+  {% if is_logged_in %}
+  <div class="card rv-feedback" id="feedback-section" style="margin-top:20px;">
+    <div class="card-title">这篇研报对你有帮助吗？</div>
+    <div id="feedback-btns" style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
+      <button type="button" class="btn-feedback btn-yes rv-fb-btn positive" data-helpful="true" aria-label="有帮助">👍 有帮助</button>
+      <button type="button" class="btn-feedback btn-no rv-fb-btn negative" data-helpful="false" aria-label="有问题">👎 有问题</button>
+      <span id="feedback-msg" class="muted" style="font-size:13px;"></span>
+    </div>
+    <p id="feedback-thanks" class="muted" style="display:none;color:var(--ok);margin-top:8px;">感谢反馈</p>
+    <p id="feedback-error" class="muted" style="display:none;color:var(--danger);margin-top:8px;">提交失败，请稍后重试</p>
+  </div>
+  {% else %}
+  <p id="feedback-login-hint" class="muted" style="margin-top:16px;">登录后可提交研报反馈：<a href="/login?next={{ request.url.path }}">立即登录</a></p>
+  {% endif %}
+
+  {% include "_footer_disclaimer.html" %}
+</main>
+
+{% include "_app_config.html" %}
+  <script src="/static/api-bridge.js"></script>
+<script>
+var _apiBase = window.__API_BASE__ || '/api/v1';
+var TYPE_CN = {'A':'事件驱动','B':'趋势跟踪','C':'低波套利'};
+function shareReport() {
+  var url = window.location.href;
+  if (navigator.share) {
+    navigator.share({ title: document.title, url: url }).catch(function() {
+      navigator.clipboard.writeText(url).then(function() { alert('链接已复制'); }).catch(function() { prompt('复制链接', url); });
+    });
+  } else {
+    navigator.clipboard.writeText(url).then(function() { alert('链接已复制'); }).catch(function() { prompt('复制链接', url); });
+  }
+}
+(function () {
+  const reportId = "{{ report.report_id or '' }}";
+  const posEl = document.getElementById('pos-status-text');
+  if (posEl && reportId) {
+    fetch(_apiBase + '/sim/positions/by-report/' + reportId)
+      .then(r => r.json())
+      .then(j => {
+        if (j.success === false || !j.data) {
+          var msg = j.code === 401 ? '请登录后查看持仓' : (j.code === 403 ? '请订阅后查看持仓' : (j.message || '暂无持仓数据'));
+          posEl.textContent = msg;
+          return;
+        }
+        const items = j.data.items || [];
+        if (items.length === 0) {
+          posEl.textContent = '暂无模拟持仓（该研报尚未触发开仓或开仓记录已结算）';
+          return;
+        }
+        const p = items[0];
+        const status = p.status || 'UNKNOWN';
+        const statusMap = {
+          OPEN: '● 持有中',
+          CLOSED_SL: '✗ 已止损',
+          CLOSED_T1: '✓ 已止盈（目标价1）',
+          CLOSED_T2: '✓ 已止盈（目标价2）',
+          CLOSED_EXPIRED: '○ 已超时平仓'
+        };
+        let txt = statusMap[status] || status;
+        if (p.execution_blocked) txt = '⊘ 执行受阻（涨跌停）';
+        else if (status === 'OPEN') {
+          const pct = p.sim_pnl_pct != null ? (p.sim_pnl_pct >= 0 ? '+' : '') + p.sim_pnl_pct.toFixed(1) + '%' : '';
+          const days = p.hold_days != null ? '已持 ' + p.hold_days + ' 日' : '';
+          txt += (pct ? ' ' + pct : '') + (days ? ' · ' + days : '') + (p.stop_loss_price ? ' · 止损 ¥' + p.stop_loss_price.toFixed(2) : '');
+        } else if (p.sim_pnl_pct != null) {
+          txt += ' ' + (p.sim_pnl_pct >= 0 ? '+' : '') + p.sim_pnl_pct.toFixed(1) + '%';
+        }
+        posEl.textContent = txt;
+        posEl.className = 'pos-status pos-' + (status === 'OPEN' ? 'open' : status.startsWith('CLOSED_T') ? 'win' : status === 'CLOSED_SL' ? 'sl' : 'expired');
+      })
+      .catch((e) => { posEl.textContent = '加载失败，请刷新重试。'; });
+  }
+})();
+(function () {
+  const reportId = "{{ report.report_id or '' }}";
+  const block = document.getElementById('feedback-section');
+  if (!block || !reportId) return;
+  const btns = block.querySelectorAll('.btn-feedback');
+  const msgEl = document.getElementById('feedback-msg');
+  const btnWrap = document.getElementById('feedback-btns');
+  const thanksEl = document.getElementById('feedback-thanks');
+  const errEl = document.getElementById('feedback-error');
+  let submitted = false;
+  btns.forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      if (submitted) return;
+      const helpful = btn.dataset.helpful === 'true';
+      btns.forEach(function (b) { b.disabled = true; });
+      const start = Date.now();
+      fetch(_apiBase + '/reports/' + reportId + '/feedback', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ feedback_type: helpful ? 'positive' : 'negative' })
+      })
+        .then(function (r) { return r.json().then(function(j){ return {ok: r.ok, j: j}; }); })
+        .then(function (res) {
+          if (res.ok && res.j && res.j.success) {
+            submitted = true;
+            const ms = Date.now() - start;
+            msgEl.textContent = helpful ? '已感谢你的反馈 ✓' : '已记录，我们会持续改进';
+            msgEl.style.color = 'var(--ok)';
+            if (btnWrap) btnWrap.style.display = 'none';
+            if (thanksEl) thanksEl.style.display = '';
+            if (errEl) errEl.style.display = 'none';
+            if (ms > 2000) console.warn('report_feedback latency', ms, 'ms');
+          } else {
+            msgEl.textContent = (res.j && res.j.message) ? res.j.message : '提交失败，请稍后重试';
+            msgEl.style.color = 'var(--danger)';
+            if (errEl) errEl.style.display = '';
+            if (thanksEl) thanksEl.style.display = 'none';
+            btns.forEach(function (b) { b.disabled = false; });
+          }
+        })
+        .catch(function () {
+          msgEl.textContent = '提交失败，请稍后重试';
+          msgEl.style.color = 'var(--danger)';
+          if (errEl) errEl.style.display = '';
+          if (thanksEl) thanksEl.style.display = 'none';
+          btns.forEach(function (b) { b.disabled = false; });
+        });
+    });
+  });
+})();
+
+var REPORT_ID = "{{ report.report_id or '' }}";
+(function () {
+  var area = document.getElementById('advanced-area');
+  var canSeeAdvanced = {{ 'true' if show_advanced else 'false' }};
+  if (!area || !REPORT_ID || !canSeeAdvanced) return;
+  function renderAdvancedMessage(msg) {
+    var content = document.createElement('div');
+    content.className = 'advanced-content';
+    content.textContent = msg;
+    area.appendChild(content);
+  }
+  function getReportAdvanced(reportId) {
+    return apiFetch('/reports/' + reportId + '/advanced');
+  }
+  getReportAdvanced(REPORT_ID).then(function(r) {
+    if (r && r.success && r.data) {
+      var content = document.createElement('div');
+      content.className = 'advanced-content';
+      content.textContent = r.data.reasoning_chain_md || r.data.reasoning_chain || '';
+      area.appendChild(content);
+      return;
+    }
+    var code = (r && r.error_code) ? String(r.error_code).toUpperCase() : '';
+    if (code === 'UNAUTHORIZED' || code === 'FORBIDDEN') {
+      renderAdvancedMessage('高级区需要登录后查看。');
+    } else {
+      renderAdvancedMessage('高级区暂不可用，请稍后重试。');
+    }
+  }).catch(function() {
+    renderAdvancedMessage('高级区加载失败，请稍后重试。');
+  });
+})();
+</script>
+</body>
+</html>

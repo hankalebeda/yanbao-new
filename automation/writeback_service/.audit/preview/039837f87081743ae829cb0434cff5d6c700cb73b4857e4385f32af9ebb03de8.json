@@ -1,0 +1,8 @@
+{
+  "base_sha256": "85f2c21fa2b5b160e24db6d32a62e2682aad53d59f956bbc6b0e206fded710fc",
+  "current_sha256": "85f2c21fa2b5b160e24db6d32a62e2682aad53d59f956bbc6b0e206fded710fc",
+  "patch_hash": "12aac3a28985345d592c7df4b1005423835ee3fc9f294c8c2847713654cfda66",
+  "patched_sha256": "12aac3a28985345d592c7df4b1005423835ee3fc9f294c8c2847713654cfda66",
+  "previewed_at": "2026-03-30T20:07:01.697223+00:00",
+  "relative_path": "tests/test_schema_alignment_traceability.py"
+}

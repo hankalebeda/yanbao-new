@@ -1,0 +1,34 @@
+{
+  "backup_ts": "20260418_072702",
+  "alive_count": 1610,
+  "tables": {
+    "report": {
+      "path": "d:\\yanbao-new\\_archive\\backup_20260418_v24\\report_20260418_072702.jsonl",
+      "rows": 1610
+    },
+    "report_citation": {
+      "path": "d:\\yanbao-new\\_archive\\backup_20260418_v24\\report_citation_20260418_072702.jsonl",
+      "rows": 8050
+    },
+    "report_data_usage_link": {
+      "path": "d:\\yanbao-new\\_archive\\backup_20260418_v24\\report_data_usage_link_20260418_072702.jsonl",
+      "rows": 8949
+    },
+    "report_idempotency": {
+      "path": "d:\\yanbao-new\\_archive\\backup_20260418_v24\\report_idempotency_20260418_072702.jsonl",
+      "rows": 0
+    },
+    "report_feedback": {
+      "path": "d:\\yanbao-new\\_archive\\backup_20260418_v24\\report_feedback_20260418_072702.jsonl",
+      "rows": 0
+    },
+    "instruction_card": {
+      "path": "d:\\yanbao-new\\_archive\\backup_20260418_v24\\instruction_card_20260418_072702.jsonl",
+      "rows": 1610
+    },
+    "report_data_usage": {
+      "path": "d:\\yanbao-new\\_archive\\backup_20260418_v24\\report_data_usage_20260418_072702.jsonl",
+      "rows": 136472
+    }
+  }
+}

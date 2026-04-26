@@ -1,0 +1,84 @@
+# ===== Large data dirs - DO NOT upload =====
+data/
+runtime/
+output/
+历史数据/
+通达信/
+
+# ===== Runtime snapshots / mirrors under ai-api =====
+ai-api/**/.tmp/
+ai-api/**/.sandbox/
+ai-api/**/.sandbox-bin/
+ai-api/**/log/
+ai-api/**/logs/
+ai-api/**/sessions/
+ai-api/**/logs_*.sqlite
+ai-api/**/*.sqlite
+ai-api/**/*.sqlite-*
+ai-api/**/*.db
+ai-api/**/*.db-*
+
+# ===== Python venv =====
+.venv/
+venv/
+env/
+
+# ===== Secrets =====
+.env
+!.env.example
+ai账户.txt
+
+# ===== Python cache / build =====
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.egg-info/
+dist/
+build/
+.pytest_cache/
+
+# ===== Database =====
+*.db
+*.sqlite3
+_archive/**/*.db
+_archive/**/*.db-*
+_archive/**/*.sqlite
+_archive/**/*.sqlite-*
+_archive/**/app.db.bak*
+
+# ===== Logs =====
+*.log
+logs/
+service_stdout.log
+service_stderr.log
+svc_out.log
+svc_err.log
+test_run.log
+
+# ===== IDE / AI workdirs =====
+.vscode/
+.idea/
+.cursor/
+.claude/
+
+# ===== HTML previews =====
+report_preview_*.html
+
+# ===== Generated reports / temp artifacts =====
+report_*.json
+temp_*.py
+*_output.txt
+*_summary.txt
+*_results.txt
+batch_resp.txt
+dashboard.txt
+recent.txt
+rlist.txt
+
+# ===== Node =====
+node_modules/
+
+# ===== Temp files =====
+*.tmp
+*.bak

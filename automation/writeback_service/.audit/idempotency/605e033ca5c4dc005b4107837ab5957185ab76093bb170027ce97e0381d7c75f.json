@@ -1,0 +1,7 @@
+{
+  "commit_id": "07928f72-5069-4a70-9a85-4a67b1ad1051",
+  "fingerprint": "265536f1c99bf7e60419257463f77b6ded33ec173822b89d832261c76825de36",
+  "idempotency_key": "remote-rollback-kestra-probe-001",
+  "operation": "rollback",
+  "saved_at": "2026-03-27T02:14:59.869425+00:00"
+}

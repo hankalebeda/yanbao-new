@@ -1,0 +1,84 @@
+{
+  "started_at": "2026-02-25T10:29:35.739714",
+  "mode": "real_smoke_low_concurrency",
+  "constraints": {
+    "sequential": true,
+    "providers": [
+      "deepseek",
+      "qwen"
+    ],
+    "calls_per_provider": 1,
+    "inter_call_sleep_s": 6.0,
+    "timeout_s": 120,
+    "retry": 1
+  },
+  "providers": {
+    "deepseek": {
+      "pass_count": 0,
+      "total": 1,
+      "results": [
+        {
+          "attempt": 2,
+          "status_code": 503,
+          "code": 503,
+          "elapsed_wall_s": 17.88,
+          "expected": "CASE-REAL_DEEPSEEK_1771986576|OK|OK",
+          "response_preview": "",
+          "match_expected": false,
+          "error": "DeepSeek session is not logged in. Please log in at https://chat.deepseek.com/ and retry.",
+          "raw": {
+            "code": 503,
+            "message": "error",
+            "data": {
+              "error_code": 3001
+            },
+            "request_id": "3bfa9007-d225-4ea3-98ee-ac3179317ac2",
+            "error": "DeepSeek session is not logged in. Please log in at https://chat.deepseek.com/ and retry."
+          },
+          "pass": false
+        }
+      ]
+    },
+    "qwen": {
+      "pass_count": 1,
+      "total": 1,
+      "results": [
+        {
+          "attempt": 1,
+          "status_code": 200,
+          "code": 0,
+          "elapsed_wall_s": 24.33,
+          "expected": "CASE-REAL_QWEN_1771986628|OK|OK",
+          "response_preview": "CASE-REAL_QWEN_1771986628|OK|OK",
+          "match_expected": true,
+          "error": "",
+          "raw": null,
+          "pass": true
+        }
+      ]
+    }
+  },
+  "close_all": {
+    "status_code": 200,
+    "body": {
+      "code": 0,
+      "message": "ok",
+      "data": {
+        "closed": true,
+        "providers": [
+          "chatgpt",
+          "deepseek",
+          "gemini",
+          "qwen"
+        ]
+      },
+      "request_id": "2f77284b-08c4-4c5a-94b6-8f548b7d2391",
+      "error": null
+    }
+  },
+  "finished_at": "2026-02-25T10:30:59.854591",
+  "summary": {
+    "total": 2,
+    "passed": 1
+  }
+}

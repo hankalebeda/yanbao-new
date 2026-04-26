@@ -1,0 +1,109 @@
+{
+  "_schema": "escort_doc25_topic_packages_v1",
+  "_source": "docs/core/25_系统问题分析角度清单.md",
+  "topics": [
+    {
+      "name": "truth_lineage",
+      "label": "真相层与血缘",
+      "angles": [1, 5, 6, 9],
+      "severity": "P1",
+      "lane": "gov_registry",
+      "task_family": "issue-registry",
+      "suggested_approach": "fix_code",
+      "current_status": "blocked",
+      "blocker_type": "resolved_maintenance",
+      "blocked_reason": "backfill completed, citations=0, reference mismatches=0; monitor only",
+      "keywords": [
+        "真相层",
+        "血缘",
+        "lineage",
+        "truth",
+        "registry",
+        "issue-registry"
+      ],
+      "write_scope": [
+        "app/governance/feature_registry.json",
+        "scripts/continuous_repo_audit.py"
+      ]
+    },
+    {
+      "name": "bad_batch_runtime",
+      "label": "坏批次与运行时恢复",
+      "angles": [9, 10, 13, 14, 16, 24],
+      "severity": "P1",
+      "lane": "runtime_blocked",
+      "task_family": "runtime-external",
+      "suggested_approach": "execution_and_monitoring",
+      "current_status": "blocked",
+      "blocker_type": "external_dependency",
+      "blocked_reason": "runtime gate or external dependency remains unresolved",
+      "keywords": [
+        "坏批次",
+        "运行时",
+        "恢复",
+        "runtime",
+        "recovery",
+        "runtime anchor",
+        "anchor"
+      ],
+      "write_scope": [
+        "automation/loop_controller/**",
+        "automation/writeback_service/**"
+      ]
+    },
+    {
+      "name": "fr07_writer_rebuild",
+      "label": "FR-07 写入器重建",
+      "angles": [7, 10, 12, 13, 15, 16, 38],
+      "severity": "P2",
+      "lane": "gov_mapping",
+      "task_family": "feature-governance",
+      "suggested_approach": "fix_then_rebuild",
+      "current_status": "blocked",
+      "blocker_type": "external_dependency",
+      "blocked_reason": "mootdx external data source unavailable; code degradation path already in place",
+      "keywords": [
+        "fr-07",
+        "writer",
+        "rebuild",
+        "写入器",
+        "重建"
+      ],
+      "write_scope": [
+        "app/governance/build_feature_catalog.py",
+        "automation/promote_prep/**"
+      ]
+    },
+    {
+      "name": "payment_auth_governance",
+      "label": "支付/鉴权/治理",
+      "angles": [1, 3, 4, 18, 20, 22, 35],
+      "severity": "P2",
+      "lane": "gov_mapping",
+      "task_family": "feature-governance",
+      "suggested_approach": "fix_then_rebuild",
+      "current_status": "blocked",
+      "blocker_type": "external_dependency",
+      "blocked_reason": "payment provider not configured, webhook/email not provisioned; requires external service setup",
+      "keywords": [
+        "支付",
+        "鉴权",
+        "认证",
+        "payment",
+        "auth",
+        "governance",
+        "治理",
+        "契约",
+        "通知",
+        "邮件",
+        "notification",
+        "email",
+        "webhook"
+      ],
+      "write_scope": [
+        "app/auth/**",
+        "app/payment/**"
+      ]
+    }
+  ]
+}

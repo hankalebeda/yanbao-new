@@ -1,0 +1,7 @@
+{
+  "commit_id": "7162b7b9-7cc1-44a8-9624-a9f96444df3a",
+  "fingerprint": "c6d2765c223f1446562b9d77c73f1f8a8cd4887ccc7b785defff578415598637",
+  "idempotency_key": "issue-mesh:issue-mesh-20260327-017:status-note:current-writeback-detail:rollback",
+  "operation": "rollback",
+  "saved_at": "2026-03-27T13:02:12.525787+00:00"
+}

@@ -1,0 +1,231 @@
+{
+  "success": true,
+  "message": "ok",
+  "data": {
+    "report_id": "857503e5-7ff6-47e8-9a43-154bea3cd897",
+    "stock_code": "600519.SH",
+    "stock_name": "贵州茅台",
+    "trade_date": "2026-04-16",
+    "recommendation": "HOLD",
+    "confidence": 0.62,
+    "strategy_type": "C",
+    "market_state": "NEUTRAL",
+    "quality_flag": "ok",
+    "llm_fallback_level": "primary",
+    "risk_audit_status": "not_triggered",
+    "review_flag": "APPROVED",
+    "publish_status": "PUBLISHED",
+    "published": true,
+    "status_reason": null,
+    "degraded_banner": null,
+    "conclusion_text": "贵州茅台当前收盘1462.84元，技术面仍偏稳，股价位于MA5=1454.90和MA20=1441.51之上，短线趋势未破坏，且20日波动率仅0.0106、ATR%=1.67，符合低波策略对稳定性的要求。但资金面明显分化：eastmoney_fflow_daykline显示主力1日净流出62.16亿元、3日净流出177.39亿元，已连续4日流出；龙虎榜近30日净买入合计为-8.41亿元。虽然10日与20日主力净流入分别为276.66亿元和118.40亿元，说明中期资金未完全转弱，但短线承压，综合建议持有观望。",
+    "citations": [
+      {
+        "citation_id": "2edfdb2f-72f5-4b82-972e-651614c3cd89",
+        "source_name": "tencent",
+        "source_url": "https://quote.eastmoney.com/concept/600519.html",
+        "fetch_time": "2026-04-17T13:27:46.150970",
+        "title": "K线日线数据",
+        "excerpt": "开盘 1467.45 收盘 1462.84 最高 1477.41 最低 1460"
+      },
+      {
+        "citation_id": "f36c4c83-83c9-4954-9213-8cb123776b83",
+        "source_name": "backfill",
+        "source_url": "https://guba.eastmoney.com/news,cjpl.html",
+        "fetch_time": "2026-04-17T13:20:57.229318",
+        "title": "热点题材数据",
+        "excerpt": "600519.SH hotspot_top50 ok"
+      },
+      {
+        "citation_id": "d9913987-9ce2-41d9-b6af-c0ac4f2b0a80",
+        "source_name": "etf_flow",
+        "source_url": "https://data.eastmoney.com/etf/default.html",
+        "fetch_time": "2026-04-17T13:20:50.536715",
+        "title": "ETF资金流向",
+        "excerpt": "600519.SH etf_flow_summary ok"
+      },
+      {
+        "citation_id": "ba00af54-5a7c-49b0-9787-eff236620588",
+        "source_name": "northbound",
+        "source_url": "https://data.eastmoney.com/hsgtcg/stock.html?code=600519",
+        "fetch_time": "2026-04-17T13:20:50.500960",
+        "title": "北向资金",
+        "excerpt": "600519.SH northbound_summary ok"
+      },
+      {
+        "citation_id": "d6380069-9905-4947-a8e7-38c0cda0b7cf",
+        "source_name": "market_state_cache",
+        "source_url": "https://quote.eastmoney.com/zs000001.html",
+        "fetch_time": "2026-04-17T17:36:54.116426",
+        "title": "市场状态",
+        "excerpt": "市场状态 NEUTRAL 参考日 2026-04-15"
+      }
+    ],
+    "instruction_card": {
+      "signal_entry_price": "¥**.**",
+      "atr_pct": 0.016712,
+      "atr_multiplier": 2.5,
+      "stop_loss": "¥**.**",
+      "target_price": "¥**.**",
+      "stop_loss_calc_mode": "atr_multiplier"
+    },
+    "sim_trade_instruction": null,
+    "used_data": [
+      {
+        "usage_id": "deee7972-e2b0-4480-8fd7-9bbfbc807539",
+        "trade_date": "2026-04-16",
+        "stock_code": "600519.SH",
+        "dataset_name": "hotspot_top50",
+        "source_name": "backfill",
+        "batch_id": "4f36199b-b0a0-4333-aeb8-64685c6fc605",
+        "fetch_time": "2026-04-17T13:20:57.229318",
+        "status": "ok",
+        "status_reason": null
+      },
+      {
+        "usage_id": "76c658bc-0df4-4012-9324-1b633038822d",
+        "trade_date": "2026-04-16",
+        "stock_code": "600519.SH",
+        "dataset_name": "main_force_flow",
+        "source_name": "eastmoney_fflow_daykline",
+        "batch_id": "13b84368-50a4-4e54-9a17-c1295facf702",
+        "fetch_time": "2026-04-17T23:36:30.981674",
+        "status": "ok",
+        "status_reason": "capital_snapshot:{\"net_inflow_1d\": -6216379392.0, \"net_inflow_3d\": -17739109376.0, \"net_inflow_5d\": -15883311104.0, \"net_inflow_10d\": 27665699840.0, \"net_inflow_20d\": 11840401920.0, \"super_large_net_5d\": null, \"large_net_5d\": null, \"streak_days\": -4, \"history_records\": 5298, \"history_end_date\": \"20260213\"}"
+      },
+      {
+        "usage_id": "d7cce84b-99af-4a1a-8c8f-5a218b3336d9",
+        "trade_date": "2026-04-16",
+        "stock_code": "600519.SH",
+        "dataset_name": "dragon_tiger_list",
+        "source_name": "eastmoney_lhb",
+        "batch_id": "13b84368-50a4-4e54-9a17-c1295facf702",
+        "fetch_time": "2026-04-17T23:36:30.981674",
+        "status": "ok",
+        "status_reason": "capital_snapshot:{\"lhb_count_30d\": 4, \"lhb_count_90d\": 4, \"lhb_count_250d\": 4, \"net_buy_total\": -840681089.98, \"avg_net_buy_ratio\": -10.8966, \"seat_concentration\": {\"status\": \"limited\", \"note\": \"seat_level_detail_not_available_in_current_free_endpoint\"}, \"source\": \"eastmoney\"}"
+      },
+      {
+        "usage_id": "ba5c6330-4240-4676-a576-11de74b11864",
+        "trade_date": "2026-04-16",
+        "stock_code": "600519.SH",
+        "dataset_name": "margin_financing",
+        "source_name": "eastmoney_push2_rzrq",
+        "batch_id": "13b84368-50a4-4e54-9a17-c1295facf702",
+        "fetch_time": "2026-04-17T23:36:30.981674",
+        "status": "ok",
+        "status_reason": "capital_snapshot:{\"latest_rzye\": -25313732608.0, \"latest_rqye\": 71500000.0, \"rzye_delta_5d\": -15883311104.0, \"rzye_delta_20d\": 11840401920.0, \"rqye_delta_5d\": null, \"rqye_delta_20d\": null, \"history_records\": 260, \"history_end_date\": \"20260213\"}"
+      },
+      {
+        "usage_id": "e596abbd-9430-4c98-bea6-892fc68e8eb3",
+        "trade_date": "2026-04-16",
+        "stock_code": "600519.SH",
+        "dataset_name": "etf_flow_summary",
+        "source_name": "etf_flow",
+        "batch_id": "9ce92367-f8f5-4ba8-b49f-8d1379458cc6",
+        "fetch_time": "2026-04-17T13:20:50.536715",
+        "status": "ok",
+        "status_reason": null
+      },
+      {
+        "usage_id": "852ded4f-76f2-4155-b89e-8f47a2990f71",
+        "trade_date": "2026-04-16",
+        "stock_code": "600519.SH",
+        "dataset_name": "market_state_input",
+        "source_name": "market_state_cache",
+        "batch_id": "f120497e-4052-4eea-b861-c4a6b96affb6",
+        "fetch_time": "2026-04-17T17:36:54.116426",
+        "status": "ok",
+        "status_reason": null
+      },
+      {
+        "usage_id": "06f7550f-929b-4e78-b226-75abe02325d6",
+        "trade_date": "2026-04-16",
+        "stock_code": "600519.SH",
+        "dataset_name": "northbound_summary",
+        "source_name": "northbound",
+        "batch_id": "2df1c6ff-c7d5-462b-b753-009d30c14750",
+        "fetch_time": "2026-04-17T13:20:50.500960",
+        "status": "ok",
+        "status_reason": null
+      },
+      {
+        "usage_id": "1b113892-01ab-4c59-86b5-c973f6112f28",
+        "trade_date": "2026-04-16",
+        "stock_code": "600519.SH",
+        "dataset_name": "kline_daily",
+        "source_name": "tencent",
+        "batch_id": "206a38e3-69ad-463f-b14b-bcb39e08400c",
+        "fetch_time": "2026-04-17T13:27:46.150970",
+        "status": "ok",
+        "status_reason": null
+      }
+    ],
+    "capital_game_summary": {
+      "headline": "主力资金已接入；龙虎榜已接入；融资融券已接入；北向资金摘要已就绪；ETF 资金流摘要已就绪",
+      "summary_text": "北向资金状态：ok；ETF 资金流状态：ok",
+      "has_real_conclusion": true,
+      "main_force": {
+        "status": "ok",
+        "source": "eastmoney_fflow_daykline",
+        "fetch_time": "2026-04-17T23:36:30.981674",
+        "net_inflow_1d": -6216379392.0,
+        "net_inflow_3d": -17739109376.0,
+        "net_inflow_5d": -15883311104.0,
+        "net_inflow_10d": 27665699840.0,
+        "net_inflow_20d": 11840401920.0,
+        "streak_days": -4,
+        "history_records": 5298,
+        "history_end_date": "20260213"
+      },
+      "dragon_tiger": {
+        "source": "eastmoney",
+        "lhb_count_30d": 4,
+        "lhb_count_90d": 4,
+        "net_buy_total": -840681089.98,
+        "avg_net_buy_ratio": -10.8966,
+        "seat_concentration": {
+          "status": "limited",
+          "note": "seat_level_detail_not_available_in_current_free_endpoint"
+        }
+      },
+      "margin_financing": {
+        "status": "ok",
+        "source": "eastmoney_push2_rzrq",
+        "fetch_time": "2026-04-17T23:36:30.981674",
+        "latest_rzye": -25313732608.0,
+        "latest_rqye": 71500000.0,
+        "rzye_delta_5d": -15883311104.0,
+        "rzye_delta_20d": 11840401920.0,
+        "rqye_delta_5d": null,
+        "rqye_delta_20d": null,
+        "history_records": 260,
+        "history_end_date": "20260213"
+      },
+      "northbound": {
+        "status": "ok",
+        "reason": "数据已接入",
+        "fetch_time": "2026-04-17T13:20:50.500960"
+      },
+      "etf_flow": {
+        "status": "ok",
+        "reason": "数据已接入",
+        "fetch_time": "2026-04-17T13:20:50.536715"
+      }
+    },
+    "term_context": {
+      "recommendation": "观望等待",
+      "quality_flag": "数据正常",
+      "risk_audit_status": "尚未触发",
+      "strategy_type": "低波套利",
+      "market_state": "震荡",
+      "confidence": "0.62",
+      "ATR": "ATR=1.7%，代表该股近期平均每日波动约 1.7%，当前止损按 2.5 倍 ATR 计算。",
+      "atr_pct": "1.7%",
+      "signal_entry_price": "¥**.**",
+      "stop_loss": "¥**.**",
+      "target_price": "¥**.**"
+    }
+  },
+  "request_id": "7ccf3e8a-80b1-42e1-b713-c75d98a9635a",
+  "error": null
+}

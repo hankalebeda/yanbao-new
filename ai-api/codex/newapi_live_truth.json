@@ -1,0 +1,21 @@
+{
+  "token_name": "codex-relay-xhigh",
+  "candidate_models": [
+    "gpt-5.4",
+    "gpt-5.3-codex"
+  ],
+  "disable_unmanaged_candidates": false,
+  "include_root_key_sources": false,
+  "allow_token_fork": true,
+  "known_relay_token_prefixes": [
+    "codex-relay-v4-"
+  ],
+  "managed_sources": [
+    "bus.042999.xyz",
+    "marybrown.dpdns.org",
+    "elysiver.h-e.top",
+    "supercodex.space",
+    "ai.acmi.run",
+    "nih.cc"
+  ]
+}

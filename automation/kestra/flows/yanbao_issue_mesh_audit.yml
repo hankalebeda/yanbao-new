@@ -1,0 +1,163 @@
+id: yanbao_issue_mesh_audit
+namespace: yanbao.ops
+description: >
+  Formal readonly monitor/analyze stage for the issue-mesh closure.
+  It runs the readonly issue mesh through mesh-runner, writes canonical shadow
+  outputs through promote_prep, and stages a handoff bundle for downstream
+  code-fix and promote flows.
+  This flow never refreshes official shared artifacts and never writes
+  docs/core/22 directly.
+
+inputs:
+  - id: app_base_url
+    type: STRING
+    defaults: "http://host.docker.internal:18100"
+  - id: internal_token
+    type: STRING
+    required: true
+  - id: new_api_base_url
+    type: STRING
+    defaults: "http://192.168.232.141:3000"
+  - id: new_api_token
+    type: STRING
+    required: true
+  - id: mesh_runner_base_url
+    type: STRING
+    defaults: "http://host.docker.internal:18193"
+  - id: mesh_runner_token
+    type: STRING
+    required: true
+  - id: promote_prep_base_url
+    type: STRING
+    defaults: "http://host.docker.internal:18194"
+  - id: promote_prep_token
+    type: STRING
+    required: true
+  - id: run_label
+    type: STRING
+    defaults: "issue-mesh-formal-monitor"
+  - id: run_id
+    type: STRING
+    required: true
+  - id: benchmark_label
+    type: STRING
+    defaults: "issue-mesh-readonly"
+  - id: audit_scope
+    type: STRING
+    defaults: "current-layer"
+  - id: shard_strategy
+    type: STRING
+    defaults: "family-view-ssot"
+  - id: control_state_snapshot
+    type: STRING
+    defaults: "Recovery-Rearm"
+  - id: max_workers
+    type: INT
+    defaults: 12
+
+tasks:
+  - id: app_health
+    type: io.kestra.plugin.core.http.Request
+    method: GET
+    uri: "{{ inputs.app_base_url }}/health"
+
+  - id: runtime_gates
+    type: io.kestra.plugin.core.http.Request
+    method: GET
+    uri: "{{ inputs.app_base_url }}/api/v1/internal/runtime/gates"
+    headers:
+      X-Internal-Token: "{{ inputs.internal_token }}"
+
+  - id: audit_context
+    type: io.kestra.plugin.core.http.Request
+    method: GET
+    uri: "{{ inputs.app_base_url }}/api/v1/internal/audit/context"
+    headers:
+      X-Internal-Token: "{{ inputs.internal_token }}"
+
+  - id: new_api_models
+    type: io.kestra.plugin.core.http.Request
+    method: GET
+    uri: "{{ inputs.new_api_base_url }}/v1/models"
+    headers:
+      Authorization: "Bearer {{ inputs.new_api_token }}"
+
+  - id: start_mesh_run
+    type: io.kestra.plugin.core.http.Request
+    method: POST
+    uri: "{{ inputs.mesh_runner_base_url }}/v1/runs"
+    headers:
+      Content-Type: application/json
+      Authorization: "Bearer {{ inputs.mesh_runner_token }}"
+    body: |
+      {
+        "run_id": "{{ inputs.run_id }}",
+        "run_label": "{{ inputs.run_label }}",
+        "benchmark_label": "{{ inputs.benchmark_label }}",
+        "max_workers": {{ inputs.max_workers }},
+        "audit_scope": "{{ inputs.audit_scope }}",
+        "shard_strategy": "{{ inputs.shard_strategy }}",
+        "control_state_snapshot": "{{ inputs.control_state_snapshot }}",
+        "audit_context": {{ outputs.audit_context.body | jq('.data') | first | json }},
+        "wait_for_completion": false
+      }
+
+  - id: poll_mesh_run
+    type: io.kestra.plugin.core.http.Request
+    timeout: PT40M
+    method: GET
+    uri: "{{ inputs.mesh_runner_base_url }}/v1/runs/{{ inputs.run_id }}?wait_for_completion=true&wait_timeout_seconds=2100"
+    headers:
+      Authorization: "Bearer {{ inputs.mesh_runner_token }}"
+    options:
+      readTimeout: PT40M
+      readIdleTimeout: PT40M
+      connectTimeout: PT1M
+
+  - id: fetch_bundle
+    type: io.kestra.plugin.core.http.Request
+    method: GET
+    uri: "{{ inputs.mesh_runner_base_url }}/v1/runs/{{ inputs.run_id }}/bundle"
+    headers:
+      Authorization: "Bearer {{ inputs.mesh_runner_token }}"
+
+  - id: submit_shadow_intent
+    type: io.kestra.plugin.core.http.Request
+    method: POST
+    uri: "{{ inputs.promote_prep_base_url }}/v1/intents"
+    headers:
+      Content-Type: application/json
+      Authorization: "Bearer {{ inputs.promote_prep_token }}"
+    body: |
+      {
+        "run_id": "{{ inputs.run_id }}",
+        "summary_markdown": {{ outputs.poll_mesh_run.body | jq('.summary_markdown') | first | json }},
+        "findings_bundle": {{ outputs.fetch_bundle.body | jq('.bundle') | first | json }},
+        "logical_target": "issue_mesh_shadow"
+      }
+
+  - id: poll_shadow_intent
+    type: io.kestra.plugin.core.http.Request
+    timeout: PT15M
+    method: GET
+    uri: "{{ inputs.promote_prep_base_url }}/v1/intents/{{ outputs.submit_shadow_intent.body | jq('.intent_id') | first }}?wait_for_completion=true&wait_timeout_seconds=900"
+    headers:
+      Authorization: "Bearer {{ inputs.promote_prep_token }}"
+    options:
+      readTimeout: PT15M
+      readIdleTimeout: PT15M
+      connectTimeout: PT1M
+
+  - id: audit_summary
+    type: io.kestra.plugin.core.log.Log
+    message: |
+      issue_mesh_run_id={{ inputs.run_id }}
+      runtime_gates_code={{ outputs.runtime_gates.code }}
+      audit_context_code={{ outputs.audit_context.code }}
+      new_api_models_code={{ outputs.new_api_models.code }}
+      mesh_runner_status={{ outputs.poll_mesh_run.body | jq('.status') | first }}
+      shadow_intent_status={{ outputs.poll_shadow_intent.body | jq('.status') | first }}
+      shadow_output_dir={{ outputs.poll_shadow_intent.body | jq('.shadow_paths.shadow_root') | first }}
+      downstream_code_fix_source_run_id={{ inputs.run_id }}
+      downstream_status_note_run_id={{ inputs.run_id }}
+      downstream_current_layer_run_id={{ inputs.run_id }}

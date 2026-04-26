@@ -1,0 +1,257 @@
+{
+  "generated_at": "2026-04-11T01:07:01.126442+00:00",
+  "mismatches": [
+    {
+      "feature_id": "FR01-POOL-03",
+      "title": "核心池股票查询",
+      "fr_id": "FR-01",
+      "flags": [
+        "BLOCKED_API"
+      ],
+      "status": "BLOCKED_API"
+    },
+    {
+      "feature_id": "FR02-SCHED-02",
+      "title": "DAG 重触发",
+      "fr_id": "FR-02",
+      "flags": [
+        "RETIRED_ROUTE"
+      ],
+      "status": "OUT_OF_SSOT"
+    },
+    {
+      "feature_id": "FR08-SIM-01",
+      "title": "模拟看板",
+      "fr_id": "FR-08",
+      "flags": [
+        "BLOCKED_API"
+      ],
+      "status": "BLOCKED_API"
+    },
+    {
+      "feature_id": "FR08-SIM-07",
+      "title": "悲观撮合引擎",
+      "fr_id": "FR-08",
+      "flags": [
+        "BLOCKED_API"
+      ],
+      "status": "BLOCKED_API"
+    },
+    {
+      "feature_id": "FR08-SIM-08",
+      "title": "回撤状态机",
+      "fr_id": "FR-08",
+      "flags": [
+        "BLOCKED_API"
+      ],
+      "status": "BLOCKED_API"
+    },
+    {
+      "feature_id": "FR08-SIM-09",
+      "title": "资金挡位切换",
+      "fr_id": "FR-08",
+      "flags": [
+        "BLOCKED_API"
+      ],
+      "status": "BLOCKED_API"
+    },
+    {
+      "feature_id": "FR09-AUTH-01",
+      "title": "用户注册",
+      "fr_id": "FR-09",
+      "flags": [
+        "BLOCKED_API"
+      ],
+      "status": "BLOCKED_API"
+    },
+    {
+      "feature_id": "FR09-AUTH-02",
+      "title": "用户登录",
+      "fr_id": "FR-09",
+      "flags": [
+        "BLOCKED_API"
+      ],
+      "status": "BLOCKED_API"
+    },
+    {
+      "feature_id": "FR09-AUTH-03",
+      "title": "用户登出",
+      "fr_id": "FR-09",
+      "flags": [
+        "BLOCKED_API"
+      ],
+      "status": "BLOCKED_API"
+    },
+    {
+      "feature_id": "FR09-AUTH-04",
+      "title": "Token 刷新",
+      "fr_id": "FR-09",
+      "flags": [
+        "BLOCKED_API"
+      ],
+      "status": "BLOCKED_API"
+    },
+    {
+      "feature_id": "FR09-AUTH-05",
+      "title": "OAuth 第三方登录",
+      "fr_id": "FR-09",
+      "flags": [
+        "BLOCKED_API"
+      ],
+      "status": "BLOCKED_API"
+    },
+    {
+      "feature_id": "FR09-AUTH-06",
+      "title": "忘记密码",
+      "fr_id": "FR-09",
+      "flags": [
+        "BLOCKED_API"
+      ],
+      "status": "BLOCKED_API"
+    },
+    {
+      "feature_id": "FR09-BILLING-03",
+      "title": "订阅状态查询",
+      "fr_id": "FR-09",
+      "flags": [
+        "FAIL_CLOSE_ROUTE"
+      ],
+      "status": "OUT_OF_SSOT"
+    },
+    {
+      "feature_id": "FR09-AUTH-07",
+      "title": "邮箱激活",
+      "fr_id": "FR-09",
+      "flags": [
+        "BLOCKED_API"
+      ],
+      "status": "BLOCKED_API"
+    },
+    {
+      "feature_id": "FR09-AUTH-08",
+      "title": "当前用户信息",
+      "fr_id": "FR-09",
+      "flags": [
+        "BLOCKED_API"
+      ],
+      "status": "BLOCKED_API"
+    },
+    {
+      "feature_id": "FR09B-CLEAN-01",
+      "title": "清空报告",
+      "fr_id": "FR-09-b",
+      "flags": [
+        "RETIRED_ROUTE"
+      ],
+      "status": "OUT_OF_SSOT"
+    },
+    {
+      "feature_id": "FR09B-CLEAN-02",
+      "title": "清空统计",
+      "fr_id": "FR-09-b",
+      "flags": [
+        "RETIRED_ROUTE"
+      ],
+      "status": "OUT_OF_SSOT"
+    },
+    {
+      "feature_id": "FR09B-CLEAN-03",
+      "title": "分级保留策略",
+      "fr_id": "FR-09-b",
+      "flags": [
+        "RETIRED_ROUTE"
+      ],
+      "status": "OUT_OF_SSOT"
+    },
+    {
+      "feature_id": "FR09B-CLEAN-04",
+      "title": "未激活用户释放",
+      "fr_id": "FR-09-b",
+      "flags": [
+        "RETIRED_ROUTE"
+      ],
+      "status": "OUT_OF_SSOT"
+    },
+    {
+      "feature_id": "FR10-HOME-01",
+      "title": "首页",
+      "fr_id": "FR-10",
+      "flags": [
+        "BLOCKED_API"
+      ],
+      "status": "BLOCKED_API"
+    },
+    {
+      "feature_id": "FR10-BOARD-01",
+      "title": "统计看板页",
+      "fr_id": "FR-10",
+      "flags": [
+        "BLOCKED_API"
+      ],
+      "status": "BLOCKED_API"
+    },
+    {
+      "feature_id": "FR10-BOARD-02",
+      "title": "模拟看板页(HTML)",
+      "fr_id": "FR-10",
+      "flags": [
+        "BLOCKED_API"
+      ],
+      "status": "BLOCKED_API"
+    },
+    {
+      "feature_id": "LEGACY-REPORT-01",
+      "title": "[废弃] /report/{stock_code} 旧路由",
+      "fr_id": "FR-10",
+      "flags": [
+        "out_of_ssot"
+      ],
+      "status": "OUT_OF_SSOT"
+    },
+    {
+      "feature_id": "LEGACY-REPORT-02",
+      "title": "[废弃] /report/{stock_code}/status 旧路由",
+      "fr_id": "FR-10",
+      "flags": [
+        "out_of_ssot"
+      ],
+      "status": "OUT_OF_SSOT"
+    },
+    {
+      "feature_id": "LEGACY-REPORT-03",
+      "title": "[废弃] /report/实时研报/{stock_code} 旧路由",
+      "fr_id": "FR-10",
+      "flags": [
+        "out_of_ssot"
+      ],
+      "status": "OUT_OF_SSOT"
+    },
+    {
+      "feature_id": "LEGACY-REPORT-04",
+      "title": "[废弃] /report 旧列表路由",
+      "fr_id": "FR-10",
+      "flags": [
+        "out_of_ssot"
+      ],
+      "status": "OUT_OF_SSOT"
+    },
+    {
+      "feature_id": "OOS-MOCK-PAY-01",
+      "title": "[OUT_OF_SSOT] Mock 支付页",
+      "fr_id": "FR-09",
+      "flags": [
+        "out_of_ssot"
+      ],
+      "status": "OUT_OF_SSOT"
+    },
+    {
+      "feature_id": "OOS-MOCK-PAY-02",
+      "title": "[OUT_OF_SSOT] Mock 支付确认",
+      "fr_id": "FR-09",
+      "flags": [
+        "out_of_ssot"
+      ],
+      "status": "OUT_OF_SSOT"
+    }
+  ]
+}

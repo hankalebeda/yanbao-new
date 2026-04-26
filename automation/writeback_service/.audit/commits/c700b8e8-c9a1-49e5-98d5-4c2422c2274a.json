@@ -1,0 +1,21 @@
+{
+  "actor": {
+    "id": "kestra",
+    "type": "workflow"
+  },
+  "base_sha256": "5ec9c5673710ed411b09109d44d87a80515b454d32f634375f04af3fc0bff542",
+  "commit_id": "c700b8e8-c9a1-49e5-98d5-4c2422c2274a",
+  "created_at": "2026-03-27T02:19:41.770513+00:00",
+  "idempotency_key": "kestra-orchestration-smoke-20260327",
+  "new_sha256": "7813d8d6c1e05e3d444bced404f556fab9f6d65b05e6db2bd9a420313bf409d6",
+  "operation": "commit",
+  "patch_hash": "7813d8d6c1e05e3d444bced404f556fab9f6d65b05e6db2bd9a420313bf409d6",
+  "previous_content_b64": "a2VzdHJhIHJlbW90ZSBzbW9rZQo=",
+  "relative_path": "docs/_temp/kestra_remote_smoke.md",
+  "request_id": "req-kestra-orchestration-smoke-20260327",
+  "rollback_commit_id": null,
+  "rollback_of": null,
+  "rolled_back_at": null,
+  "run_id": "4kriBz5VLJzH0DyqWP3R4w",
+  "target_path": "D:\\yanbao\\docs\\_temp\\kestra_remote_smoke.md"
+}

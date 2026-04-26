@@ -1,0 +1,9 @@
+{
+    "resource":  "provider",
+    "name":  "codex.sakurapy.de",
+    "homepage":  "https://codex.sakurapy.de",
+    "app":  "codex",
+    "model":  "gpt-5.4",
+    "endpoint":  "https://codex.sakurapy.de/v1",
+    "enabled":  true
+}

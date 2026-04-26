@@ -1,0 +1,15 @@
+{
+  "passed": 0,
+  "total": 3,
+  "results": {
+    "single": {
+      "error": "Qwen web app failed to load frontend assets. Check network access to assets.alicdn.com or configure qwen_proxy_url. blocked_urls=['https://assets.alicdn.com/g/qwenweb/qwen-chat-fe/0.2.7/css/main.css', 'https://assets.alicdn.com/g/qwenweb/qwen-chat-fe/0.2.7/js/main.js', 'https://assets.alicdn.com/g/qwenweb/qwen-chat-fe/0.2.7/js/i18next-vendor.js']"
+    },
+    "batch": {
+      "error": "Kweichow Moutai failed: Qwen web app failed to load frontend assets. Check network access to assets.alicdn.com or configure qwen_proxy_url. blocked_urls=['https://assets.alicdn.com/g/qwenweb/qwen-chat-fe/0.2.7/js/main.js', 'https://assets.alicdn.com/g/qwenweb/qwen-chat-fe/0.2.7/js/i18next-vendor.js', 'https://assets.alicdn.com/g/qwenweb/qwen-chat-fe/0.2.7/js/antd-vendor.js']"
+    },
+    "reconnect": {
+      "error": "Qwen web app failed to load frontend assets. Check network access to assets.alicdn.com or configure qwen_proxy_url. blocked_urls=['https://assets.alicdn.com/g/qwenweb/qwen-chat-fe/0.2.7/css/main.css', 'https://assets.alicdn.com/g/qwenweb/qwen-chat-fe/0.2.7/js/main.js', 'https://assets.alicdn.com/g/qwenweb/qwen-chat-fe/0.2.7/js/i18next-vendor.js']"
+    }
+  }
+}

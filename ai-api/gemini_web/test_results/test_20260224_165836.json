@@ -1,0 +1,17 @@
+{
+  "passed": 1,
+  "total": 3,
+  "results": {
+    "single": {
+      "response": "登录\nGemini\n关于 Gemini\n在新窗口中打开\nGemini 应用\n在新窗口中打开\n订阅\n在新窗口中打开\n企业应用场景\n在新窗口中打开\n与 Gemini 对话\n认识 Gemini：你的私人 AI 助理\n撰写\n计划\n研究\n学习\n\n请联网搜索今天（2026年02月24日）A股市场最重要的一条新闻，给出标题和来源链接。\n\n工具\n快速\n\n须遵守《Google 条款》\n在新窗口中打开\n和《Google 隐私权政策》\n在新窗口中打开\n。Gemini 是一款 AI 工具，其回答未必正确无误。\n\nGemini 已回复\n出了点问题 (3)\n提交",
+      "elapsed_s": 3.18,
+      "has_citation": true
+    },
+    "batch": {
+      "error": "贵州茅台 失败: Page.evaluate: Target page, context or browser has been closed"
+    },
+    "reconnect": {
+      "error": "重连后回复为空"
+    }
+  }
+}

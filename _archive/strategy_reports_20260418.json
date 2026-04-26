@@ -1,0 +1,645 @@
+{
+  "generated_at": "2026-04-18",
+  "trade_date": "2026-04-16",
+  "reports": [
+    {
+      "report_id": "64b8cbac-8354-4d87-b4cd-b495d2620021",
+      "stock_code": "600519.SH",
+      "trade_date": "2026-04-16",
+      "strategy_type": "A",
+      "recommendation": "HOLD",
+      "confidence": 0.72,
+      "llm_actual_model": "gpt-5.4",
+      "publish_status": "PUBLISHED",
+      "conclusion_text": "贵州茅台当前收盘1462.84元，仍高于MA5的1454.90元和MA20的1441.51元，短线趋势未破坏；但资金面明显承压，主力净流入1日为-62.16亿元、5日为-158.83亿元，近30天龙虎榜4次上榜且净买入为-8.41亿元，显示事件交易资金持续兑现。估值方面PE(TTM)21.41倍、PB 7.20倍，结合ROE 32.53%，基本面仍具支撑。考虑当前为震荡市且策略A更看重事件催化持续性，在缺乏新增强催化下，建议以HOLD为主，等待资金回流或明确事件窗口再增配。",
+      "reasoning_chain_md": "## 1. 数据解读\n- **技术面**：收盘价1462.84，高于**MA5=1454.902**与**MA20=1441.505**，说明中短期均线结构仍偏稳；当日振幅结合**ATR%=1.671249**、20日波动率**0.010596**，显示波动可控但缺乏强趋势扩张。\n- **资金面**：主力净流入**1日-62.16亿元**、**5日-158.83亿元**，属于持续净流出；龙虎榜近30天**入榜4次**，但**净买入-8.41亿元**，反映活跃资金偏兑现。\n- **估值与基本面**：**PE(TTM)=21.41**、**PB=7.20**、**ROE=32.53%**，在白酒龙头中估值不算激进，盈利质量仍强。\n\n## 2. 逻辑推断\n- 股价站在5日和20日均线之上，说明下方有一定支撑，基本面估值也没有出现“高估+流出”共振恶化。\n- 但资金连续大额流出，且龙虎榜口径同样偏负，说明短线交易层面并未形成持续抢筹。\n- **为何归类为当前策略类型(A)**：题设已给定为**事件驱动**，此类策略核心不是单纯看估值或趋势，而是评估催化是否能持续发酵、是否已被交易资金兑现。当前可见的交易信号更多是“事件后兑现”而非“事件前布局”。\n- 因此，在A策略框架下，现阶段更适合把茅台视为“等待新催化确认”的标的，而非立即追涨。\n\n## 3. 风险评估\n- **主要风险**：若主力净流出延续，且股价跌破**MA5/MA20**，则短线可能转弱。\n- **事件风险**：A策略下最重要的是催化窗口。当前数据中未见明确新增热点强化，若没有业绩、提价、分红或政策类新事件接力，事件驱动逻辑容易降温。\n- **市场环境风险**：当前市场状态为**NEUTRAL**，震荡市对事件交易的持续性并不友好，容易出现脉冲后回落。\n\n## 4. 最终结论\n- 综合技术面偏稳、估值基本面扎实，与资金面持续流出相对冲，结论为**HOLD**。\n- **执行要点（A策略）**：重点观察未来1-2周是否出现新的事件催化及资金回流，尤其关注主力净流入由负转正、股价能否稳住**1455元附近MA5**并重新放量上攻；若无新增催化，则以持有观察为宜，不宜激进追价。",
+      "content_json": {
+        "term_context": [
+          {
+            "term": "MA5",
+            "plain_explain": "5日均线反映短期趋势。"
+          },
+          {
+            "term": "MA20",
+            "plain_explain": "20日均线反映中期趋势。"
+          },
+          {
+            "term": "样本数",
+            "plain_explain": "统计中可用于结算验证的数据量。"
+          },
+          {
+            "term": "覆盖率",
+            "plain_explain": "有明确动作信号的样本占比。"
+          }
+        ],
+        "cause_effect_chain": [
+          {
+            "step": 1,
+            "title": "价格位置",
+            "fact": "close=1462.84",
+            "impact": "确定当前交易位置。"
+          },
+          {
+            "step": 2,
+            "title": "趋势关系",
+            "fact": "ma5=1454.902 ma20=1441.505",
+            "impact": "确认短中期强弱。"
+          },
+          {
+            "step": 3,
+            "title": "未来方向",
+            "fact": "1d=UP 7d=UP",
+            "impact": "输出1~7天操作方向。"
+          },
+          {
+            "step": 4,
+            "title": "风险过滤",
+            "fact": "7d_acc=0.0 samples=1",
+            "impact": "样本不足时降低可靠性。"
+          },
+          {
+            "step": 5,
+            "title": "多维证据",
+            "fact": "技术/资金/基本面/市场状态",
+            "impact": "防止单指标结论。"
+          }
+        ],
+        "key_numbers": [
+          {
+            "label": "close",
+            "value": 1462.84
+          },
+          {
+            "label": "ma5",
+            "value": 1454.902
+          },
+          {
+            "label": "ma20",
+            "value": 1441.505
+          }
+        ],
+        "evidence_backing_points": [
+          {
+            "title": "技术趋势",
+            "badge": "MA结构",
+            "badge_type": "up",
+            "basis": "close=1462.84 ma5=1454.902 ma20=1441.505",
+            "nums": [
+              "atr_pct=1.671249",
+              "volatility_20d=0.010596"
+            ]
+          },
+          {
+            "title": "主力资金",
+            "badge": "main_force",
+            "badge_type": "down",
+            "basis": "status=ok",
+            "nums": [
+              "net_inflow_1d=-6216379392.0",
+              "net_inflow_5d=-15883311104.0"
+            ]
+          },
+          {
+            "title": "龙虎榜",
+            "badge": "dragon_tiger",
+            "badge_type": "down",
+            "basis": "status=ok",
+            "nums": [
+              "lhb_count_30d=4",
+              "net_buy_total=-840681089.98"
+            ]
+          },
+          {
+            "title": "融资融券",
+            "badge": "margin",
+            "badge_type": "down",
+            "basis": "status=ok",
+            "nums": [
+              "latest_rzye=-25313732608.0",
+              "rzye_delta_5d=-15883311104.0"
+            ]
+          },
+          {
+            "title": "北向资金",
+            "badge": "northbound",
+            "badge_type": "flat",
+            "basis": "status=ok",
+            "nums": [
+              "source=northbound"
+            ]
+          },
+          {
+            "title": "热点题材",
+            "badge": "hotspot",
+            "badge_type": "flat",
+            "basis": "status=ok",
+            "nums": [
+              "source=backfill"
+            ]
+          },
+          {
+            "title": "市场状态",
+            "badge": "NEUTRAL",
+            "badge_type": "flat",
+            "basis": "computed_from_reference_date=2026-04-15;cache_status=FRESH;recomputed_after_kline_backfill",
+            "nums": [
+              "reference_date=2026-04-15"
+            ]
+          },
+          {
+            "title": "基本面",
+            "badge": "valuation",
+            "badge_type": "up",
+            "basis": "stock_profile_snapshot",
+            "nums": [
+              "pe_ttm=21.41",
+              "pb=7.2",
+              "roe=32.53%",
+              "total_mv=1762244737356.6"
+            ]
+          },
+          {
+            "title": "预测可靠性",
+            "badge": "backtest_7d",
+            "badge_type": "warn",
+            "basis": "prediction_outcome.window_days=7",
+            "nums": [
+              "accuracy=0.0",
+              "samples=1"
+            ]
+          }
+        ],
+        "direction_forecast": {
+          "horizons": [
+            {
+              "horizon_day": 1,
+              "direction": "UP",
+              "action": "HOLD"
+            },
+            {
+              "horizon_day": 7,
+              "direction": "UP",
+              "action": "HOLD"
+            }
+          ],
+          "backtest_recent_3m": [
+            {
+              "horizon_day": 7,
+              "actionable_accuracy": 0.0,
+              "actionable_samples": 1,
+              "actionable_coverage": 1.0
+            }
+          ],
+          "summary": {
+            "estimated_from": "kline_ma_structure",
+            "note": "v26 strict gate fallback forecast"
+          }
+        },
+        "price_forecast": {
+          "windows": [
+            {
+              "horizon_days": 7,
+              "central_price": 1462.84,
+              "target_high": 1499.51,
+              "target_low": 1438.39,
+              "llm_action": "HOLD",
+              "basis": "ATR%*1.5 止盈 / ATR%*1.0 止损"
+            }
+          ]
+        },
+        "accuracy_explain": {
+          "headline": "7天可操作准确率=0.0，样本=1。",
+          "source": "prediction_outcome.window_days=7",
+          "accuracy": 0.0,
+          "samples": 1
+        }
+      }
+    },
+    {
+      "report_id": "1be39094-ae2e-49e1-80c6-aeb22a1150ea",
+      "stock_code": "002594.SZ",
+      "trade_date": "2026-04-16",
+      "strategy_type": "B",
+      "recommendation": "HOLD",
+      "confidence": 0.68,
+      "llm_actual_model": "gpt-5.4",
+      "publish_status": "PUBLISHED",
+      "conclusion_text": "比亚迪当前收盘价105.54元，高于MA5的103.66元和MA20的103.29元，短线趋势仍偏强，符合趋势跟踪策略对均线结构的优先判断。但资金面分化明显：主力1日净流出7.53亿元，5日仅净流入0.06亿元，说明追价资金跟随度不足。龙虎榜近30天入榜30次、净买入73.86亿元，显示个股关注度高且活跃。估值方面PE(TTM)29.01倍、PB 4.16倍、ROE 15.31%，不属极端高估。综合看，股价处于均线之上但短期资金承接偏弱，建议以HOLD为主，等待后续放量与资金回流确认。",
+      "reasoning_chain_md": "## 1. 数据解读\n- **技术指标**：收盘价 **105.54** 元，高于 **MA5=103.662** 元与 **MA20=103.29** 元，且当日高点 **105.97** 元、低点 **103.28** 元，说明股价沿短中期均线上方运行，趋势未破坏。\n- **波动特征**：ATR%为 **2.98%**，20日波动率 **0.020917**，说明个股有一定弹性，但并非极端失控波动。\n- **资金数据**：主力净流入 **1日=-7.53亿元**，**5日=+0.06亿元**，短线资金明显流出，但中短期并未形成持续大幅净流入，资金跟随度一般。\n- **活跃资金**：龙虎榜30天入榜 **30次**，净买入 **73.86亿元**，说明市场交易热度高、游资与活跃资金参与显著。\n- **估值数据**：PE(TTM) **29.01**，PB **4.16**，ROE **15.31%**，在A股乘用车板块中属于可接受区间，不满足“PE>40且资金流出”的明显估值压制条件。\n\n## 2. 逻辑推断\n- **为何归类为当前策略类型(B)**：题设已明确为**趋势跟踪**，该策略核心是优先看**MA结构、近端价格强弱和资金跟随度**，避免在震荡市中逆势硬判。比亚迪当前价格站上MA5和MA20，符合趋势股的基础形态，因此应按B类策略分析，而不是单纯事件驱动或低波套利。\n- 从趋势角度看，股价位于短中期均线之上，说明**价格趋势偏多**。\n- 但从资金角度看，**1日主力净流出7.53亿元**，而**5日仅+0.06亿元**，表明短线承接不足，趋势虽在，但**跟随资金不够强**。\n- 龙虎榜净买入 **73.86亿元** 强化了个股活跃度与交易关注度，但龙虎榜资金偏交易性，不等同于稳定趋势资金，因此不能单独作为强烈看多依据。\n- 估值端PE **29.01** 倍、ROE **15.31%**，说明公司基本面质量尚可，至少当前并未因高估值显著拖累判断。\n\n## 3. 风险评估\n- **市场环境**为 **NEUTRAL（震荡）**，在震荡市中趋势策略需要更重视“资金确认”，否则容易出现假突破或冲高回落。\n- 若后续股价跌破 **MA5 103.66元** 并向 **MA20 103.29元** 回撤，则短线趋势优势会快速减弱。\n- 主力资金若未来几日继续维持**5日净流出转负**，将构成偏空信号，需警惕趋势反转。\n- 个股活跃度高虽带来机会，但也意味着波动和博弈加剧，ATR% **2.98%** 提示短线追高并非低风险。\n\n## 4. 最终结论\n在B类趋势跟踪框架下，比亚迪当前**均线结构偏强、估值不过分、市场关注度高**，但**主力1日净流出7.53亿元** 暗示短线资金承接不足，尚缺乏强趋势继续扩散的确认信号。因此给出 **HOLD** 更稳妥：不建议逆势看空，也不宜在资金未明显回流前激进上调至BUY。执行要点是继续观察股价能否稳站 **MA5/MA20** 上方，并等待主力资金由负转强后再考虑顺势加仓。",
+      "content_json": {
+        "term_context": [
+          {
+            "term": "MA5",
+            "plain_explain": "5日均线反映短期趋势。"
+          },
+          {
+            "term": "MA20",
+            "plain_explain": "20日均线反映中期趋势。"
+          },
+          {
+            "term": "样本数",
+            "plain_explain": "统计中可用于结算验证的数据量。"
+          },
+          {
+            "term": "覆盖率",
+            "plain_explain": "有明确动作信号的样本占比。"
+          }
+        ],
+        "cause_effect_chain": [
+          {
+            "step": 1,
+            "title": "价格位置",
+            "fact": "close=105.54",
+            "impact": "确定当前交易位置。"
+          },
+          {
+            "step": 2,
+            "title": "趋势关系",
+            "fact": "ma5=103.662 ma20=103.29",
+            "impact": "确认短中期强弱。"
+          },
+          {
+            "step": 3,
+            "title": "未来方向",
+            "fact": "1d=UP 7d=UP",
+            "impact": "输出1~7天操作方向。"
+          },
+          {
+            "step": 4,
+            "title": "风险过滤",
+            "fact": "7d_acc=None samples=0",
+            "impact": "样本不足时降低可靠性。"
+          },
+          {
+            "step": 5,
+            "title": "多维证据",
+            "fact": "技术/资金/基本面/市场状态",
+            "impact": "防止单指标结论。"
+          }
+        ],
+        "key_numbers": [
+          {
+            "label": "close",
+            "value": 105.54
+          },
+          {
+            "label": "ma5",
+            "value": 103.662
+          },
+          {
+            "label": "ma20",
+            "value": 103.29
+          }
+        ],
+        "evidence_backing_points": [
+          {
+            "title": "技术趋势",
+            "badge": "MA结构",
+            "badge_type": "up",
+            "basis": "close=105.54 ma5=103.662 ma20=103.29",
+            "nums": [
+              "atr_pct=2.980277",
+              "volatility_20d=0.020917"
+            ]
+          },
+          {
+            "title": "主力资金",
+            "badge": "main_force",
+            "badge_type": "warn",
+            "basis": "status=ok",
+            "nums": [
+              "net_inflow_1d=-752897616.0",
+              "net_inflow_5d=5645680.0"
+            ]
+          },
+          {
+            "title": "龙虎榜",
+            "badge": "dragon_tiger",
+            "badge_type": "up",
+            "basis": "status=ok",
+            "nums": [
+              "lhb_count_30d=30",
+              "net_buy_total=7385988077.97"
+            ]
+          },
+          {
+            "title": "融资融券",
+            "badge": "margin",
+            "badge_type": "flat",
+            "basis": "status=ok",
+            "nums": [
+              "latest_rzye=9117197565.0",
+              "rzye_delta_5d=None"
+            ]
+          },
+          {
+            "title": "北向资金",
+            "badge": "northbound",
+            "badge_type": "flat",
+            "basis": "status=ok",
+            "nums": [
+              "source=northbound"
+            ]
+          },
+          {
+            "title": "热点题材",
+            "badge": "hotspot",
+            "badge_type": "flat",
+            "basis": "status=ok",
+            "nums": [
+              "source=backfill"
+            ]
+          },
+          {
+            "title": "市场状态",
+            "badge": "NEUTRAL",
+            "badge_type": "flat",
+            "basis": "computed_from_reference_date=2026-04-15;cache_status=FRESH;recomputed_after_kline_backfill",
+            "nums": [
+              "reference_date=2026-04-15"
+            ]
+          },
+          {
+            "title": "基本面",
+            "badge": "valuation",
+            "badge_type": "up",
+            "basis": "stock_profile_snapshot",
+            "nums": [
+              "pe_ttm=29.01",
+              "pb=4.16",
+              "roe=15.31%",
+              "total_mv=946182763295.7"
+            ]
+          },
+          {
+            "title": "预测可靠性",
+            "badge": "backtest_7d",
+            "badge_type": "warn",
+            "basis": "prediction_outcome.window_days=7",
+            "nums": [
+              "accuracy=None",
+              "samples=0"
+            ]
+          }
+        ],
+        "direction_forecast": {
+          "horizons": [
+            {
+              "horizon_day": 1,
+              "direction": "UP",
+              "action": "HOLD"
+            },
+            {
+              "horizon_day": 7,
+              "direction": "UP",
+              "action": "HOLD"
+            }
+          ],
+          "backtest_recent_3m": [
+            {
+              "horizon_day": 7,
+              "actionable_accuracy": null,
+              "actionable_samples": 0,
+              "actionable_coverage": 0.0
+            }
+          ],
+          "summary": {
+            "estimated_from": "kline_ma_structure",
+            "note": "v26 strict gate fallback forecast"
+          }
+        },
+        "price_forecast": {
+          "windows": [
+            {
+              "horizon_days": 7,
+              "central_price": 105.54,
+              "target_high": 110.26,
+              "target_low": 102.39,
+              "llm_action": "HOLD",
+              "basis": "ATR%*1.5 止盈 / ATR%*1.0 止损"
+            }
+          ]
+        },
+        "accuracy_explain": {
+          "headline": "该股暂无可用的7天历史结算样本。",
+          "source": "prediction_outcome.window_days=7",
+          "accuracy": null,
+          "samples": 0
+        }
+      }
+    },
+    {
+      "report_id": "661b8333-8235-4a2d-8151-552bbbce572d",
+      "stock_code": "000858.SZ",
+      "trade_date": "2026-04-16",
+      "strategy_type": "C",
+      "recommendation": "HOLD",
+      "confidence": 0.62,
+      "llm_actual_model": "gpt-5.4",
+      "publish_status": "PUBLISHED",
+      "conclusion_text": "五粮液当前股价103.44元，MA5为102.916、MA20为102.8485，股价略站上短中期均线，技术面偏稳；20日波动率仅0.010053、ATR%为1.479118，符合低波套利对低波动标的的偏好。估值方面PE(TTM)13.79、PB 2.77、ROE 15.37%，处于相对合理区间。但资金面偏弱，主力净流入1日-3.27亿元、5日-3.61亿元，显示短线承接不足。虽近30天龙虎榜8次、净买入8.59亿元，但在震荡市下更适合持有观察、控制仓位，不宜激进追高。",
+      "reasoning_chain_md": "## 数据解读\n1. **技术指标**：收盘价103.44元，略高于MA5=102.916和MA20=102.8485，说明股价仍运行在短中期均线之上，趋势并未走坏。ATR%=1.479118、20日波动率=0.010053，波动明显偏低。\n2. **估值与基本面**：来自`stock_profile`，PE(TTM)=13.79、PB=2.77、ROE=15.37%，对白酒Ⅱ龙头而言估值不高，盈利能力保持中上水平。\n3. **资金流**：来自`main_force_flow`，主力净流入1日=-3.27亿、5日=-3.61亿，说明近期资金面偏谨慎；但`dragon_tiger_list`显示30天入榜8次、净买入8.59亿，表明中期仍有活跃资金关注。\n\n## 逻辑推断\n1. 当前市场状态为**NEUTRAL**，震荡市中更重视安全边际和回撤控制。\n2. 该股低波动特征明显（20日波动率仅0.010053），因此**归类为策略类型C：低波套利**是合理的；该策略更偏好走势平稳、估值不贵、回撤可控的品种。\n3. 五粮液估值端具备支撑（PE 13.79不高），技术端也未破位，但短线主力资金连续净流出，意味着向上弹性暂时不足。\n\n## 风险评估\n1. **资金风险**：5日主力净流出-3.61亿是明确偏空信号，若后续继续流出，股价可能重新跌回MA5/MA20下方。\n2. **市场风险**：震荡市中白酒板块容易受消费预期与风格切换扰动，缺乏单边上行环境。\n3. **策略执行要点（C类）**：应以低仓位、分批介入、接近均线低吸为主，避免追涨；若跌破MA20或波动显著放大，应及时降低仓位。\n\n## 最终结论\n综合技术面稳、估值合理、波动较低与短线资金偏弱的因素，给出**HOLD**。其更适合作为震荡市中的低波配置标的，而非强趋势进攻品种；在策略C框架下，核心是控制仓位、博取稳健收益，而不是追求高弹性。",
+      "content_json": {
+        "term_context": [
+          {
+            "term": "MA5",
+            "plain_explain": "5日均线反映短期趋势。"
+          },
+          {
+            "term": "MA20",
+            "plain_explain": "20日均线反映中期趋势。"
+          },
+          {
+            "term": "样本数",
+            "plain_explain": "统计中可用于结算验证的数据量。"
+          },
+          {
+            "term": "覆盖率",
+            "plain_explain": "有明确动作信号的样本占比。"
+          }
+        ],
+        "cause_effect_chain": [
+          {
+            "step": 1,
+            "title": "价格位置",
+            "fact": "close=103.44",
+            "impact": "确定当前交易位置。"
+          },
+          {
+            "step": 2,
+            "title": "趋势关系",
+            "fact": "ma5=102.916 ma20=102.8485",
+            "impact": "确认短中期强弱。"
+          },
+          {
+            "step": 3,
+            "title": "未来方向",
+            "fact": "1d=UP 7d=UP",
+            "impact": "输出1~7天操作方向。"
+          },
+          {
+            "step": 4,
+            "title": "风险过滤",
+            "fact": "7d_acc=None samples=0",
+            "impact": "样本不足时降低可靠性。"
+          },
+          {
+            "step": 5,
+            "title": "多维证据",
+            "fact": "技术/资金/基本面/市场状态",
+            "impact": "防止单指标结论。"
+          }
+        ],
+        "key_numbers": [
+          {
+            "label": "close",
+            "value": 103.44
+          },
+          {
+            "label": "ma5",
+            "value": 102.916
+          },
+          {
+            "label": "ma20",
+            "value": 102.8485
+          }
+        ],
+        "evidence_backing_points": [
+          {
+            "title": "技术趋势",
+            "badge": "MA结构",
+            "badge_type": "up",
+            "basis": "close=103.44 ma5=102.916 ma20=102.8485",
+            "nums": [
+              "atr_pct=1.479118",
+              "volatility_20d=0.010053"
+            ]
+          },
+          {
+            "title": "主力资金",
+            "badge": "main_force",
+            "badge_type": "down",
+            "basis": "status=ok",
+            "nums": [
+              "net_inflow_1d=-327401649.0",
+              "net_inflow_5d=-361166559.0"
+            ]
+          },
+          {
+            "title": "龙虎榜",
+            "badge": "dragon_tiger",
+            "badge_type": "up",
+            "basis": "status=ok",
+            "nums": [
+              "lhb_count_30d=8",
+              "net_buy_total=858727677.38"
+            ]
+          },
+          {
+            "title": "融资融券",
+            "badge": "margin",
+            "badge_type": "flat",
+            "basis": "status=ok",
+            "nums": [
+              "latest_rzye=3881608005.0",
+              "rzye_delta_5d=None"
+            ]
+          },
+          {
+            "title": "北向资金",
+            "badge": "northbound",
+            "badge_type": "flat",
+            "basis": "status=ok",
+            "nums": [
+              "source=northbound"
+            ]
+          },
+          {
+            "title": "热点题材",
+            "badge": "hotspot",
+            "badge_type": "flat",
+            "basis": "status=ok",
+            "nums": [
+              "source=backfill"
+            ]
+          },
+          {
+            "title": "市场状态",
+            "badge": "NEUTRAL",
+            "badge_type": "flat",
+            "basis": "computed_from_reference_date=2026-04-15;cache_status=FRESH;recomputed_after_kline_backfill",
+            "nums": [
+              "reference_date=2026-04-15"
+            ]
+          },
+          {
+            "title": "基本面",
+            "badge": "valuation",
+            "badge_type": "up",
+            "basis": "stock_profile_snapshot",
+            "nums": [
+              "pe_ttm=13.79",
+              "pb=2.77",
+              "roe=15.37%",
+              "total_mv=395380591389.3"
+            ]
+          },
+          {
+            "title": "预测可靠性",
+            "badge": "backtest_7d",
+            "badge_type": "warn",
+            "basis": "prediction_outcome.window_days=7",
+            "nums": [
+              "accuracy=None",
+              "samples=0"
+            ]
+          }
+        ],
+        "direction_forecast": {
+          "horizons": [
+            {
+              "horizon_day": 1,
+              "direction": "UP",
+              "action": "HOLD"
+            },
+            {
+              "horizon_day": 7,
+              "direction": "UP",
+              "action": "HOLD"
+            }
+          ],
+          "backtest_recent_3m": [
+            {
+              "horizon_day": 7,
+              "actionable_accuracy": null,
+              "actionable_samples": 0,
+              "actionable_coverage": 0.0
+            }
+          ],
+          "summary": {
+            "estimated_from": "kline_ma_structure",
+            "note": "v26 strict gate fallback forecast"
+          }
+        },
+        "price_forecast": {
+          "windows": [
+            {
+              "horizon_days": 7,
+              "central_price": 103.44,
+              "target_high": 105.73,
+              "target_low": 101.91,
+              "llm_action": "HOLD",
+              "basis": "ATR%*1.5 止盈 / ATR%*1.0 止损"
+            }
+          ]
+        },
+        "accuracy_explain": {
+          "headline": "该股暂无可用的7天历史结算样本。",
+          "source": "prediction_outcome.window_days=7",
+          "accuracy": null,
+          "samples": 0
+        }
+      }
+    }
+  ]
+}

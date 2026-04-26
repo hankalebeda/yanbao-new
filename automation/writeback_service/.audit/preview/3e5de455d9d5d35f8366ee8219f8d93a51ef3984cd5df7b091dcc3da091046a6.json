@@ -1,0 +1,8 @@
+{
+  "base_sha256": "fd3d5cec49d06eeec44c6fa12edd7460f27559831e4df8c307881717ceb5cc90",
+  "current_sha256": "fd3d5cec49d06eeec44c6fa12edd7460f27559831e4df8c307881717ceb5cc90",
+  "patch_hash": "edb25ffc035532d50d8886a9870a74328d0468b30466a6177008bc821584e83f",
+  "patched_sha256": "edb25ffc035532d50d8886a9870a74328d0468b30466a6177008bc821584e83f",
+  "previewed_at": "2026-03-27T15:29:28.387621+00:00",
+  "relative_path": "docs/_temp/kestra_auto_writeback_smoke.md"
+}

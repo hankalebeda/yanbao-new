@@ -1,0 +1,164 @@
+{
+  "started_at": "2026-02-25T09:58:36.400950",
+  "tests": {
+    "eastmoney_realtime_600519": {
+      "status": "ok",
+      "code": "600519",
+      "name": "贵州茅台",
+      "last_price": 1475.37,
+      "pct_change": 0.58,
+      "high_limit_price": 1613.48,
+      "low_limit_price": 1320.12,
+      "elapsed_s": 0.79,
+      "has_limit_price": true
+    },
+    "eastmoney_realtime_000858": {
+      "status": "ok",
+      "code": "000858",
+      "name": "五 粮 液",
+      "last_price": 105.3,
+      "pct_change": 0.13,
+      "high_limit_price": 115.68,
+      "low_limit_price": 94.64,
+      "elapsed_s": 0.62,
+      "has_limit_price": true
+    },
+    "eastmoney_kline_600519": {
+      "status": "ok",
+      "code": "600519",
+      "count": 30,
+      "latest_record": "2026-02-25,1470.00,1475.37,1481.99,1467.88,6621",
+      "earliest_record": "2026-01-07,1432.88,1423.36,1435.00,1420.20,29684",
+      "elapsed_s": 0.706
+    },
+    "eastmoney_capital_flow_600519": {
+      "status": "ok",
+      "code": "600519",
+      "count": 20,
+      "latest_record": "2026-02-24,-445960704.0,-254544.0,446215248.0,-206392032.0,-239568672.0,-7.19,-0.00,7.20,-3.33,-3.86,1466.80,-1.25,0.00,0.00",
+      "elapsed_s": 0.702
+    },
+    "eastmoney_index_sh000001": {
+      "status": "ok",
+      "index_code": "000001",
+      "name": "上证指数",
+      "count": 30,
+      "latest_record": "2026-02-25,4123.78,4139.26,4142.84,4122.70,225547997",
+      "elapsed_s": 0.862
+    },
+    "eastmoney_index_hs300": {
+      "status": "ok",
+      "index_code": "000300",
+      "name": "沪深300",
+      "count": 30,
+      "latest_record": "2026-02-25,4713.58,4727.72,4732.85,4713.34,70018319",
+      "elapsed_s": 0.857
+    },
+    "eastmoney_news_600519": {
+      "status": "ok",
+      "code": "600519",
+      "count": 0,
+      "latest_title": null,
+      "elapsed_s": 0.984
+    },
+    "margin_realtime_snapshot_600519": {
+      "status": "ok",
+      "code": "600519",
+      "name": "贵州茅台",
+      "rzye_yuan": 1252270215.0,
+      "rqye_yuan": 71500000.0,
+      "has_realtime_margin": true,
+      "note": "融资融券历史接口已失效，仅有实时快照（f277/f278）",
+      "elapsed_s": 0.866
+    },
+    "mootdx_network": {
+      "status": "ok",
+      "mode": "network",
+      "count": 1,
+      "sample": {
+        "market": 1,
+        "code": "600519",
+        "active1": 561,
+        "price": 1476.33,
+        "last_close": 1466.8,
+        "open": 1470.0,
+        "high": 1481.99,
+        "low": 1467.88,
+        "servertime": "9:43:41.808",
+        "reversed_bytes0": 9436968,
+        "reversed_bytes1": -147633,
+        "vol": 6634,
+        "cur_vol": 10,
+        "amount": 977921088.0,
+        "s_vol": 3014,
+        "b_vol": 3621,
+        "reversed_bytes2": 0,
+        "reversed_bytes3": 313110,
+        "bid1": 1475.21,
+        "ask1": 1475.31,
+        "bid_vol1": 1,
+        "ask_vol1": 1,
+        "bid2": 1474.82,
+        "ask2": 1476.33,
+        "bid_vol2": 1,
+        "ask_vol2": 1,
+        "bid3": 1474.39,
+        "ask3": 1476.3500000000001,
+        "bid_vol3": 1,
+        "ask_vol3": 1,
+        "bid4": 1474.3,
+        "ask4": 1476.3700000000001,
+        "bid_vol4": 2,
+        "ask_vol4": 7,
+        "bid5": 1474.18,
+        "ask5": 1476.75,
+        "bid_vol5": 1,
+        "ask_vol5": 4,
+        "reversed_bytes4": [
+          5004
+        ],
+        "reversed_bytes5": 0,
+        "reversed_bytes6": 0,
+        "reversed_bytes7": 0,
+        "reversed_bytes8": 0,
+        "reversed_bytes9": 0.05,
+        "active2": 561,
+        "volume": 6634
+      },
+      "elapsed_s": 0.275
+    },
+    "tdx_local_file": {
+      "status": "ok",
+      "found": [
+        {
+          "base_dir": "C:\\new_tdx",
+          "sh_file_count": 5867,
+          "sz_file_count": 5696,
+          "sample_sh": [
+            "sh000001.day",
+            "sh000002.day",
+            "sh000003.day"
+          ]
+        }
+      ]
+    },
+    "weibo_hot_search": {
+      "status": "ok",
+      "count": 50,
+      "top3": [
+        "平顶山再通报打人事件",
+        "宝马7系降价约27万",
+        "九组数据感受万马奔腾的活力春节"
+      ],
+      "has_cookie": false,
+      "note": "需要微博Cookie(SUB字段)才能获取完整数据",
+      "elapsed_s": 0.812
+    }
+  },
+  "summary": {
+    "passed": 11,
+    "total": 11,
+    "pass_rate": "11/11",
+    "critical_issues": []
+  }
+}

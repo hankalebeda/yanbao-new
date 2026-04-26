@@ -1,0 +1,26 @@
+[Unit]
+Description=Escort Team Autonomous Multi-Agent Service
+After=network.target docker.service newapi-channel-health.timer
+Wants=docker.service newapi-channel-health.timer
+
+[Service]
+Type=simple
+User=hugh
+WorkingDirectory=/home/hugh/yanbao
+Environment=NEW_API_BASE_URL=http://localhost:3000
+Environment=NEW_API_TOKEN=wpG93VkYDw5hlK2nedXpEkQQtDAM8YohRm3Q10RO37x76JYR
+Environment=ISSUE_MESH_READONLY_MAX_WORKERS=12
+Environment=ISSUE_MESH_MAX_WORKERS_CAP=12
+Environment=CODEX_CANONICAL_PROVIDER=newapi-192.168.232.141-3000-stable
+Environment=CODEX_READONLY_LANE=codex-readonly
+Environment=CODEX_STABLE_LANE=codex-stable
+ExecStart=/home/hugh/yanbao/.venv/bin/python -m automation.agents.run_team --mode fix --max-rounds 0
+Restart=on-failure
+RestartSec=60
+WatchdogSec=1800
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=escort-team
+
+[Install]
+WantedBy=multi-user.target

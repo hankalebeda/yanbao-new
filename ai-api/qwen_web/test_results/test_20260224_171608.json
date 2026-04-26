@@ -1,0 +1,39 @@
+{
+  "passed": 3,
+  "total": 3,
+  "results": {
+    "single": {
+      "response": "正在搜索网络\n跳过",
+      "elapsed_s": 9.01,
+      "has_citation": false
+    },
+    "batch": [
+      {
+        "code": "600519",
+        "name": "Kweichow Moutai",
+        "response": "精炼信息以准确回应\n跳过",
+        "elapsed_s": 9.01,
+        "has_citation": false
+      },
+      {
+        "code": "000858",
+        "name": "Wuliangye",
+        "response": "正在提炼核心信息\n跳过",
+        "elapsed_s": 9.01,
+        "has_citation": false
+      },
+      {
+        "code": "300750",
+        "name": "CATL",
+        "response": "正在搜索网络\n跳过",
+        "elapsed_s": 9.01,
+        "has_citation": false
+      }
+    ],
+    "reconnect": {
+      "response": "已经完成思考\n测试通过",
+      "elapsed_s": 9.02,
+      "has_citation": false
+    }
+  }
+}

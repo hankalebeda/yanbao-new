@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>登录 - A股研报平台</title>
+  <link rel="stylesheet" href="/static/demo.css">
+</head>
+<body>
+  <nav class="site-nav">
+    <a href="/" class="nav-brand">A股研报平台</a>
+    <button class="nav-toggle" aria-label="菜单" onclick="document.querySelector('.nav-links').classList.toggle('open')">☰</button>
+    <div class="nav-links">
+      {% include "_nav_links.html" %}
+    </div>
+  </nav>
+
+  <main class="auth-wrap">
+    <div class="auth-card">
+      <div class="auth-card-header">
+        <h2>登录</h2>
+      </div>
+      {% set qs_activated = request.query_params.get('activated', '') %}
+      {% set qs_error = request.query_params.get('error', '') %}
+      {% if qs_activated == '1' %}
+      <div id="activation-success-message" class="auth-banner auth-banner-success">邮箱已激活，请登录继续</div>
+      {% endif %}
+      {% if qs_error == 'INVALID_OAUTH_STATE' %}
+      <div id="oauth-error-message" class="auth-banner auth-banner-error">第三方登录校验已失效，请重新发起登录。</div>
+      {% endif %}
+      <form id="login-form">
+        <div class="auth-field">
+          <input type="email" name="email" placeholder="邮箱" required autocomplete="username">
+        </div>
+        <div class="auth-field">
+          <input type="password" name="password" placeholder="密码" required autocomplete="current-password">
+        </div>
+        <p class="auth-agreement">
+          <a href="/forgot-password" class="auth-link">忘记密码？</a>
+        </p>
+        <button type="submit" class="auth-btn-primary">登录</button>
+      </form>
+      <p id="oauth-note" class="auth-note muted">当前暂未提供可用的第三方登录方式，请使用邮箱登录。</p>
+      <div id="login-message" class="auth-banner" style="display:none;"></div>
+      <div id="oauth-providers" class="auth-oauth-row"></div>
+      <div class="auth-card-footer">
+        <p>还没有账号？<a href="/register" class="auth-link-primary">立即注册</a></p>
+      </div>
+      <p class="muted" style="margin-top: var(--space-5); font-size: var(--fs-2xs); text-align: center;">投资有风险，本平台仅供参考。</p>
+    </div>
+  </main>
+
+  {% include "_app_config.html" %}
+  <script src="/static/api-bridge.js?v=3"></script>
+  <script>
+    function resolveSafeNextPath(rawNext) {
+      var raw = (rawNext || '').toString().trim();
+      if (!raw) return '/';
+      if (!raw.startsWith('/')) return '/';
+      if (raw.startsWith('//')) return '/';
+      if (raw.indexOf('\\\\') >= 0) return '/';
+      return raw;
+    }
+
+    (async function() {
+      try {
+        var r = await getOAuthProviders();
+        var providers = (r && r.success && r.data && r.data.providers) ? r.data.providers : [];
+        var row = document.getElementById('oauth-providers');
+        if (!row) return;
+        if (providers.length === 0) { return; }
+        var cls = { qq: 'auth-oauth-qq', wechat: 'auth-oauth-wechat' };
+        var next = resolveSafeNextPath((new URLSearchParams(location.search).get('next')) || '/');
+        var encodedNext = encodeURIComponent(next);
+        row.innerHTML = providers.map(function(p) {
+          var startPath = p && p.start_path ? p.start_path : '';
+          if (!startPath) return '';
+          return '<form class="auth-oauth-form" method="post" action="' + startPath + '?next=' + encodedNext + '">' +
+                 '<button type="submit" class="auth-oauth-btn ' + (cls[p.id] || '') + '">' + p.name + '</button>' +
+                 '</form>';
+        }).join('');
+      } catch (e) {}
+    })();
+    document.getElementById('login-form').addEventListener('submit', async function(e) {
+      e.preventDefault();
+      var fd = new FormData(this);
+      var email = (fd.get('email') || '').toString().trim();
+      if (!email || email.indexOf('@') < 0) {
+        alert('请输入有效邮箱');
+        return;
+      }
+      var body = { email: email, password: fd.get('password') };
+      var res = await postLogin(body);
+      if (res && res.success) {
+        var target = resolveSafeNextPath((new URLSearchParams(location.search).get('next')) || '/');
+        if (res.data && res.data.redirect_url) target = res.data.redirect_url;
+        target = resolveSafeNextPath(target);
+        location.href = target;
+      } else {
+        showLoginMessage(getLoginErrorMessage(res));
+      }
+    });
+
+    function getLoginErrorMessage(res) {
+      return (res && res.message) ? res.message : '登录失败';
+    }
+    function showLoginMessage(msg) {
+      var el = document.getElementById('login-message');
+      if (el) { el.textContent = msg; el.style.display = ''; el.className = 'auth-banner auth-banner-error'; }
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,14 @@
+{% set nav_class_name = nav_class if nav_class is defined and nav_class else "site-nav" %}
+<nav class="{{ nav_class_name }}">
+  <a href="/" class="nav-brand">A股研报平台</a>
+  <button
+    class="nav-toggle"
+    aria-label="菜单"
+    onclick="this.nextElementSibling.classList.toggle('open')"
+  >
+    ☰
+  </button>
+  <div class="nav-links">
+    {% include "_nav_links.html" %}
+  </div>
+</nav>

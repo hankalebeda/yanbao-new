@@ -1,0 +1,39 @@
+{
+  "passed": 3,
+  "total": 3,
+  "results": {
+    "single": {
+      "response": "已经完成思考\n根据联网搜索，为您整理今日（2026年2月24日）A股一条重要新闻：\n🔹 我国在光通信与6G领域斩获关键技术突破，通信设备",
+      "elapsed_s": 9.02,
+      "has_citation": false
+    },
+    "batch": [
+      {
+        "code": "600519",
+        "name": "Kweichow Moutai",
+        "response": "已经完成思考\n贵州茅台主营茅台酒及系列酒的生产与销售，主导产品为酱香型白酒贵州茅台酒。\n东方财富网\n+20",
+        "elapsed_s": 9.02,
+        "has_citation": false
+      },
+      {
+        "code": "000858",
+        "name": "Wuliangye",
+        "response": "已经完成思考\n五粮液主营浓香型白酒的生产与销售，核心产品为\"五粮液\"系列酒。\n雪球\n雪球",
+        "elapsed_s": 9.03,
+        "has_citation": false
+      },
+      {
+        "code": "300750",
+        "name": "CATL",
+        "response": "已经完成思考\n宁德时代主营新能源汽车动力电池及储能系统的研发、生产与销售，为全球新能源应用提供解决方案。\nbaike.jfinfo.com",
+        "elapsed_s": 9.02,
+        "has_citation": false
+      }
+    ],
+    "reconnect": {
+      "response": "已经完成思考\n测试通过",
+      "elapsed_s": 9.01,
+      "has_citation": false
+    }
+  }
+}

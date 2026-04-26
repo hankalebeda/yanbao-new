@@ -1,0 +1,94 @@
+# Kestra Flows for Yanbao
+
+This directory contains runnable Kestra flow definitions for the formal `Kestra + New API + independent writeback` control plane.
+
+## Flows
+
+- `flows/yanbao_health_checks.yml`
+  - Formal preflight lane for app/internal endpoints, autonomy loop status, New API, and helper bridges
+  - Uses app-level `GET /api/v1/internal/autonomy/loop` instead of direct legacy `loop_controller` health probes
+- `flows/yanbao_report_writeback_orchestration.yml`
+  - Standalone report generation fan-out (`/api/v1/reports/generate`)
+  - Uses `promote_prep /v1/triage/writeback` for AI risk analysis
+  - Writeback A preview (`/v1/preview`)
+  - Writeback A auto-commit (`/v1/commit`)
+  - Separate from the issue-mesh repair closure
+- `flows/yanbao_issue_mesh_audit.yml`
+  - Formal monitor/analyze stage for issue-mesh autonomy
+  - Readonly runtime gate check (`/api/v1/internal/runtime/gates`)
+  - Readonly audit context fetch (`/api/v1/internal/audit/context`)
+  - Readonly issue mesh execution through `mesh-runner`
+  - Async shadow intent submit/poll through `promote_prep`
+  - Passes the app-provided `audit_context` through to `mesh-runner`
+  - Passes `outputs.poll_mesh_run.body.summary_markdown` through to the shadow writer
+  - Waits for the shadow intent to reach a terminal status before logging success
+  - Shadow output write under `docs/_temp/issue_mesh_shadow/**`
+  - Canonical shadow bundle path is `docs/_temp/issue_mesh_shadow/<run_id>/{summary.md,bundle.json}`
+  - Downstream handoff source for code-fix and promote flows
+  - No formal writeback to `docs/core/22_*` or official shared artifacts
+  - Requires an explicit `run_id` in the canonical format `issue-mesh-YYYYMMDD-NNN`
+  - Runs `12` fixed shards with canonical readonly concurrency set to `12`
+- `flows/yanbao_issue_mesh_code_fix_wave.yml`
+  - Formal fix -> verify -> writeback stage
+  - Consumes a completed readonly issue-mesh run
+  - Uses `promote_prep /v1/triage/synthesize-patches`
+  - Uses `promote_prep /v1/triage/writeback` for AI risk analysis
+  - Runs scoped pytest before writeback A batch commit
+- `flows/yanbao_issue_mesh_status_note_promote.yml`
+  - Formal promote entry for `current-writeback-detail`
+  - Reads a readonly shadow bundle
+  - Rechecks `runtime/gates` and `audit/context`
+  - Requests a controller-only status-note patch payload
+  - Uses `promote_prep /v1/triage` for AI risk analysis
+  - Uses writeback B `preview`
+  - Auto-commits only when triage returns `allow`
+  - Verifies rollback acceptance against the original `base_sha256` and shadow snapshot
+  - Emits an explicit skip when prepare is rejected by control-plane or runtime conditions
+- `flows/yanbao_issue_mesh_current_layer_promote.yml`
+  - Formal promote entry for `2.1 / 2.3 / 4.5`
+  - Rechecks `runtime/gates` and `audit/context`
+  - Requests a current-layer patch payload with formal gates enabled
+  - Uses `promote_prep /v1/triage` for AI risk analysis
+  - Uses writeback B `preview`
+  - Auto-commits only when triage returns `allow`
+  - Verifies rollback acceptance against the original `base_sha256` and shadow snapshot
+  - Emits an explicit skip when runtime gates or control-plane policy block promote
+- `flows/yanbao_master_loop.yml`
+  - Formal issue-mesh closure orchestrator
+  - Keeps `health_checks`, `runtime/gates`, and `audit/context` snapshots in Kestra for observability
+  - Starts a controller-owned round through `POST /api/v1/internal/autonomy/loop/start`
+  - Waits for the controller-owned round through `GET /api/v1/internal/autonomy/loop/await-round`
+  - Uses the app internal autonomy runtime as the only round scheduler; Kestra does not orchestrate audit/fix/promote subflows directly
+
+## Notes
+
+- The flows call APIs only and never write business DB tables directly.
+- Internal app endpoints require `X-Internal-Token`.
+- New API requests use `Authorization: Bearer <token>`.
+- Writeback A and writeback B each enforce their own allow/deny policy.
+- The reference report flow uses `12` concurrent slots so the default orchestration is already aligned with the current multi-worker target.
+- The issue mesh flow is readonly-only for tracked truth layers. It may write shadow outputs, but it must not refresh official shared artifacts or write `docs/core/22_*` directly.
+- The issue mesh flow now uses `submit -> poll` for both `mesh-runner` and `promote_prep` intent handling; the sync shadow endpoint remains a fallback/test interface only.
+- Writeback A remains governed by its runtime allow/deny policy and only auto-commits when `promote_prep /v1/triage/writeback` returns `allow`.
+- Controller-only promote flows use the formal `triage -> preview -> auto-commit` path.
+- Controller-only promote flows require `lease_id + fencing_token`; Kestra must pass both and never fall back to `null`.
+- `promote_prep /v1/triage` is the formal review gate for promote and fail-closes on non-`allow` decisions.
+- Formal commit requests carry `triage_record_id`; with `WRITEBACK_REQUIRE_TRIAGE=true`, writeback services fail-close on missing or non-`allow` triage records.
+- Promote flows no longer rely on a manual `enabled=false` reservation switch; they emit explicit skip/reject signals based on prepare results.
+- The app internal runtime and audit APIs are the formal Kestra control-plane source; Kestra only uses `/autonomy/loop/start`, `/autonomy/loop/await-round`, and `/autonomy/loop` for the master round lifecycle.
+- The canonical issue mesh `run_id` format is `issue-mesh-YYYYMMDD-NNN`; do not fall back to Kestra execution ids for formal runs.
+- The canonical runtime worker path is `runtime/issue_mesh/<run_id>/shard_XX/{task_spec.json,result.json}`.
+- The formal flow set for this control plane is exactly:
+  - `yanbao_health_checks`
+  - `yanbao_report_writeback_orchestration`
+  - `yanbao_issue_mesh_audit`
+  - `yanbao_issue_mesh_code_fix_wave`
+  - `yanbao_issue_mesh_status_note_promote`
+  - `yanbao_issue_mesh_current_layer_promote`
+  - `yanbao_master_loop`
+- The canonical bridge topology is:
+  - `app_base_url=http://host.docker.internal:18100`
+  - `writeback_a_base_url=http://host.docker.internal:18192`
+  - `mesh_runner_base_url=http://host.docker.internal:18193`
+  - `promote_prep_base_url=http://host.docker.internal:18194`
+  - `writeback_b_base_url=http://host.docker.internal:18195`

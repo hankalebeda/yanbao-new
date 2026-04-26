@@ -1,0 +1,64 @@
+# Recommended use:
+# - Run this Compose file on the Ubuntu control-plane host.
+# - Keep Yanbao app and writeback service on the Windows host that owns D:\yanbao.
+# - Point APP_BASE_URL / WRITEBACK_BASE_URL to explicit cross-host URLs via .env.
+services:
+  kestra-postgres:
+    image: postgres:16
+    container_name: kestra-postgres
+    environment:
+      POSTGRES_DB: ${KESTRA_POSTGRES_DB:-kestra}
+      POSTGRES_USER: ${KESTRA_POSTGRES_USER:-kestra}
+      POSTGRES_PASSWORD: ${KESTRA_POSTGRES_PASSWORD:-kestra}
+    ports:
+      - "${KESTRA_POSTGRES_PORT:-55433}:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${KESTRA_POSTGRES_USER:-kestra} -d ${KESTRA_POSTGRES_DB:-kestra}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    volumes:
+      - kestra_postgres_data:/var/lib/postgresql/data
+
+  kestra:
+    image: kestra/kestra:v1.3.2
+    container_name: kestra
+    command: server standalone --flow-path /app/flows
+    depends_on:
+      kestra-postgres:
+        condition: service_healthy
+    ports:
+      - "${KESTRA_HTTP_PORT:-18080}:8080"
+    volumes:
+      - ../kestra/flows:/app/flows
+      - kestra_storage:/app/storage
+    environment:
+      KESTRA_CONFIGURATION: |
+        datasources:
+          postgres:
+            url: jdbc:postgresql://kestra-postgres:5432/${KESTRA_POSTGRES_DB:-kestra}
+            driverClassName: org.postgresql.Driver
+            username: ${KESTRA_POSTGRES_USER:-kestra}
+            password: ${KESTRA_POSTGRES_PASSWORD:-kestra}
+        kestra:
+          server:
+            basicAuth:
+              username: ${KESTRA_BASIC_AUTH_USERNAME:-admin@kestra.io}              # SECURITY: default password for dev bootstrap only.
+              # Production: set KESTRA_BASIC_AUTH_PASSWORD in .env (never commit).              password: ${KESTRA_BASIC_AUTH_PASSWORD:-Kestra20260327!}
+          repository:
+            type: postgres
+          queue:
+            type: postgres
+          storage:
+            type: local
+            local:
+              basePath: /app/storage
+          tasks:
+            tmpDir:
+              path: /tmp/kestra-wd/tmp
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+volumes:
+  kestra_postgres_data:
+  kestra_storage:

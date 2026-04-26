@@ -1,0 +1,11 @@
+{# 登录状态：个人中心 + 管理后台(仅admin) + 退出；未登录：登录 + 注册 #}
+{% if current_user %}
+  <a href="/profile"{% if request.url.path == '/profile' %} class="active"{% endif %}>个人中心</a>
+  {% if (current_user.role or '')|lower == 'admin' %}
+  <a href="/admin"{% if request.url.path == '/admin' %} class="active"{% endif %}>管理后台</a>
+  {% endif %}
+  <a href="/logout">退出登录</a>
+{% else %}
+  <a href="/login"{% if request.url.path == '/login' %} class="active"{% endif %}>登录</a>
+  <a href="/register"{% if request.url.path == '/register' %} class="active"{% endif %}>注册</a>
+{% endif %}

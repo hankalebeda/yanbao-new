@@ -1,0 +1,39 @@
+{
+  "passed": 3,
+  "total": 3,
+  "results": {
+    "single": {
+      "response": "已经完成思考\n📈 今日A股重要新闻（2026年2月24日）\n**A股马年首个交易日迎",
+      "elapsed_s": 9.03,
+      "has_citation": false
+    },
+    "batch": [
+      {
+        "code": "600519",
+        "name": "Kweichow Moutai",
+        "response": "已经完成思考\n贵州茅台主营茅台酒及系列白酒的生产销售，核心",
+        "elapsed_s": 9.01,
+        "has_citation": false
+      },
+      {
+        "code": "000858",
+        "name": "Wuliangye",
+        "response": "已经完成思考\n五粮液主营业务为白酒的研发、生产与销售，以浓香型五粮液系列为核心产品。",
+        "elapsed_s": 9.02,
+        "has_citation": false
+      },
+      {
+        "code": "300750",
+        "name": "CATL",
+        "response": "已经完成思考\n宁德时代主营动力电池、储能电池的研发、生产与销售，为全球新能源汽车及能源存储提供解决方案。",
+        "elapsed_s": 9.03,
+        "has_citation": false
+      }
+    ],
+    "reconnect": {
+      "response": "已经完成思考\n测试通过",
+      "elapsed_s": 9.03,
+      "has_citation": false
+    }
+  }
+}

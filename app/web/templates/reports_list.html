@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>研报列表 - A股研报平台</title>
+  <link rel="stylesheet" href="/static/demo.css">
+</head>
+<body>
+  <nav class="site-nav">
+    <a href="/" class="nav-brand">A股研报平台</a>
+    <button class="nav-toggle" aria-label="菜单" onclick="document.querySelector('.nav-links').classList.toggle('open')">☰</button>
+    <div class="nav-links">
+      {% include "_nav_links.html" %}
+    </div>
+  </nav>
+
+  <main class="container">
+    <h1 class="page-title">研报列表</h1>
+    <p class="muted">支持按代码、日期、结论、信号类型、持仓、市场状态筛选。</p>
+
+    <div class="filter-bar">
+      <input type="text" id="filter-code" placeholder="股票代码" />
+      <input type="text" id="filter-name" placeholder="股票名称" />
+      <input type="date" id="filter-date-from" placeholder="起始日期" />
+      <input type="date" id="filter-date-to" placeholder="结束日期" />
+      <select id="filter-conclusion">
+        <option value="">全部结论</option>
+        <option value="BUY">买入</option>
+        <option value="SELL">卖出</option>
+        <option value="HOLD">观望</option>
+      </select>
+      <select id="filter-strategy">
+        <option value="">全部信号类型</option>
+        <option value="A">A类</option>
+        <option value="B">B类</option>
+        <option value="C">C类</option>
+      </select>
+      <select id="filter-position">
+        <option value="">全部持仓</option>
+        <option value="OPEN">持有中</option>
+        <option value="CLOSED_T1">已止盈</option>
+        <option value="CLOSED_SL">已止损</option>
+        <option value="CLOSED_EXPIRED">已过期</option>
+      </select>
+      <select id="filter-market">
+        <option value="">全部市场状态</option>
+        <option value="BULL">积极</option>
+        <option value="NEUTRAL">谨慎</option>
+        <option value="BEAR">防御</option>
+      </select>
+      <select id="filter-quality">
+        <option value="">全部质量</option>
+        <option value="high">高</option>
+        <option value="medium">中</option>
+        <option value="low">低</option>
+      </select>
+      <select id="filter-tier">
+        <option value="">全部级别</option>
+        <option value="100k">10万</option>
+        <option value="300k">30万</option>
+        <option value="500k">50万</option>
+      </select>
+      <select id="filter-sort">
+        <option value="-created_at">时间倒序</option>
+        <option value="created_at">时间正序</option>
+      </select>
+      <button type="button" class="btn-filter" id="apply-filters">筛选</button>
+    </div>
+
+    <div id="reports-list" class="reports-list-container"></div>
+    <p id="page-info" class="muted" style="margin-top:8px;">加载中…</p>
+
+    <div id="reports-empty" class="empty-state" style="display:none;">
+      <div class="empty-state-icon">🔍</div>
+      <div class="empty-state-title">未找到符合条件的研报</div>
+      <p class="empty-state-desc">尝试放宽筛选条件，或选择不同的时间范围。</p>
+      <p class="empty-state-action"><a href="/reports" class="btn-primary">清空筛选</a> <a href="/reports" class="btn-secondary" style="margin-left:var(--space-2);">查看全部研报</a></p>
+    </div>
+
+    <div class="pagination" id="pagination" style="display:none;"></div>
+  </main>
+
+  <footer class="site-footer">
+    <div class="footer-inner">
+      {% include "_footer_disclaimer.html" %}
+    </div>
+  </footer>
+
+
+  {% include "_app_config.html" %}
+  <script src="/static/api-bridge.js"></script>
+  <script>
+    var _labels = { recommendation: {BUY:'买入',SELL:'卖出',HOLD:'观望'}, position_status: {OPEN:'持有中',CLOSED_T1:'已止盈',CLOSED_T2:'已止盈',CLOSED_SL:'已止损',CLOSED_EXPIRED:'已过期'} };
+    (async function(){ try { var r = await getPlatformConfig(); if (r && r.success && r.data && r.data.labels) _labels = r.data.labels; } catch(e){} })();
+    var currentPage = 1;
+    var totalPages = 1;
+    var pageSize = 20;
+    function posStatusClass(s) {
+      if (!s) return 'pos-expired';
+      if (s === 'OPEN') return 'pos-open';
+      if (s === 'CLOSED_T1' || s === 'CLOSED_T2') return 'pos-win';
+      if (s === 'CLOSED_SL') return 'pos-sl';
+      return 'pos-expired';
+    }
+    function posStatusText(s) {
+      if (!s) return '—';
+      var L = _labels.position_status;
+      if (L && L[s]) return L[s];
+      if (s === 'CLOSED_T1' || s === 'CLOSED_T2') return '已止盈';
+      if (s === 'OPEN') return '持有中';
+      if (s === 'CLOSED_SL') return '已止损';
+      return '已过期';
+    }
+    function renderReportRow(r, posStatus) {
+      var code = (r.stock_code || '').replace(/\.(SH|SZ)$/,'');
+      var rec = r.recommendation || 'HOLD';
+      var recCls = rec === 'BUY' ? 'badge-buy' : (rec === 'SELL' ? 'badge-sell' : 'badge-hold');
+      var typeCls = (r.strategy_type === 'A' ? 'badge-type-a' : (r.strategy_type === 'B' ? 'badge-type-b' : (r.strategy_type === 'C' ? 'badge-type-c' : 'badge-type-a')));
+      var conf = r.confidence != null ? Math.round((r.confidence || 0) * 100) + '%' : '';
+      var date = (r.trade_date || r.created_at || '').slice(0,10);
+      var dateShort = date ? date.slice(5).replace('-','/') : '—';
+      var pcls = posStatusClass(posStatus);
+      var ptext = posStatusText(posStatus);
+      var link = r.report_id ? '/reports/' + r.report_id : '/report/' + code;
+      var bannerHtml = r.degraded_banner ? '<div style="margin-top:6px;padding:4px 10px;background:rgba(250,173,20,.12);border:1px solid rgba(250,173,20,.4);border-radius:6px;color:#d48806;font-size:12px;">' + r.degraded_banner + '</div>' : '';
+      return '<article class="report-row" style="padding:16px;gap:20px"><div class="report-row-left" style="gap:16px">' +
+        '<div class="report-row-head" style="gap:12px"><strong>' + (r.stock_name || r.stock_code) + ' ' + (r.stock_code || '') + '</strong>' +
+        '<span class="badge ' + typeCls + '">' + (r.strategy_type || 'A') + '类</span><span class="badge ' + recCls + '">' + ((_labels.recommendation && _labels.recommendation[rec]) || '观望') + '</span></div>' +
+        '<div class="report-row-meta" style="gap:12px"><span>置信度 ' + conf + '</span><span>' + date + '</span></div>' +
+        '<div class="report-row-status" style="gap:12px"><span class="pos-status ' + pcls + '">' + ptext + '</span><span class="report-row-date">' + dateShort + '</span></div>' + bannerHtml + '</div>' +
+        '<div class="report-row-action"><a href="' + link + '">查看研报</a></div></article>';
+    }
+    async function loadReports() {
+      var params = { page: currentPage, page_size: pageSize };
+      var code = document.getElementById('filter-code');
+      if (code && code.value.trim()) {
+        var c = code.value.trim();
+        params.stock_code = /^\d{6}\.(SH|SZ)$/i.test(c) ? c : (c.length === 6 ? c + '.SH' : c);
+      }
+      var name = document.getElementById('filter-name');
+      if (name && name.value.trim()) params.stock_name = name.value.trim();
+      var df = document.getElementById('filter-date-from');
+      if (df && df.value) params.date_from = df.value;
+      var dt = document.getElementById('filter-date-to');
+      if (dt && dt.value) params.date_to = dt.value;
+      var concl = document.getElementById('filter-conclusion');
+      if (concl && concl.value) params.conclusion = concl.value;
+      var strat = document.getElementById('filter-strategy');
+      if (strat && strat.value) params.strategy_type = strat.value;
+      var pos = document.getElementById('filter-position');
+      if (pos && pos.value) params.position_status = pos.value;
+      var mkt = document.getElementById('filter-market');
+      if (mkt && mkt.value) params.market_state = mkt.value;
+      var sort = document.getElementById('filter-sort');
+      if (sort && sort.value) params.sort = sort.value;
+      var res = await getReports(params);
+      if (res && res.success === false) {
+        var list = document.getElementById('reports-list');
+        var empty = document.getElementById('reports-empty');
+        if (list) { list.innerHTML = '<p class="muted" style="padding:16px;">' + (res.message || '加载失败') + '</p>'; list.style.display = 'block'; }
+        if (empty) empty.style.display = 'none';
+        return;
+      }
+      var data = (res && res.data) ? res.data : null;
+      var items = (data && data.items) ? data.items : [];
+      totalPages = data && data.page_size ? Math.max(1, Math.ceil((data.total || 0) / data.page_size)) : 1;
+      var list = document.getElementById('reports-list');
+      var empty = document.getElementById('reports-empty');
+      var pag = document.getElementById('pagination');
+      if (items.length > 0) {
+        list.innerHTML = items.map(function(r){ return renderReportRow(r, r.position_status); }).join('');
+        list.style.display = 'block';
+        var info = document.getElementById('page-info');
+        if (info) info.textContent = '共 ' + (data.total || items.length) + ' 条，当前第 ' + currentPage + ' 页';
+        if (empty) empty.style.display = 'none';
+        if (pag && totalPages > 1) {
+          pag.style.display = 'flex';
+          var html = '';
+          if (currentPage > 1) html += '<a href="javascript:void(0)" onclick="currentPage=' + (currentPage-1) + ';loadReports();return false;">上一页</a>';
+          html += '<span class="pagination-info">第 ' + currentPage + ' / ' + totalPages + ' 页</span>';
+          if (currentPage < totalPages) html += '<a href="javascript:void(0)" onclick="currentPage=' + (currentPage+1) + ';loadReports();return false;">下一页</a>';
+          pag.innerHTML = html;
+        }
+      } else {
+        list.innerHTML = '';
+        list.style.display = 'none';
+        var info2 = document.getElementById('page-info');
+        if (info2) info2.textContent = '暂无符合条件的研报';
+        if (empty) empty.style.display = 'block';
+        if (pag) pag.style.display = 'none';
+      }
+    }
+    loadReports();
+    var btn = document.getElementById('apply-filters');
+    if (btn) btn.addEventListener('click', function(){ currentPage = 1; loadReports(); });
+  </script>
+</body>
+</html>

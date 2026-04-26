@@ -1,0 +1,9 @@
+{
+    "resource":  "provider",
+    "name":  "code.claudex.us.ci",
+    "homepage":  "https://code.claudex.us.ci",
+    "app":  "codex",
+    "model":  "gpt-5.4",
+    "endpoint":  "https://code.claudex.us.ci/v1",
+    "enabled":  true
+}

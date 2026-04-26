@@ -1,0 +1,13 @@
+import sqlite3
+db = sqlite3.connect('data/app.db')
+c = db.cursor()
+c.execute("SELECT stock_code,task_id,status,status_reason,created_at FROM report_generation_task WHERE status NOT IN ('Completed','Failed','Expired') ORDER BY created_at")
+rows = c.fetchall()
+print('Active tasks:', len(rows))
+for r in rows: print(r)
+print()
+c.execute("SELECT stock_code,trade_date,published,is_deleted,quality_flag,publish_status FROM report WHERE published=1 AND is_deleted=0 ORDER BY trade_date,stock_code")
+rows = c.fetchall()
+print(f'Total published: {len(rows)}')
+for r in rows: print(r)
+db.close()

@@ -1,0 +1,28 @@
+﻿PUA L143: <button class="admin-mobile-tab" onclick="switchSection('review')">婢跺秴顓?/button>
+PUA L197: <button class="admin-nav-item" id="nav-review" onclick="switchSection('review')"><span class="admin-nav-item-icon">&#128269;</span> 瀵板懎顦茬€癸紕鐖洪幎?/button>
+PUA L199: <button class="admin-nav-item" id="nav-users" onclick="switchSection('users')"><span class="admin-nav-item-icon">&#128101;</span> 鐢ㄦ埛姒傝顫?/button>
+PUA L207: <span class="admin-nav-group-label">杩愯顢戣鏄?/span>
+PUA L211: 缁狅紕鎮婃い鍏哥瑝閸愬秵褰佹笟?DAG 鐞涖儴绐囧叆鍙ｉ敍娑橆洤闂団偓鐞涖儴绐囬敍宀冾嚞娴ｈ法鏁ら弬鎵畱閸愬懘鍎存潻鎰樊濞翠胶鈻奸獮鏈典簰璋冨害鐘舵€佷椒璐熼崙鍡愨偓?
+PUA L221: <a class="admin-nav-item" href="/dashboard"><span class="admin-nav-item-icon">&#128200;</span> 缂佺喕顓搁惇瀣緲</a>
+PUA L253: <div class="kpi-card-label">閺嶇绺惧Ч鐘侯潐濡?/div>
+PUA L257: <div class="kpi-card-sub">閸欘亣鑲＄エ/div>
+PUA L283: <div class="kpi-card-label">瀵板懎顦茬€?/div>
+PUA L367: <thead><tr><th>闃舵顔?/th><th>鐘舵€?th><th>寮€濮嬫椂闂?th><th>瀹屾垚鏃堕棿</th><th>閿欒顕?/th></tr></thead>
+PUA L383: <h2 class="card-title">閹镐椒绮ㄥ鍌濐潔</h2>
+PUA L425: 鐠囥儵銆夐崣顏勭潔缁€鐑樻付鏉╂垼鐨熸惔锔剧波閺嬫粈绗岄敊璇嚖閸樼喎娲滈敍灞藉嚒闁偓娴兼垹娈戞禍鍝勪紣鐞涖儴绐囧叆鍙ｆ稉宥呭晙瀵瑰顦诲鈧弨淇扁偓?
+PUA L459: <!-- 瀵板懎顦茬€癸紕鐖洪幎?-->
+PUA L465: <h1>瀵板懎顦茬€癸紕鐖洪幎?/h1>
+PUA L479: <tr><th>鐮旀姤ID</th><th>鑲＄エ浠ｇ爜</th><th>娴溿倖妲楅弮?/th><th>婢跺秴顓哥姸鎬?th><th>鏁版嵁璐ㄩ噺</th><th>鍒涘缓鏃堕棿</th><th>鎿嶄綔</th></tr>
+PUA L505: <h1>鐢ㄦ埛姒傝顫?/h1>
+PUA L521: <tr><th>鐢ㄦ埛ID</th><th>闁喚顔?/th><th>瑙掕壊</th><th>浼氬憳绛夌骇</th><th>闁喚顔堟宀冪槈</th><th>鎿嶄綔</th></tr>
+PUA L1212: <div class="kpi-card-label">閺嶇绺惧Ч鐘侯潐濡?/div>
+PUA L1216: <div class="kpi-card-sub">閸欘亣鑲＄エ/div>
+PUA L1242: <div class="kpi-card-label">瀵板懎顦茬€?/div>
+PUA L1326: <thead><tr><th>闃舵顔?/th><th>鐘舵€?th><th>寮€濮嬫椂闂?th><th>瀹屾垚鏃堕棿</th><th>閿欒顕?/th></tr></thead>
+PUA L1342: <h2 class="card-title">閹镐椒绮ㄥ鍌濐潔</h2>
+PUA L1384: 鐠囥儵銆夐崣顏勭潔缁€鐑樻付鏉╂垼鐨熸惔锔剧波閺嬫粈绗岄敊璇嚖閸樼喎娲滈敍灞藉嚒闁偓娴兼垹娈戞禍鍝勪紣鐞涖儴绐囧叆鍙ｆ稉宥呭晙瀵瑰顦诲鈧弨淇扁偓?
+PUA L1418: <!-- 瀵板懎顦茬€癸紕鐖洪幎?-->
+PUA L1424: <h1>瀵板懎顦茬€癸紕鐖洪幎?/h1>
+PUA L1438: <tr><th>鐮旀姤ID</th><th>鑲＄エ浠ｇ爜</th><th>娴溿倖妲楅弮?/th><th>婢跺秴顓哥姸鎬?th><th>鏁版嵁璐ㄩ噺</th><th>鍒涘缓鏃堕棿</th><th>鎿嶄綔</th></tr>
+PUA L1464: <h1>鐢ㄦ埛姒傝顫?/h1>
+PUA L1478: <tr><th>鐢ㄦ埛ID</th><th>闁喚顔?/th><th>瑙掕壊</th><th>浼氬憳绛夌骇</th><th>闁喚顔堟宀冪槈</th><th>鎿嶄綔</th></tr>

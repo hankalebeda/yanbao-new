@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>请求有误 - A股研报平台</title>
+  <link rel="stylesheet" href="/static/demo.css">
+</head>
+<body>
+  <main class="container error-page" style="padding:48px 20px;max-width:720px;">
+    <section class="card" style="text-align:center;">
+      <p class="muted" style="font-size:12px;letter-spacing:.08em;">HTTP 400 / 422</p>
+      <h1 class="page-title">请求参数不正确</h1>
+      <p class="muted">{{ detail or '当前请求缺少必要信息，或输入格式不符合要求。' }}</p>
+      <p style="margin-top:24px;"><a href="/" class="btn-primary">返回首页</a></p>
+    </section>
+  </main>
+</body>
+</html>

@@ -1,0 +1,31 @@
+task_id_prefix: prompt6-analysis
+goal: "Prompt 6 analysis-only"
+task_kind: analysis
+
+prompt_source:
+  file: "docs/提示词/18_全量自动化提示词.md"
+  heading: "## Prompt 6：真实验真 + 深度修复循环控制器"
+  format: fenced_text
+
+read_scope:
+  - app
+  - tests
+  - scripts
+  - docs/core
+  - "github/automation/live_fix_loop"
+
+write_scope:
+  - app
+  - tests
+  - scripts
+  - docs/core
+  - "docs/提示词"
+  - "github/automation/live_fix_loop"
+
+timeout_minutes: 50
+allow_native_subagents: true
+allow_native_subagents_at_external_limit: true
+inner_agent_max_depth: 1
+inner_agent_max_threads: 4
+ensure_runtime: false
+lock: false

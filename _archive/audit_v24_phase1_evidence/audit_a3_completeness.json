@@ -1,0 +1,673 @@
+{
+  "ts": "2026-04-18T02:22:02.741440",
+  "db": "D:\\yanbao-new\\data\\app.db",
+  "totals": {
+    "total": 1612,
+    "alive": 1610,
+    "deleted": 2
+  },
+  "quality_flag_dist": [
+    {
+      "quality_flag": "ok",
+      "cnt": 1610
+    }
+  ],
+  "llm_fallback_dist": [
+    {
+      "llm_fallback_level": "primary",
+      "cnt": 1610
+    }
+  ],
+  "failure_category_dist": [
+    {
+      "failure_category": null,
+      "cnt": 1610
+    }
+  ],
+  "degraded_status_reason": [],
+  "content_json_missing": [
+    {
+      "trade_date": "2026-04-03",
+      "missing": 205
+    },
+    {
+      "trade_date": "2026-04-07",
+      "missing": 197
+    },
+    {
+      "trade_date": "2026-04-08",
+      "missing": 26
+    },
+    {
+      "trade_date": "2026-04-09",
+      "missing": 197
+    },
+    {
+      "trade_date": "2026-04-10",
+      "missing": 197
+    },
+    {
+      "trade_date": "2026-04-13",
+      "missing": 197
+    },
+    {
+      "trade_date": "2026-04-14",
+      "missing": 197
+    },
+    {
+      "trade_date": "2026-04-15",
+      "missing": 197
+    },
+    {
+      "trade_date": "2026-04-16",
+      "missing": 197
+    }
+  ],
+  "content_json_missing_total": 1610,
+  "conclusion_text_short": [],
+  "conclusion_text_short_total": 0,
+  "reasoning_chain_empty": [],
+  "reasoning_chain_empty_total": 0,
+  "confidence_null": [],
+  "confidence_null_total": 0,
+  "data_usage_by_source": [
+    {
+      "trade_date": "2026-04-07",
+      "source_name": "backfill",
+      "stocks_with_usage": 203
+    },
+    {
+      "trade_date": "2026-04-07",
+      "source_name": "eastmoney",
+      "stocks_with_usage": 19
+    },
+    {
+      "trade_date": "2026-04-07",
+      "source_name": "etf_flow",
+      "stocks_with_usage": 203
+    },
+    {
+      "trade_date": "2026-04-07",
+      "source_name": "market_state_cache",
+      "stocks_with_usage": 197
+    },
+    {
+      "trade_date": "2026-04-07",
+      "source_name": "northbound",
+      "stocks_with_usage": 203
+    },
+    {
+      "trade_date": "2026-04-07",
+      "source_name": "tencent",
+      "stocks_with_usage": 197
+    },
+    {
+      "trade_date": "2026-04-07",
+      "source_name": "xueqiu",
+      "stocks_with_usage": 3
+    },
+    {
+      "trade_date": "2026-04-08",
+      "source_name": "backfill",
+      "stocks_with_usage": 29
+    },
+    {
+      "trade_date": "2026-04-08",
+      "source_name": "etf_flow",
+      "stocks_with_usage": 29
+    },
+    {
+      "trade_date": "2026-04-08",
+      "source_name": "market_state_cache",
+      "stocks_with_usage": 26
+    },
+    {
+      "trade_date": "2026-04-08",
+      "source_name": "northbound",
+      "stocks_with_usage": 29
+    },
+    {
+      "trade_date": "2026-04-08",
+      "source_name": "tencent",
+      "stocks_with_usage": 26
+    },
+    {
+      "trade_date": "2026-04-09",
+      "source_name": "backfill",
+      "stocks_with_usage": 200
+    },
+    {
+      "trade_date": "2026-04-09",
+      "source_name": "etf_flow",
+      "stocks_with_usage": 200
+    },
+    {
+      "trade_date": "2026-04-09",
+      "source_name": "market_state_cache",
+      "stocks_with_usage": 197
+    },
+    {
+      "trade_date": "2026-04-09",
+      "source_name": "northbound",
+      "stocks_with_usage": 200
+    },
+    {
+      "trade_date": "2026-04-09",
+      "source_name": "tencent",
+      "stocks_with_usage": 197
+    },
+    {
+      "trade_date": "2026-04-10",
+      "source_name": "backfill",
+      "stocks_with_usage": 200
+    },
+    {
+      "trade_date": "2026-04-10",
+      "source_name": "eastmoney",
+      "stocks_with_usage": 2
+    },
+    {
+      "trade_date": "2026-04-10",
+      "source_name": "etf_flow",
+      "stocks_with_usage": 200
+    },
+    {
+      "trade_date": "2026-04-10",
+      "source_name": "market_state_cache",
+      "stocks_with_usage": 197
+    },
+    {
+      "trade_date": "2026-04-10",
+      "source_name": "northbound",
+      "stocks_with_usage": 200
+    },
+    {
+      "trade_date": "2026-04-10",
+      "source_name": "tdx_local",
+      "stocks_with_usage": 1
+    },
+    {
+      "trade_date": "2026-04-10",
+      "source_name": "tencent",
+      "stocks_with_usage": 197
+    },
+    {
+      "trade_date": "2026-04-10",
+      "source_name": "xueqiu",
+      "stocks_with_usage": 3
+    },
+    {
+      "trade_date": "2026-04-13",
+      "source_name": "backfill",
+      "stocks_with_usage": 200
+    },
+    {
+      "trade_date": "2026-04-13",
+      "source_name": "etf_flow",
+      "stocks_with_usage": 200
+    },
+    {
+      "trade_date": "2026-04-13",
+      "source_name": "market_state_cache",
+      "stocks_with_usage": 197
+    },
+    {
+      "trade_date": "2026-04-13",
+      "source_name": "northbound",
+      "stocks_with_usage": 200
+    },
+    {
+      "trade_date": "2026-04-13",
+      "source_name": "tencent",
+      "stocks_with_usage": 197
+    },
+    {
+      "trade_date": "2026-04-14",
+      "source_name": "backfill",
+      "stocks_with_usage": 200
+    },
+    {
+      "trade_date": "2026-04-14",
+      "source_name": "eastmoney",
+      "stocks_with_usage": 6
+    },
+    {
+      "trade_date": "2026-04-14",
+      "source_name": "etf_flow",
+      "stocks_with_usage": 200
+    },
+    {
+      "trade_date": "2026-04-14",
+      "source_name": "market_state_cache",
+      "stocks_with_usage": 199
+    },
+    {
+      "trade_date": "2026-04-14",
+      "source_name": "northbound",
+      "stocks_with_usage": 200
+    },
+    {
+      "trade_date": "2026-04-14",
+      "source_name": "tdx_local",
+      "stocks_with_usage": 4
+    },
+    {
+      "trade_date": "2026-04-14",
+      "source_name": "tencent",
+      "stocks_with_usage": 197
+    },
+    {
+      "trade_date": "2026-04-14",
+      "source_name": "xueqiu",
+      "stocks_with_usage": 2
+    },
+    {
+      "trade_date": "2026-04-15",
+      "source_name": "backfill",
+      "stocks_with_usage": 200
+    },
+    {
+      "trade_date": "2026-04-15",
+      "source_name": "eastmoney",
+      "stocks_with_usage": 6
+    },
+    {
+      "trade_date": "2026-04-15",
+      "source_name": "etf_flow",
+      "stocks_with_usage": 200
+    },
+    {
+      "trade_date": "2026-04-15",
+      "source_name": "market_state_cache",
+      "stocks_with_usage": 197
+    },
+    {
+      "trade_date": "2026-04-15",
+      "source_name": "northbound",
+      "stocks_with_usage": 200
+    },
+    {
+      "trade_date": "2026-04-15",
+      "source_name": "tdx_local",
+      "stocks_with_usage": 4
+    },
+    {
+      "trade_date": "2026-04-15",
+      "source_name": "tencent",
+      "stocks_with_usage": 197
+    },
+    {
+      "trade_date": "2026-04-15",
+      "source_name": "xueqiu",
+      "stocks_with_usage": 2
+    },
+    {
+      "trade_date": "2026-04-16",
+      "source_name": "backfill",
+      "stocks_with_usage": 200
+    },
+    {
+      "trade_date": "2026-04-16",
+      "source_name": "eastmoney",
+      "stocks_with_usage": 78
+    },
+    {
+      "trade_date": "2026-04-16",
+      "source_name": "etf_flow",
+      "stocks_with_usage": 200
+    },
+    {
+      "trade_date": "2026-04-16",
+      "source_name": "market_state_cache",
+      "stocks_with_usage": 197
+    },
+    {
+      "trade_date": "2026-04-16",
+      "source_name": "northbound",
+      "stocks_with_usage": 200
+    },
+    {
+      "trade_date": "2026-04-16",
+      "source_name": "tencent",
+      "stocks_with_usage": 197
+    }
+  ],
+  "reports_without_usage": [],
+  "reports_missing_kline_qfq_history": [
+    {
+      "trade_date": "2026-04-07",
+      "missing": 197
+    },
+    {
+      "trade_date": "2026-04-08",
+      "missing": 26
+    },
+    {
+      "trade_date": "2026-04-09",
+      "missing": 197
+    },
+    {
+      "trade_date": "2026-04-10",
+      "missing": 197
+    },
+    {
+      "trade_date": "2026-04-13",
+      "missing": 197
+    },
+    {
+      "trade_date": "2026-04-14",
+      "missing": 197
+    },
+    {
+      "trade_date": "2026-04-15",
+      "missing": 197
+    },
+    {
+      "trade_date": "2026-04-16",
+      "missing": 197
+    }
+  ],
+  "reports_missing_market_state": [
+    {
+      "trade_date": "2026-04-07",
+      "missing": 197
+    },
+    {
+      "trade_date": "2026-04-08",
+      "missing": 26
+    },
+    {
+      "trade_date": "2026-04-09",
+      "missing": 197
+    },
+    {
+      "trade_date": "2026-04-10",
+      "missing": 197
+    },
+    {
+      "trade_date": "2026-04-13",
+      "missing": 197
+    },
+    {
+      "trade_date": "2026-04-14",
+      "missing": 197
+    },
+    {
+      "trade_date": "2026-04-15",
+      "missing": 197
+    },
+    {
+      "trade_date": "2026-04-16",
+      "missing": 197
+    }
+  ],
+  "reports_missing_tencent_kline": [
+    {
+      "trade_date": "2026-04-07",
+      "missing": 197
+    },
+    {
+      "trade_date": "2026-04-08",
+      "missing": 26
+    },
+    {
+      "trade_date": "2026-04-09",
+      "missing": 197
+    },
+    {
+      "trade_date": "2026-04-10",
+      "missing": 197
+    },
+    {
+      "trade_date": "2026-04-13",
+      "missing": 197
+    },
+    {
+      "trade_date": "2026-04-14",
+      "missing": 197
+    },
+    {
+      "trade_date": "2026-04-15",
+      "missing": 197
+    },
+    {
+      "trade_date": "2026-04-16",
+      "missing": 197
+    }
+  ],
+  "reports_missing_kline": [
+    {
+      "trade_date": "2026-04-07",
+      "missing": 197
+    },
+    {
+      "trade_date": "2026-04-08",
+      "missing": 26
+    },
+    {
+      "trade_date": "2026-04-09",
+      "missing": 197
+    },
+    {
+      "trade_date": "2026-04-10",
+      "missing": 197
+    },
+    {
+      "trade_date": "2026-04-13",
+      "missing": 197
+    },
+    {
+      "trade_date": "2026-04-14",
+      "missing": 197
+    },
+    {
+      "trade_date": "2026-04-15",
+      "missing": 197
+    },
+    {
+      "trade_date": "2026-04-16",
+      "missing": 197
+    }
+  ],
+  "distinct_source_names": [
+    "backfill",
+    "eastmoney",
+    "etf_flow",
+    "market_state_cache",
+    "northbound",
+    "tdx_local",
+    "tencent",
+    "xueqiu"
+  ],
+  "data_batch_status": [
+    {
+      "source_name": "backfill",
+      "batch_status": "SUCCESS",
+      "n": 11
+    },
+    {
+      "source_name": "eastmoney",
+      "batch_status": "PARTIAL_SUCCESS",
+      "n": 11
+    },
+    {
+      "source_name": "eastmoney",
+      "batch_status": "SUCCESS",
+      "n": 8
+    },
+    {
+      "source_name": "etf_flow",
+      "batch_status": "SUCCESS",
+      "n": 11
+    },
+    {
+      "source_name": "market_state_cache",
+      "batch_status": "SUCCESS",
+      "n": 8
+    },
+    {
+      "source_name": "northbound",
+      "batch_status": "SUCCESS",
+      "n": 11
+    },
+    {
+      "source_name": "tdx_local",
+      "batch_status": "SUCCESS",
+      "n": 3
+    },
+    {
+      "source_name": "tencent",
+      "batch_status": "PARTIAL_SUCCESS",
+      "n": 8
+    }
+  ],
+  "data_batch_error_top": [
+    {
+      "error_code": "KLINE_FETCH_FAILED",
+      "error_stage": "backfill_missing",
+      "n": 1659
+    }
+  ],
+  "settlement_error": "no such table: settlement",
+  "task_status_dist": [
+    {
+      "trade_date": "2026-04-07",
+      "status": "Completed",
+      "n": 201
+    },
+    {
+      "trade_date": "2026-04-07",
+      "status": "Expired",
+      "n": 22
+    },
+    {
+      "trade_date": "2026-04-08",
+      "status": "Completed",
+      "n": 197
+    },
+    {
+      "trade_date": "2026-04-09",
+      "status": "Completed",
+      "n": 200
+    },
+    {
+      "trade_date": "2026-04-09",
+      "status": "Failed",
+      "n": 1
+    },
+    {
+      "trade_date": "2026-04-10",
+      "status": "Completed",
+      "n": 200
+    },
+    {
+      "trade_date": "2026-04-10",
+      "status": "Expired",
+      "n": 11
+    },
+    {
+      "trade_date": "2026-04-13",
+      "status": "Completed",
+      "n": 197
+    },
+    {
+      "trade_date": "2026-04-14",
+      "status": "Completed",
+      "n": 203
+    },
+    {
+      "trade_date": "2026-04-15",
+      "status": "Completed",
+      "n": 201
+    },
+    {
+      "trade_date": "2026-04-15",
+      "status": "Failed",
+      "n": 2
+    },
+    {
+      "trade_date": "2026-04-16",
+      "status": "Completed",
+      "n": 197
+    },
+    {
+      "trade_date": "2026-04-16",
+      "status": "Failed",
+      "n": 29
+    }
+  ],
+  "market_state_cache": [
+    {
+      "trade_date": "2026-04-07",
+      "market_state": "NEUTRAL",
+      "kline_batch_id": null,
+      "hotspot_batch_id": null,
+      "a_type_pct": 0.35,
+      "b_type_pct": 0.45,
+      "c_type_pct": 0.2
+    },
+    {
+      "trade_date": "2026-04-08",
+      "market_state": "BEAR",
+      "kline_batch_id": null,
+      "hotspot_batch_id": null,
+      "a_type_pct": 0.35,
+      "b_type_pct": 0.45,
+      "c_type_pct": 0.2
+    },
+    {
+      "trade_date": "2026-04-09",
+      "market_state": "NEUTRAL",
+      "kline_batch_id": null,
+      "hotspot_batch_id": null,
+      "a_type_pct": 0.35,
+      "b_type_pct": 0.45,
+      "c_type_pct": 0.2
+    },
+    {
+      "trade_date": "2026-04-10",
+      "market_state": "NEUTRAL",
+      "kline_batch_id": "984d997a-a06e-466e-acb9-371eb871f63f",
+      "hotspot_batch_id": "984d997a-a06e-466e-acb9-371eb871f63f",
+      "a_type_pct": 0.35,
+      "b_type_pct": 0.45,
+      "c_type_pct": 0.2
+    },
+    {
+      "trade_date": "2026-04-13",
+      "market_state": "NEUTRAL",
+      "kline_batch_id": null,
+      "hotspot_batch_id": null,
+      "a_type_pct": 0.35,
+      "b_type_pct": 0.45,
+      "c_type_pct": 0.2
+    },
+    {
+      "trade_date": "2026-04-14",
+      "market_state": "NEUTRAL",
+      "kline_batch_id": "37f0d3d1-b3c3-43f0-9105-e402891d93a3",
+      "hotspot_batch_id": "37f0d3d1-b3c3-43f0-9105-e402891d93a3",
+      "a_type_pct": 0.35,
+      "b_type_pct": 0.45,
+      "c_type_pct": 0.2
+    },
+    {
+      "trade_date": "2026-04-15",
+      "market_state": "NEUTRAL",
+      "kline_batch_id": "7325d3f1-7d14-437f-a4bd-938796d8be71",
+      "hotspot_batch_id": "7325d3f1-7d14-437f-a4bd-938796d8be71",
+      "a_type_pct": 0.35,
+      "b_type_pct": 0.45,
+      "c_type_pct": 0.2
+    },
+    {
+      "trade_date": "2026-04-16",
+      "market_state": "NEUTRAL",
+      "kline_batch_id": null,
+      "hotspot_batch_id": null,
+      "a_type_pct": 0.35,
+      "b_type_pct": 0.45,
+      "c_type_pct": 0.2
+    }
+  ]
+}

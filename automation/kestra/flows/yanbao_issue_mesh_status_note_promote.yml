@@ -1,0 +1,237 @@
+id: yanbao_issue_mesh_status_note_promote
+namespace: yanbao.ops
+description: >
+  Formal status-note promote entry for docs/core/22 current-writeback-detail.
+  It rechecks runtime gates and audit context, requests a promote payload from
+  promote_prep, runs AI triage, previews and commits through writeback B, and
+  verifies rollback acceptance when requested.
+  Control-plane or runtime rejection is surfaced as an explicit skip instead of
+  a reserved/manual enable flag.
+
+inputs:
+  - id: app_base_url
+    type: STRING
+    defaults: "http://host.docker.internal:18100"
+  - id: internal_token
+    type: STRING
+    required: true
+  - id: promote_prep_base_url
+    type: STRING
+    defaults: "http://host.docker.internal:18194"
+  - id: promote_prep_token
+    type: STRING
+    required: true
+  - id: writeback_b_base_url
+    type: STRING
+    defaults: "http://host.docker.internal:18195"
+  - id: writeback_b_token
+    type: STRING
+    required: true
+  - id: run_id
+    type: STRING
+    required: true
+  - id: lease_id
+    type: STRING
+    required: true
+  - id: fencing_token
+    type: INT
+    required: true
+  - id: do_rollback_after_commit
+    type: BOOLEAN
+    defaults: false
+
+tasks:
+  - id: runtime_gates
+    type: io.kestra.plugin.core.http.Request
+    method: GET
+    uri: "{{ inputs.app_base_url }}/api/v1/internal/runtime/gates"
+    headers:
+      X-Internal-Token: "{{ inputs.internal_token }}"
+
+  - id: audit_context
+    type: io.kestra.plugin.core.http.Request
+    method: GET
+    uri: "{{ inputs.app_base_url }}/api/v1/internal/audit/context"
+    headers:
+      X-Internal-Token: "{{ inputs.internal_token }}"
+
+  - id: prepare_status_note
+    type: io.kestra.plugin.core.http.Request
+    method: POST
+    uri: "{{ inputs.promote_prep_base_url }}/v1/promote/status-note"
+    headers:
+      Content-Type: application/json
+      Authorization: "Bearer {{ inputs.promote_prep_token }}"
+    body: |
+      {
+        "run_id": "{{ inputs.run_id }}",
+        "runtime_gates": {{ outputs.runtime_gates.body | jq('.data') | first | json }},
+        "audit_context": {{ outputs.audit_context.body | jq('.data') | first | json }}
+      }
+    allowFailed: true
+
+  - id: commit_if_prepare_ready
+    type: io.kestra.plugin.core.flow.If
+    condition: "{{ outputs.prepare_status_note.code == 200 }}"
+    then:
+      - id: commit_if_needed
+        type: io.kestra.plugin.core.flow.If
+        condition: "{{ not (outputs.prepare_status_note.body | jq('.skip_commit') | first) }}"
+        then:
+          - id: triage_decision
+            type: io.kestra.plugin.core.http.Request
+            timeout: PT5M
+            method: POST
+            uri: "{{ inputs.promote_prep_base_url }}/v1/triage"
+            headers:
+              Content-Type: application/json
+              Authorization: "Bearer {{ inputs.promote_prep_token }}"
+            options:
+              readTimeout: PT5M
+              readIdleTimeout: PT5M
+              connectTimeout: PT1M
+            body: |
+              {
+                "run_id": "{{ inputs.run_id }}",
+                "layer": "status-note",
+                "target_path": {{ outputs.prepare_status_note.body | jq('.target_path') | first | json }},
+                "target_anchor": "{{ outputs.prepare_status_note.body | jq('.target_anchor') | first }}",
+                "patch_text": {{ outputs.prepare_status_note.body | jq('.patch_text') | first | json }},
+                "base_sha256": "{{ outputs.prepare_status_note.body | jq('.base_sha256') | first }}",
+                "runtime_gates": {{ outputs.runtime_gates.body | jq('.data') | first | json }},
+                "audit_context": {{ outputs.audit_context.body | jq('.data') | first | json }},
+                "semantic_fingerprint": "{{ outputs.prepare_status_note.body | jq('.semantic_fingerprint') | first }}"
+              }
+          - id: commit_if_triage_allow
+            type: io.kestra.plugin.core.flow.If
+            condition: "{{ outputs.triage_decision.body | jq('.auto_commit') | first }}"
+            then:
+              - id: writeback_preview
+                type: io.kestra.plugin.core.http.Request
+                method: POST
+                uri: "{{ inputs.writeback_b_base_url }}/v1/preview"
+                headers:
+                  Content-Type: application/json
+                  Authorization: "Bearer {{ inputs.writeback_b_token }}"
+                body: |
+                  {
+                    "target_path": {{ outputs.prepare_status_note.body | jq('.target_path') | first | json }},
+                    "base_sha256": "{{ outputs.prepare_status_note.body | jq('.base_sha256') | first }}",
+                    "patch_text": {{ outputs.prepare_status_note.body | jq('.patch_text') | first | json }}
+                  }
+              - id: commit_if_preview_clean
+                type: io.kestra.plugin.core.flow.If
+                condition: "{{ not (outputs.writeback_preview.body | jq('.conflict') | first) }}"
+                then:
+                  - id: writeback_commit
+                    type: io.kestra.plugin.core.http.Request
+                    method: POST
+                    uri: "{{ inputs.writeback_b_base_url }}/v1/commit"
+                    headers:
+                      Content-Type: application/json
+                      Authorization: "Bearer {{ inputs.writeback_b_token }}"
+                    body: |
+                      {
+                        "target_path": {{ outputs.prepare_status_note.body | jq('.target_path') | first | json }},
+                        "base_sha256": "{{ outputs.prepare_status_note.body | jq('.base_sha256') | first }}",
+                        "patch_text": {{ outputs.prepare_status_note.body | jq('.patch_text') | first | json }},
+                        "idempotency_key": "{{ outputs.prepare_status_note.body | jq('.idempotency_key') | first }}",
+                        "request_id": "{{ outputs.prepare_status_note.body | jq('.request_id') | first }}",
+                        "run_id": "{{ inputs.run_id }}",
+                        "triage_record_id": "{{ outputs.triage_decision.body | jq('.triage_record_id') | first }}",
+                        "lease_id": "{{ inputs.lease_id }}",
+                        "fencing_token": {{ inputs.fencing_token }},
+                        "actor": {
+                          "type": "workflow",
+                          "id": "kestra-status-note-auto"
+                        }
+                      }
+                  - id: rollback_if_requested
+                    type: io.kestra.plugin.core.flow.If
+                    condition: "{{ inputs.do_rollback_after_commit }}"
+                    then:
+                      - id: writeback_rollback
+                        type: io.kestra.plugin.core.http.Request
+                        method: POST
+                        uri: "{{ inputs.writeback_b_base_url }}/v1/rollback"
+                        headers:
+                          Content-Type: application/json
+                          Authorization: "Bearer {{ inputs.writeback_b_token }}"
+                        body: |
+                          {
+                            "commit_id": "{{ outputs.writeback_commit.body | jq('.commit_id') | first }}",
+                            "idempotency_key": "{{ outputs.prepare_status_note.body | jq('.idempotency_key') | first }}:rollback",
+                            "request_id": "{{ outputs.prepare_status_note.body | jq('.request_id') | first }}:rollback",
+                            "run_id": "{{ inputs.run_id }}",
+                            "lease_id": "{{ inputs.lease_id }}",
+                            "fencing_token": {{ inputs.fencing_token }},
+                            "actor": {
+                              "type": "workflow",
+                              "id": "kestra-status-note-auto"
+                            }
+                          }
+                      - id: verify_rollback_acceptance
+                        type: io.kestra.plugin.core.http.Request
+                        method: POST
+                        uri: "{{ inputs.promote_prep_base_url }}/v1/promote/rollback-acceptance"
+                        headers:
+                          Content-Type: application/json
+                          Authorization: "Bearer {{ inputs.promote_prep_token }}"
+                        body: |
+                          {
+                            "run_id": "{{ inputs.run_id }}",
+                            "layer": "status-note",
+                            "target_path": {{ outputs.prepare_status_note.body | jq('.target_path') | first | json }},
+                            "expected_base_sha256": "{{ outputs.prepare_status_note.body | jq('.base_sha256') | first }}",
+                            "expected_shadow_snapshot": {{ outputs.prepare_status_note.body | jq('.shadow_snapshot') | first | json }}
+                          }
+                else:
+                  - id: skip_status_note_commit_after_preview
+                    type: io.kestra.plugin.core.log.Log
+                    message: |
+                      layer=status-note
+                      run_id={{ inputs.run_id }}
+                      skip_commit=true
+                      skip_reason=PREVIEW_CONFLICT
+                      preview_conflict={{ outputs.writeback_preview.body | jq('.conflict') | first }}
+            else:
+              - id: skip_status_note_commit_after_triage
+                type: io.kestra.plugin.core.log.Log
+                message: |
+                  layer=status-note
+                  run_id={{ inputs.run_id }}
+                  skip_commit=true
+                  skip_reason=AI_TRIAGE_DECISION
+                  triage_decision={{ outputs.triage_decision.body | jq('.decision') | first }}
+                  triage_reason={{ outputs.triage_decision.body | jq('.reason') | first }}
+        else:
+          - id: skip_status_note_commit
+            type: io.kestra.plugin.core.log.Log
+            message: |
+              layer=status-note
+              run_id={{ inputs.run_id }}
+              skip_commit=true
+              skip_reason={{ outputs.prepare_status_note.body | jq('.skip_reason') | first }}
+    else:
+      - id: skip_status_note_prepare
+        type: io.kestra.plugin.core.log.Log
+        message: |
+          layer=status-note
+          run_id={{ inputs.run_id }}
+          skip_commit=true
+          skip_reason=STATUS_NOTE_PREPARE_REJECTED
+          prepare_http_code={{ outputs.prepare_status_note.code }}
+          prepare_detail={{ outputs.prepare_status_note.body | jq('.detail') | first }}
+
+  - id: promote_summary
+    type: io.kestra.plugin.core.log.Log
+    message: |
+      layer=status-note
+      run_id={{ inputs.run_id }}
+      prepare_http_code={{ outputs.prepare_status_note.code }}
+      prepare_ready={{ outputs.prepare_status_note.code == 200 }}
+      prepare_skip_commit={{ outputs.prepare_status_note.body | jq('.skip_commit') | first }}
+      prepare_skip_reason={{ outputs.prepare_status_note.body | jq('.skip_reason') | first }}
+      manual_approval_required=false
+      writeback_commit_requires_pause=false
+      rollback_requested={{ inputs.do_rollback_after_commit }}

@@ -1,0 +1,9 @@
+{
+  "name": "api.einzieg.site",
+  "endpoint": "https://api.einzieg.site/v1",
+  "model": "gpt-5.4",
+  "homepage": "https://api.einzieg.site",
+  "enabled": true,
+  "resource": "provider",
+  "app": "codex"
+}

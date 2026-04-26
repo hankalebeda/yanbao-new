@@ -1,0 +1,16 @@
+{
+    "enabled":  true,
+    "app":  "codex",
+    "review_model":  "gpt-5.3-codex",
+    "name":  "cliproxy-192.168.232.141-8317",
+    "homepage":  "http://192.168.232.141:8317",
+    "model":  "gpt-5.4",
+    "resource":  "provider",
+    "endpoint":  "http://192.168.232.141:8317/v1",
+    "fallback_models":  [
+                            "gpt-5.4",
+                            "gpt-5.3-codex",
+                            "gpt-5.2",
+                            "gpt-5"
+                        ]
+}

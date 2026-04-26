@@ -1,0 +1,68 @@
+{
+  "started_at": "2026-02-25T08:52:03.947767",
+  "mode": "real_smoke_low_concurrency",
+  "constraints": {
+    "sequential": true,
+    "calls_per_provider": 1,
+    "batch": false,
+    "timeout_s": 120
+  },
+  "providers": {
+    "chatgpt": {
+      "status_code": 503,
+      "code": 503,
+      "elapsed_wall_s": 48.47,
+      "response_preview": "",
+      "expected": "CASE-REAL_CHATGPT_1771980724|OK|OK",
+      "match_expected": false,
+      "error": "ChatGPT model check failed: expected GPT-5.x, got 'GPT-4.5'"
+    },
+    "deepseek": {
+      "status_code": 500,
+      "code": 500,
+      "elapsed_wall_s": 15.6,
+      "response_preview": "",
+      "expected": "CASE-REAL_DEEPSEEK_1771980772|OK|OK",
+      "match_expected": false,
+      "error": "deepseek call failed: Page.goto: net::ERR_INTERNET_DISCONNECTED at https://chat.deepseek.com/\nCall log:\n  - navigating to \"https://chat.deepseek.com/\", waiting until \"domcontentloaded\"\n"
+    },
+    "gemini": {
+      "status_code": 500,
+      "code": 500,
+      "elapsed_wall_s": 3.4,
+      "response_preview": "",
+      "expected": "CASE-REAL_GEMINI_1771980788|OK|OK",
+      "match_expected": false,
+      "error": "gemini call failed: Page.goto: net::ERR_CONNECTION_RESET at https://gemini.google.com/app\nCall log:\n  - navigating to \"https://gemini.google.com/app\", waiting until \"domcontentloaded\"\n"
+    },
+    "qwen": {
+      "status_code": 500,
+      "code": 500,
+      "elapsed_wall_s": 5.46,
+      "response_preview": "",
+      "expected": "CASE-REAL_QWEN_1771980791|OK|OK",
+      "match_expected": false,
+      "error": "qwen call failed: Page.goto: net::ERR_INTERNET_DISCONNECTED at https://chat.qwen.ai/\nCall log:\n  - navigating to \"https://chat.qwen.ai/\", waiting until \"domcontentloaded\"\n"
+    }
+  },
+  "close_all": {
+    "code": 0,
+    "message": "ok",
+    "data": {
+      "closed": true,
+      "providers": [
+        "chatgpt",
+        "deepseek",
+        "gemini",
+        "qwen"
+      ]
+    },
+    "request_id": "1d72dffb-a6ed-4d34-9662-0158d3c6a7ea",
+    "error": null
+  },
+  "finished_at": "2026-02-25T08:53:19.933183",
+  "summary": {
+    "total": 4,
+    "passed": 0
+  }
+}

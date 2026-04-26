@@ -1,0 +1,23 @@
+{
+  "actor": {
+    "id": "kestra-report-writeback-auto",
+    "type": "workflow"
+  },
+  "base_sha256": "ca39eb97dc9322a785812eb5ff7777d43cf4573744460fcc5e89c1eb6a4af65a",
+  "commit_id": "f38936cb-841c-461a-a21f-daf2b0168ac5",
+  "created_at": "2026-03-30T06:29:59.001139+00:00",
+  "idempotency_key": "kestra:yanbao_report_writeback_orchestration:20260330-r2",
+  "new_sha256": "ca39eb97dc9322a785812eb5ff7777d43cf4573744460fcc5e89c1eb6a4af65a",
+  "operation": "commit",
+  "patch_hash": "ca39eb97dc9322a785812eb5ff7777d43cf4573744460fcc5e89c1eb6a4af65a",
+  "previous_content_b64": "IyDkuLTml7blt6XkvZznm67lvZUKCuacrOebruW9leWcqOa4heeQhuWQjuWPquS/neeVmeW9k+WJjea0u+i3g+eahOS4tOaXtuWPsOi0puS4juWwkemHj+S4remXtOW3peS7tuOAggoK5b2T5YmN6buY6K6k5rS755uu5b2V77yaCi0gYG9wdDQvYAotIGBmaXg0L2AKLSBgc3RhZ2UxMjNfbG9vcC9gCi0gYHBhcmFsbGVsX3J1bnMvYAoK6KeE5YiZ77yaCi0g5paw5Li05pe25paH5qGj5YWI5pS+IGBkb2NzL190ZW1wL2DvvIzlrozmiJDlkI7opoHkuYjlhpnlm54gYGRvY3MvY29yZS8wMX4wNWDjgIFgZG9jcy9jb3JlLzIyX+WFqOmHj+WKn+iDvei/m+W6puaAu+ihqF92N1/nsr7lrqEubWRg44CBYGRvY3MvY29yZS85OV9BSempseWKqOezu+e7n+W8gOWPkeS4jlNraWxs6L2s5YyW5oyH5Y2XLm1kYO+8jOimgeS5iOW9kuaho+WIsCBgZG9jcy9vbGQvYCDmiJYgYF9hcmNoaXZlL2DjgIIKLSBgb3B0NC9gIOS4jiBgZml4NC9gIOebruW9leWIhuWIq+eUqOS6juKAnOS8mOWMliAvIOi/kOihjOaOqOi/m+KAneS4juKAnOS7o+eggeS/ruWkjeKAnea1geeoi++8m+S4jeimgea3t+WGmeOAggotIOWmguaenOWQjOS4gOaXtuacn+S8muW5tuihjOWkmui9ru+8jOS8mOWFiOWcqCBgb3B0NC9g44CBYGZpeDQvYCDkuIvlop7liqAgYDxydW5fbGFiZWw+L2Ag5a2Q55uu5b2V77yM6YG/5YWN6KaG55uW5LiK5LiA6L2u57uT5p6c44CCCi0g5bm26KGM5a6h6K6h5Lu75Yqh57uf5LiA5oqK5q+P6L2u57uT5p6c5YaZ5YiwIGBkb2NzL190ZW1wL3BhcmFsbGVsX3J1bnMvPHJ1bl9pZD4vYO+8m+emgeatouWkmuS4quS7u+WKoeWFseS6q+WQjOS4gOS4que7k+aenOaWh+S7tuOAggotIOWOhuWPsuWuoeiuoeOAgea1j+iniOWZqOW/q+eFp+OAgeS4k+mhueWIhuaekOWSjOi/kOihjOi+k+WHuuS4jeWGjemVv+acn+eVmeWcqOi/memHjO+8m+W3sue7n+S4gOi/geWFpSBgZG9jcy9vbGQvcmVwb19jbGVhbnVwXzIwMjYtMDMtMjQvYOOAggotIOacrOebruW9leemgeatouWtmOaUvuacque7j+aVtOeQhueahCBTU09UIOWGheWuue+8jOemgeatouaKiuS4tOaXtuaWh+S7tuS/neWtmOWIsOahjOmdouOAggo=",
+  "relative_path": "docs/_temp/README.md",
+  "request_id": "req-report-writeback-20260330-r2",
+  "rollback_commit_id": null,
+  "rollback_of": null,
+  "rolled_back_at": null,
+  "run_id": "report-writeback-20260330-001",
+  "target_path": "D:\\yanbao\\docs\\_temp\\README.md",
+  "triage_decision_source": "ai",
+  "triage_record_id": "report-writeback-20260330-001__report-writeback-writeback"
+}

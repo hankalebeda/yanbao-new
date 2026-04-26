@@ -1,0 +1,37 @@
+﻿<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>研报生成失败</title>
+  <style>
+    body { margin:0; font-family:"Microsoft YaHei",sans-serif; background:#fff5f5; color:#4a1010; }
+    .wrap { max-width:900px; margin:24px auto; padding:0 16px; }
+    .card { background:#fff; border:1px solid #f2caca; border-radius:12px; padding:16px; }
+    code { background:#fbe7e7; padding:2px 6px; border-radius:6px; }
+  </style>
+</head>
+<body>
+  {% set error_key = (error or '') | string %}
+  {% if error_key == 'invalid_stock_code' %}
+    {% set title = '股票代码格式不正确' %}
+    {% set message = '请输入正确的股票代码，例如 600519.SH。' %}
+  {% elif error_key == 'recent_report_not_ready' %}
+    {% set title = '最新研报准备中' %}
+    {% set message = '这只股票的最新公开研报仍在整理中，请稍后刷新页面查看。' %}
+  {% else %}
+    {% set title = '研报暂不可用' %}
+    {% set message = '当前这只股票的公开研报暂不可用，请稍后重试或先查看已发布内容。' %}
+  {% endif %}
+  <div class="wrap">
+    <div class="card">
+      <h2>{{ title }}</h2>
+      <p>股票：<b>{{ stock_code }}</b></p>
+      <p>{{ message }}</p>
+      <p>说明：当前系统只展示真实可追溯结果，不会向页面透传内部诊断码或演示占位结果。</p>
+      <p>可先返回研报列表查看已发布内容。</p>
+      <p><a href="/reports">查看研报列表</a></p>
+    </div>
+  </div>
+</body>
+</html>

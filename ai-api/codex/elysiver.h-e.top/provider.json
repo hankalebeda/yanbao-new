@@ -1,0 +1,9 @@
+{
+    "resource":  "provider",
+    "name":  "elysiver.h-e.top",
+    "homepage":  "https://elysiver.h-e.top/v1",
+    "app":  "codex",
+    "model":  "gpt-5.4",
+    "endpoint":  "https://elysiver.h-e.top/v1",
+    "enabled":  true
+}

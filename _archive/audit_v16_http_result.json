@@ -1,0 +1,282 @@
+[
+  {
+    "label": "Login admin",
+    "status": 404,
+    "icon": "WARN",
+    "method": "POST",
+    "path": "/api/v1/auth/login",
+    "auth": "none"
+  },
+  {
+    "label": "Login admin (/auth/login alias)",
+    "status": 200,
+    "icon": "PASS",
+    "method": "POST",
+    "path": "/auth/login",
+    "auth": "none"
+  },
+  {
+    "label": "FR00: /api/v1/health",
+    "status": 200,
+    "icon": "PASS",
+    "method": "GET",
+    "path": "/api/v1/health",
+    "auth": "none"
+  },
+  {
+    "label": "FR00: /health alias",
+    "status": 200,
+    "icon": "PASS",
+    "method": "GET",
+    "path": "/health",
+    "auth": "none"
+  },
+  {
+    "label": "FR10: / (home HTML)",
+    "status": 200,
+    "icon": "PASS",
+    "method": "GET",
+    "path": "/",
+    "auth": "none"
+  },
+  {
+    "label": "FR10: /reports (HTML)",
+    "status": 200,
+    "icon": "PASS",
+    "method": "GET",
+    "path": "/reports",
+    "auth": "none"
+  },
+  {
+    "label": "FR10: /api/v1/home",
+    "status": 200,
+    "icon": "PASS",
+    "method": "GET",
+    "path": "/api/v1/home",
+    "auth": "none"
+  },
+  {
+    "label": "FR10: /api/v1/platform/summary",
+    "status": 200,
+    "icon": "PASS",
+    "method": "GET",
+    "path": "/api/v1/platform/summary",
+    "auth": "none"
+  },
+  {
+    "label": "FR10: /api/v1/platform/config",
+    "status": 200,
+    "icon": "PASS",
+    "method": "GET",
+    "path": "/api/v1/platform/config",
+    "auth": "none"
+  },
+  {
+    "label": "FR10: /api/v1/dashboard/stats window=7",
+    "status": 200,
+    "icon": "PASS",
+    "method": "GET",
+    "path": "/api/v1/dashboard/stats?window_days=7",
+    "auth": "none"
+  },
+  {
+    "label": "FR10: /api/v1/dashboard/stats window=1",
+    "status": 200,
+    "icon": "PASS",
+    "method": "GET",
+    "path": "/api/v1/dashboard/stats?window_days=1",
+    "auth": "none"
+  },
+  {
+    "label": "FR10: /api/v1/dashboard/stats window=30",
+    "status": 200,
+    "icon": "PASS",
+    "method": "GET",
+    "path": "/api/v1/dashboard/stats?window_days=30",
+    "auth": "none"
+  },
+  {
+    "label": "FR-REP: list reports",
+    "status": 200,
+    "icon": "PASS",
+    "method": "GET",
+    "path": "/api/v1/reports?limit=5",
+    "auth": "none"
+  },
+  {
+    "label": "FR-REP: reports/recent (expected: 404)",
+    "status": 404,
+    "icon": "WARN",
+    "method": "GET",
+    "path": "/api/v1/reports/recent?limit=5",
+    "auth": "none"
+  },
+  {
+    "label": "FR01: pool stocks",
+    "status": 200,
+    "icon": "PASS",
+    "method": "GET",
+    "path": "/api/v1/pool/stocks",
+    "auth": "none"
+  },
+  {
+    "label": "FR04: hot-stocks",
+    "status": 200,
+    "icon": "PASS",
+    "method": "GET",
+    "path": "/api/v1/market/hot-stocks",
+    "auth": "none"
+  },
+  {
+    "label": "FR05: market state",
+    "status": 200,
+    "icon": "PASS",
+    "method": "GET",
+    "path": "/api/v1/market/state",
+    "auth": "none"
+  },
+  {
+    "label": "FR06: llm/health (int)",
+    "status": 200,
+    "icon": "PASS",
+    "method": "GET",
+    "path": "/api/v1/internal/llm/health",
+    "auth": "internal"
+  },
+  {
+    "label": "FR06: llm/version (int)",
+    "status": 200,
+    "icon": "PASS",
+    "method": "GET",
+    "path": "/api/v1/internal/llm/version",
+    "auth": "internal"
+  },
+  {
+    "label": "FR04: hotspot/health (int)",
+    "status": 200,
+    "icon": "PASS",
+    "method": "GET",
+    "path": "/api/v1/internal/hotspot/health",
+    "auth": "internal"
+  },
+  {
+    "label": "FR04: source/fallback-status (int)",
+    "status": 200,
+    "icon": "PASS",
+    "method": "GET",
+    "path": "/api/v1/internal/source/fallback-status",
+    "auth": "internal"
+  },
+  {
+    "label": "FR07: predictions/stats",
+    "status": 200,
+    "icon": "PASS",
+    "method": "GET",
+    "path": "/api/v1/predictions/stats",
+    "auth": "none"
+  },
+  {
+    "label": "FR08: sim positions",
+    "status": 200,
+    "icon": "PASS",
+    "method": "GET",
+    "path": "/api/v1/sim/positions",
+    "auth": "admin"
+  },
+  {
+    "label": "FR08: sim account summary",
+    "status": 200,
+    "icon": "PASS",
+    "method": "GET",
+    "path": "/api/v1/sim/account/summary",
+    "auth": "admin"
+  },
+  {
+    "label": "FR08: sim-dashboard",
+    "status": 200,
+    "icon": "PASS",
+    "method": "GET",
+    "path": "/api/v1/portfolio/sim-dashboard",
+    "auth": "admin"
+  },
+  {
+    "label": "FR09: /api/v1/auth/me",
+    "status": 404,
+    "icon": "WARN",
+    "method": "GET",
+    "path": "/api/v1/auth/me",
+    "auth": "admin"
+  },
+  {
+    "label": "FR09: plans",
+    "status": 200,
+    "icon": "PASS",
+    "method": "GET",
+    "path": "/api/v1/platform/plans",
+    "auth": "none"
+  },
+  {
+    "label": "FR12: admin users",
+    "status": 200,
+    "icon": "PASS",
+    "method": "GET",
+    "path": "/api/v1/admin/users",
+    "auth": "admin"
+  },
+  {
+    "label": "FR12: admin overview",
+    "status": 200,
+    "icon": "PASS",
+    "method": "GET",
+    "path": "/api/v1/admin/overview",
+    "auth": "admin"
+  },
+  {
+    "label": "FR12: admin system-status",
+    "status": 200,
+    "icon": "PASS",
+    "method": "GET",
+    "path": "/api/v1/admin/system-status",
+    "auth": "admin"
+  },
+  {
+    "label": "FR12: admin scheduler status",
+    "status": 200,
+    "icon": "PASS",
+    "method": "GET",
+    "path": "/api/v1/admin/scheduler/status",
+    "auth": "admin"
+  },
+  {
+    "label": "FR03: admin cookie health",
+    "status": 200,
+    "icon": "PASS",
+    "method": "GET",
+    "path": "/api/v1/admin/cookie-session/health?login_source=weibo",
+    "auth": "admin"
+  },
+  {
+    "label": "FR13: /api/v1/governance/catalog",
+    "status": 200,
+    "icon": "PASS",
+    "method": "GET",
+    "path": "/api/v1/governance/catalog",
+    "auth": "admin"
+  },
+  {
+    "label": "FR13: /api/v1/features/catalog",
+    "status": 200,
+    "icon": "PASS",
+    "method": "GET",
+    "path": "/api/v1/features/catalog",
+    "auth": "admin"
+  },
+  {
+    "label": "Meta: openapi.json",
+    "status": 200,
+    "icon": "PASS",
+    "method": "GET",
+    "path": "/openapi.json",
+    "auth": "none"
+  }
+]

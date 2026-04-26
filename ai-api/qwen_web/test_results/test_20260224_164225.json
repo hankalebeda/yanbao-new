@@ -1,0 +1,15 @@
+{
+  "passed": 0,
+  "total": 3,
+  "results": {
+    "single": {
+      "error": "Qwen returned invalid output: prompt echo"
+    },
+    "batch": {
+      "error": "Kweichow Moutai failed: Qwen returned invalid output: prompt echo"
+    },
+    "reconnect": {
+      "error": "Qwen returned invalid output: prompt echo"
+    }
+  }
+}

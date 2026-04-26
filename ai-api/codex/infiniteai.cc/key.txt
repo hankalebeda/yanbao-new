@@ -1,0 +1,21 @@
+https://api.infiniteai.cc
+sk-OBf0J-_WOD7-b7OWzBX5WGfEzZaYesx3
+
+
+curl https://api.infiniteai.cc/v1/responses \
+  -H "Authorization: Bearer <YOUR_API_KEY>" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "gpt-5.2",
+    "input": [
+      {
+        "type": "message",
+        "role": "user",
+        "content": [
+          { "type": "input_text", "text": "Hello!" }
+        ]
+      }
+    ],
+    "store": false,
+    "stream": true
+  }'

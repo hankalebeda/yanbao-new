@@ -1,0 +1,14 @@
+{
+  "app_base_url": "http://host.docker.internal:18100",
+  "internal_token": "replace-me",
+  "new_api_base_url": "http://192.168.232.141:3000",
+  "new_api_token": "replace-me",
+  "mesh_runner_base_url": "http://host.docker.internal:18193",
+  "promote_prep_base_url": "http://host.docker.internal:18194",
+  "writeback_a_base_url": "http://host.docker.internal:18192",
+  "writeback_b_base_url": "http://host.docker.internal:18195",
+  "autonomy_mode": "fix",
+  "fix_goal": 10,
+  "await_timeout_seconds": 3600,
+  "round_id": "20260330-001"
+}

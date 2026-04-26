@@ -1,0 +1,572 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>页面与接口总览 - A股研报平台</title>
+<link rel="stylesheet" href="/static/demo.css">
+<style>
+  .feature-summary { display:flex; gap:16px; flex-wrap:wrap; margin:20px 0; }
+  .summary-card { padding:16px 24px; border-radius:8px; min-width:120px; text-align:center; border:1px solid #dbe2ea; background:#fff; }
+  .summary-card h3 { margin:0 0 4px; font-size:28px; }
+  .summary-card p { margin:0; font-size:13px; color:#64748b; }
+  .card-total { background:#eff6ff; border-color:#bfdbfe; }
+  .card-ready { background:#ecfdf5; border-color:#86efac; }
+  .card-gap { background:#fffbeb; border-color:#fcd34d; }
+  .card-oos { background:#f8fafc; border-color:#cbd5e1; }
+  .fr-group { margin:24px 0; border:1px solid #dbe2ea; border-radius:12px; overflow:hidden; background:#fff; }
+  .fr-group-header { background:#f8fafc; padding:14px 18px; display:flex; justify-content:space-between; align-items:center; cursor:pointer; }
+  .fr-group-body { padding:8px 18px 18px; }
+  .feature-card { border:1px solid #e5e7eb; border-radius:10px; margin:12px 0; padding:14px 16px; background:#fff; }
+  .feature-card h3 { margin:0 0 10px; font-size:15px; display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+  .feature-table { width:100%; border-collapse:collapse; font-size:13px; }
+  .feature-table td { padding:6px 8px; border-bottom:1px solid #f1f5f9; vertical-align:top; }
+  .feature-table td:first-child { width:120px; font-weight:600; color:#475569; white-space:nowrap; }
+  code { background:#f8fafc; padding:2px 6px; border-radius:4px; font-size:12px; }
+  .status-dot { width:10px; height:10px; border-radius:50%; display:inline-block; }
+  .dot-READY { background:#22c55e; }
+  .dot-READY_WITH_GAPS { background:#f59e0b; }
+  .dot-MISMATCH { background:#fb7185; }
+  .dot-BLOCKED_API, .dot-BLOCKED_PAGE, .dot-BLOCKED_TEST { background:#ef4444; }
+  .dot-OUT_OF_SSOT { background:#94a3b8; }
+  .badge { display:inline-block; padding:2px 8px; border-radius:999px; font-size:11px; font-weight:600; }
+  .badge-public { background:#ecfdf5; color:#166534; }
+  .badge-admin { background:#fff7ed; color:#9a3412; }
+  .badge-internal { background:#eff6ff; color:#1d4ed8; }
+  .badge-out_of_ssot, .badge-deprecated { background:#f1f5f9; color:#475569; }
+  .filter-bar { margin:16px 0; display:flex; gap:12px; flex-wrap:wrap; align-items:center; }
+  .search-input { padding:8px 14px; border:1px solid #cbd5e1; border-radius:8px; font-size:14px; width:300px; }
+  .filter-btn { padding:6px 14px; border:1px solid #cbd5e1; border-radius:999px; background:#fff; cursor:pointer; font-size:12px; }
+  .filter-btn.active { background:#0f4c75; color:#fff; border-color:#0f4c75; }
+  .no-results { padding:36px; text-align:center; color:#94a3b8; display:none; }
+  .page-note { margin:16px 0; padding:14px 16px; border-radius:10px; border:1px solid #dbeafe; background:#f8fbff; color:#1e3a8a; line-height:1.7; font-size:13px; }
+</style>
+</head>
+<body>
+  {% include "_site_nav.html" %}
+  <main class="container page-shell" style="max-width:1100px;">
+    <section class="page-hero">
+      <div class="page-hero-main">
+        <p class="page-eyebrow">管理视图</p>
+        <h1>页面与接口总览</h1>
+        <p class="page-summary">这里汇总当前后台页面、接口和最近一次校验结果，方便管理员快速判断哪些入口可用、哪些位置还需补齐。</p>
+      </div>
+    </section>
+
+    {% set latest_feature_verified_at = catalog.latest_feature_verified_at %}
+    {% if latest_feature_verified_at is none and catalog.test_result_freshness == 'fresh' and catalog.test_result_source %}
+      {% set freshness_ns = namespace(latest_feature_verified_at=None) %}
+      {% for feat in catalog.features %}
+        {% if feat.last_verified_at and (freshness_ns.latest_feature_verified_at is none or feat.last_verified_at > freshness_ns.latest_feature_verified_at) %}
+          {% set freshness_ns.latest_feature_verified_at = feat.last_verified_at %}
+        {% endif %}
+      {% endfor %}
+      {% set latest_feature_verified_at = freshness_ns.latest_feature_verified_at %}
+    {% endif %}
+    {% set freshness_ns = namespace(latest_feature_verified_at=latest_feature_verified_at) %}
+    {% set denominator_summary = catalog.denominator_summary or {} %}
+    {% set traceability_summary = catalog.feature_traceability_summary or {} %}
+    {% set eligible_total = denominator_summary.get('eligible_total', (catalog.total or 0) - catalog.negative_status_summary.get('negative_total', 0)) %}
+    {% set negative_total = denominator_summary.get('negative_total', catalog.negative_status_summary.get('negative_total', 0)) %}
+    {% set ready_strict_count = denominator_summary.get('ready_strict_count', catalog.status_summary.get('READY', 0)) %}
+    {% set ready_with_gaps_total = denominator_summary.get('ready_with_gaps_count', catalog.status_summary.get('READY_WITH_GAPS', 0)) %}
+    {% set blocked_total = denominator_summary.get('blocked_count', catalog.status_summary.get('MISMATCH', 0)) %}
+
+    <section class="feature-card" id="catalog-bridge-summary" style="margin-top:20px;">
+      <h3><span class="status-dot dot-READY_WITH_GAPS"></span> 范围说明</h3>
+      <table class="feature-table">
+        <tr><td>当前主统计口径</td><td><strong>{{ catalog.total }}</strong> 项在册条目；所有卡片、筛选和分组都先以这套注册表口径起算。</td></tr>
+        <tr><td>治理分母</td><td><strong>{{ eligible_total }}</strong> 项计入 ready 分母；负向/退役/范围外共 {{ negative_total }} 项，只展示不计入 ready。</td></tr>
+        <tr><td>人工总表对照</td><td>人工精审总表见 <code>{{ catalog_bridge.progress_doc_path }}</code>；本页所有统计仅以当前注册表口径为准。</td></tr>
+        <tr id="catalog-canonical-scope" data-catalog-total="{{ catalog.total }}" data-eligible-total="{{ eligible_total }}" data-negative-total="{{ negative_total }}" data-ready-with-gaps="{{ ready_with_gaps_total }}"><td>待完善项</td><td>待完善 {{ ready_with_gaps_total }} 项，负向/范围外 {{ negative_total }} 项；ready 口径始终只看 eligible denominator。</td></tr>
+        <tr id="catalog-traceability-summary" data-feature-marker="{{ traceability_summary.get('feature_marker', 0) }}" data-fr-fallback="{{ traceability_summary.get('fr_inference_fallback', 0) }}" data-unmapped="{{ traceability_summary.get('unmapped', 0) }}" data-governance-excluded="{{ traceability_summary.get('governance_excluded', 0) }}"><td>测试映射</td><td>feature 直连 {{ traceability_summary.get('feature_marker', 0) }} 项 / FR naming fallback {{ traceability_summary.get('fr_inference_fallback', 0) }} 项 / 未绑定 {{ traceability_summary.get('unmapped', 0) }} 项 / 治理排除 {{ traceability_summary.get('governance_excluded', 0) }} 项。</td></tr>
+        <tr><td>统计口径</td><td>本页展示的是当前后台总览口径，用于辅助排查页面、接口与运行状态，不替代历史报告。</td></tr>
+        <tr><td>Negative bucket</td><td>retired {{ catalog.negative_status_summary.get('retired_route', 0) }} / fail-close {{ catalog.negative_status_summary.get('fail_close_route', 0) }} / deprecated {{ catalog.negative_status_summary.get('deprecated', 0) }} / out_of_ssot {{ catalog.negative_status_summary.get('out_of_ssot', 0) }} ; none count toward ready.</td></tr>
+      </table>
+    </section>
+
+    <section class="feature-card" id="catalog-runtime-state">
+      <h3><span class="status-dot dot-READY"></span> 页面数据来源</h3>
+      <table class="feature-table">
+        <tr><td>当前接口</td><td><code>{{ catalog_api_path or '/api/v1/features/catalog?source=live' }}</code></td></tr>
+        <tr><td>对照接口</td><td><code>{{ catalog_snapshot_api_path or '/api/v1/governance/catalog?source=snapshot' }}</code></td></tr>
+        <tr><td>系统状态接口</td><td><code>{{ admin_system_status_api_path or '/api/v1/admin/system-status' }}</code> · <code>{{ health_api_path or '/health' }}</code></td></tr>
+        <tr><td>当前页面模式</td><td>{% if catalog_is_snapshot %}对照模式{% else %}当前模式{% endif %}</td></tr>
+        <tr><td>同步状态</td><td id="catalog-sync-status">正在比对当前接口与对照接口</td></tr>
+        <tr><td>当前数据时间</td><td id="catalog-live-generated-at">{{ catalog.generated_at or '未生成' }}</td></tr>
+        <tr><td>对照数据时间</td><td id="catalog-snapshot-generated-at">等待读取</td></tr>
+        <tr><td>系统状态</td><td id="catalog-runtime-state-value">等待读取</td></tr>
+        <tr><td>健康检查</td><td id="catalog-runtime-health-value">等待读取</td></tr>
+        <tr><td>关键日期</td><td id="catalog-runtime-anchor-strip">等待读取</td></tr>
+        <tr><td>runtime truth gaps</td><td id="catalog-runtime-truth-gaps">等待读取</td></tr>
+        <tr>
+          <td>治理校验说明</td>
+          <td id="catalog-test-freshness">
+            治理状态：{{ catalog.test_result_freshness or 'unknown' }}
+            {% if catalog.test_result_stale_reason %} · 原因：{{ catalog.test_result_stale_reason }}{% endif %}
+            · 治理批次时间：{{ catalog.test_result_generated_at or '暂未发现' }}
+            · 最近 feature 验证：{{ freshness_ns.latest_feature_verified_at or '暂未记录' }}
+            {% if catalog.cache_ttl_seconds %} · 缓存 {{ catalog.cache_ttl_seconds }}s{% endif %}
+          </td>
+        </tr>
+      </table>
+    </section>
+
+    <section class="feature-card" id="fr10-name-bridge" style="background:#fffdf5;border-color:#fcd34d;">
+      <h3><span class="status-dot dot-MISMATCH"></span> 页面分组说明</h3>
+      <table class="feature-table">
+        {% for row in catalog_bridge.fr10_name_bridge %}
+        <tr>
+          <td>{{ row.label }}</td>
+          <td>用于归拢同一类页面与入口。</td>
+        </tr>
+        {% endfor %}
+      </table>
+    </section>
+
+    <div class="feature-summary">
+      <div class="summary-card card-total">
+        <h3 id="catalog-total-count">{{ catalog.total }}</h3>
+        <p>注册总数</p>
+      </div>
+      <div class="summary-card card-ready">
+        <h3>{{ ready_strict_count }}/{{ eligible_total }}</h3>
+        <p>ready / 治理分母</p>
+      </div>
+      <div class="summary-card card-gap">
+        <h3>{{ ready_with_gaps_total }}</h3>
+        <p>待完善</p>
+      </div>
+      <div class="summary-card">
+        <h3>{{ blocked_total }}</h3>
+        <p>阻塞/异常</p>
+      </div>
+      <div class="summary-card card-oos">
+        <h3>{{ negative_total }}</h3>
+        <p>负向/范围外</p>
+      </div>
+    </div>
+
+    <div class="page-note">
+      <strong>读法提醒：</strong>本页只保留一套口径：`catalog.total` 表示在册条目，`eligible_total` 表示 ready 分母，`negative_total` 表示退役/保留/范围外条目。
+    </div>
+    <div class="page-note" id="runtime-layer-note">
+      <strong>Runtime vs Governance：</strong>本页的 ready 只代表治理 readiness，不代表 runtime 全绿；真实运行风险以 system-status、health 和 runtime truth gaps 为准。
+    </div>
+
+    <p id="catalog-generated-at" style="font-size:12px;color:#64748b;">页面数据时间：{{ catalog.generated_at or '未生成' }}{% if catalog_api_path %} · 当前接口：{{ catalog_api_path }}{% endif %}{% if catalog_snapshot_api_path %} · 对照接口：{{ catalog_snapshot_api_path }}{% endif %}</p>
+
+    <div class="filter-bar">
+      <input type="text" class="search-input" id="featureSearch" placeholder="搜索页面名 / 接口 / 参数..." oninput="filterFeatures()">
+      <span style="font-size:12px;color:#64748b;">状态</span>
+      <button class="filter-btn active" data-filter="all" onclick="setStatusFilter('all', this)">全部</button>
+      <button class="filter-btn" data-filter="READY" onclick="setStatusFilter('READY', this)">可用</button>
+      <button class="filter-btn" data-filter="READY_WITH_GAPS" onclick="setStatusFilter('READY_WITH_GAPS', this)">待完善</button>
+      <button class="filter-btn" data-filter="BLOCKED" onclick="setStatusFilter('BLOCKED', this)">阻塞</button>
+      <button class="filter-btn" data-filter="MISMATCH" onclick="setStatusFilter('MISMATCH', this)">异常</button>
+      <button class="filter-btn" data-filter="OUT_OF_SSOT" onclick="setStatusFilter('OUT_OF_SSOT', this)">范围外</button>
+      <span style="font-size:12px;color:#64748b;margin-left:8px;">可见性</span>
+      <button class="filter-btn active" data-vis="all" onclick="setVisFilter('all', this)">全部</button>
+      <button class="filter-btn" data-vis="public" onclick="setVisFilter('public', this)">公开</button>
+      <button class="filter-btn" data-vis="admin" onclick="setVisFilter('admin', this)">后台</button>
+      <button class="filter-btn" data-vis="internal" onclick="setVisFilter('internal', this)">内部</button>
+    </div>
+    <div id="filterSummary" style="margin:6px 0 14px;font-size:12px;color:#64748b;"></div>
+    <div class="no-results" id="noResults">没有匹配的页面或接口</div>
+
+    {% for fr_id, fr_features in groups.items() %}
+    {% set ready_count = fr_features | selectattr('structural_status', 'equalto', 'READY') | list | length %}
+    {% set negative_count = fr_features | selectattr('structural_status', 'equalto', 'OUT_OF_SSOT') | list | length %}
+    {% set eligible_group_total = (fr_features | length) - negative_count %}
+    {% set total_count = fr_features | length %}
+    <section class="fr-group" id="group-{{ fr_id|lower|replace('fr-', '')|replace('-', '_') }}">
+      <div class="fr-group-header" onclick="toggleGroup(this)">
+        <h2>{{ fr_names.get(fr_id, '未命名模块') }}</h2>
+        <span class="badge badge-public">{{ ready_count }}/{{ eligible_group_total if eligible_group_total > 0 else 0 }}</span>
+      </div>
+      <div class="fr-group-body">
+        {% if negative_count %}
+        <p style="margin:8px 0 10px;font-size:12px;color:#64748b;">本组另有 {{ negative_count }} 项退役/范围外条目，仅展示不计入 ready 分母。</p>
+        {% endif %}
+        {% for feat in fr_features %}
+        <article
+          class="feature-card feature-entry"
+          id="feature-{{ fr_id|lower|replace('fr-', '')|replace('-', '_') }}-{{ loop.index0 }}"
+          data-status="{{ feat.structural_status }}"
+          data-vis="{{ feat.visibility }}"
+          data-search="{{ feat.title }} {{ feat.primary_api.path if feat.primary_api else '' }} {{ feat.request_params | map(attribute='name') | join(' ') if feat.request_params else '' }}"
+        >
+          <h3>
+            <span class="status-dot dot-{{ feat.structural_status }}"></span>
+            {{ feat.title }}
+            <span class="badge badge-{{ feat.visibility }}">
+              {% if feat.visibility == 'public' %}公开{% elif feat.visibility == 'admin' %}后台{% elif feat.visibility == 'internal' %}内部{% elif feat.visibility == 'deprecated' %}停用{% else %}范围外{% endif %}
+            </span>
+          </h3>
+          <table class="feature-table">
+            {% if feat.primary_api and feat.primary_api.method %}
+            <tr><td>接口</td><td><code>{{ feat.primary_api.method }} {{ feat.primary_api.path }}</code></td></tr>
+            {% endif %}
+            {% if feat.runtime_page_path %}
+            <tr><td>运行入口</td><td><a href="{{ feat.runtime_page_path }}">{{ feat.runtime_page_path }}</a></td></tr>
+            {% endif %}
+            {% if feat.request_params %}
+            <tr><td>请求参数</td><td>{% for param in feat.request_params %}<code>{{ param.name }}</code>{% if param.required %}*{% endif %} {{ param.type }}{% if param.description %}：{{ param.description }}{% endif %}{% if not loop.last %} / {% endif %}{% endfor %}</td></tr>
+            {% endif %}
+            {% if feat.default_example and feat.default_example.curl %}
+            <tr><td>默认示例</td><td><code>{{ feat.default_example.curl }}</code></td></tr>
+            {% endif %}
+            {% if feat.key_response_fields %}
+            <tr><td>返回字段</td><td>{% for field in feat.key_response_fields %}<code>{{ field.name }}</code>{% if field.description %}：{{ field.description }}{% endif %}{% if not loop.last %} / {% endif %}{% endfor %}</td></tr>
+            {% endif %}
+            {% set _status_cn = {'READY':'可用','READY_WITH_GAPS':'待完善','BLOCKED':'阻塞','MISMATCH':'异常','OUT_OF_SSOT':'范围外'} %}
+            <tr><td>当前状态</td><td><strong>{{ _status_cn.get(feat.structural_status, '待确认') }}</strong>{% if feat.mismatch_flags %}（仍需进一步核对）{% endif %}</td></tr>
+            <tr><td>测试状态</td><td>{{ feat.last_test_status or 'UNKNOWN' }}</td></tr>
+            <tr><td>最近验证</td><td>{{ feat.last_verified_at or '暂未记录' }}</td></tr>
+            {% if feat.test_traceability %}
+            {% set _mapping_source = feat.test_traceability.mapping_source %}
+            {% if _mapping_source == 'feature_marker' %}
+              {% set _mapping_label = 'feature 直连' %}
+              {% set _mapping_note = '已绑定 feature 级测试标记' %}
+            {% elif _mapping_source == 'fr_inference_fallback' %}
+              {% set _mapping_label = '规则推断' %}
+              {% set _mapping_note = '未检测到直接标记，当前按命名规则归档' %}
+            {% elif _mapping_source == 'governance_excluded' %}
+              {% set _mapping_label = '治理排除' %}
+              {% set _mapping_note = '治理排除项不宣称测试通过' %}
+            {% else %}
+              {% set _mapping_label = '待确认' %}
+              {% set _mapping_note = '映射方式待确认' %}
+            {% endif %}
+            <tr
+              class="feature-traceability"
+              data-mapping-source="{{ feat.test_traceability.mapping_source }}"
+              data-mapping-note="{{ feat.test_traceability.mapping_note | e }}"
+              data-feature-count="{{ feat.test_traceability.exact_feature_node_count }}"
+              data-fr-fallback-count="{{ feat.test_traceability.fr_inference_node_count }}"
+            >
+              <td>测试映射</td>
+              <td>
+                {{ _mapping_label }}
+                {% if feat.test_traceability.exact_feature_node_count or feat.test_traceability.fr_inference_node_count %}
+                  · 直连 {{ feat.test_traceability.exact_feature_node_count }} / 规则推断 {{ feat.test_traceability.fr_inference_node_count }}
+                {% endif %}
+                · {{ _mapping_note }}
+              </td>
+            </tr>
+            {% endif %}
+            <tr
+              class="feature-nodeids"
+              data-test-count="{{ feat.test_nodeids | length }}"
+              data-test-nodeids="{{ feat.test_nodeids | join(' || ') | e }}"
+            >
+              <td>测试节点</td>
+              <td>
+                {% if feat.test_nodeids %}
+                  已绑定 {{ feat.test_nodeids | length }} 个测试节点
+                {% elif feat.test_traceability and feat.test_traceability.mapping_source == 'governance_excluded' %}
+                  治理排除：不对退役/范围外条目宣称 ready 或测试通过
+                {% else %}
+                  暂未绑定
+                {% endif %}
+              </td>
+            </tr>
+            {% if feat.ssot_refs %}
+            <tr
+              class="feature-ssot-refs"
+              data-ssot-ref-count="{{ feat.ssot_refs | length }}"
+              data-ssot-refs="{{ feat.ssot_refs | join(' || ') | e }}"
+            >
+              <td>SSOT锚点</td>
+              <td>已绑定 {{ feat.ssot_refs | length }} 个锚点</td>
+            </tr>
+            {% endif %}
+            {% if feat.mismatch_flags %}
+            <tr>
+              <td>治理说明</td>
+              <td>
+                {% for flag in feat.mismatch_flags %}
+                  {% if not loop.first %} / {% endif %}
+                  {% if flag == 'RETIRED_ROUTE' %}
+                    退役路由，不计入 ready
+                  {% elif flag == 'FAIL_CLOSE_ROUTE' %}
+                    fail-close 路由，不计入 ready
+                  {% elif flag == 'out_of_ssot' and feat.visibility == 'deprecated' %}
+                    已废弃条目，不计入 ready
+                  {% else %}
+                    范围外条目，不计入 ready
+                  {% endif %}
+                {% endfor %}
+              </td>
+            </tr>
+            {% elif feat.structural_status == 'OUT_OF_SSOT' %}
+            <tr><td>治理说明</td><td>{% if feat.visibility == 'deprecated' %}已废弃条目，不计入 ready{% else %}范围外条目，不计入 ready{% endif %}</td></tr>
+            {% endif %}
+          </table>
+        </article>
+        {% endfor %}
+      </div>
+    </section>
+    {% endfor %}
+  </main>
+
+  <footer class="site-footer">
+    <div class="footer-inner">
+      {% include "_footer_disclaimer.html" %}
+    </div>
+  </footer>
+
+{% include "_app_config.html" %}
+<script src="/static/api-bridge.js"></script>
+<script>
+var featuresBridge = window.ApiBridge;
+var getFeaturesCatalog = featuresBridge.getFeaturesCatalog;
+var getGovernanceCatalog = featuresBridge.getGovernanceCatalog;
+var getAdminSystemStatus = featuresBridge.getAdminSystemStatus;
+var getHealthStatus = featuresBridge.getHealthStatus;
+var getSettledBridgeData = featuresBridge.getSettledBridgeData;
+
+let currentStatusFilter = 'all';
+let currentVisFilter = 'all';
+
+function setNodeText(id, value) {
+  const node = document.getElementById(id);
+  if (node) node.textContent = value;
+}
+
+function safeText(value, fallback = '-') {
+  if (value === null || value === undefined || value === '') return fallback;
+  return String(value);
+}
+
+function normalizeStatusSummary(summary) {
+  const normalized = {};
+  Object.keys(summary || {}).sort().forEach((key) => {
+    normalized[key] = Number(summary[key] || 0);
+  });
+  return normalized;
+}
+
+function sameStatusSummary(left, right) {
+  return JSON.stringify(normalizeStatusSummary(left)) === JSON.stringify(normalizeStatusSummary(right));
+}
+
+function sameDenominatorSummary(left, right) {
+  const keys = ['catalog_total', 'eligible_total', 'negative_total', 'ready_strict_count', 'ready_with_gaps_count', 'blocked_count'];
+  return keys.every((key) => Number((left || {})[key] || 0) === Number((right || {})[key] || 0));
+}
+
+function latestFeatureVerifiedAt(catalog) {
+  const summarized = safeText(catalog && catalog.latest_feature_verified_at, '').trim();
+  if (summarized) return summarized;
+  const freshness = safeText(catalog && catalog.test_result_freshness, '').trim().toLowerCase();
+  const source = safeText(catalog && catalog.test_result_source, '').trim();
+  if (freshness !== 'fresh' || !source) return null;
+  let latest = null;
+  (catalog && catalog.features || []).forEach((feature) => {
+    const candidate = safeText(feature && feature.last_verified_at, '').trim();
+    if (candidate && (!latest || candidate > latest)) latest = candidate;
+  });
+  return latest;
+}
+
+function formatGovernanceFreshness(catalog) {
+  return [
+    '治理状态：' + safeText(catalog && catalog.test_result_freshness, 'unknown'),
+    (catalog && catalog.test_result_stale_reason) ? ('原因：' + catalog.test_result_stale_reason) : null,
+    '治理批次时间：' + safeText(catalog && catalog.test_result_generated_at, '暂未发现'),
+    '最近 feature 验证：' + safeText(latestFeatureVerifiedAt(catalog), '暂未记录'),
+    catalog && catalog.cache_ttl_seconds ? ('缓存 ' + catalog.cache_ttl_seconds + 's') : null,
+  ].filter(Boolean).join(' · ');
+}
+
+function formatRuntimeAnchors(anchors) {
+  const orderedKeys = [
+    ['runtime_trade_date', '运行日'],
+    ['public_pool_trade_date', '公开池批次'],
+    ['stats_snapshot_date', '统计批次'],
+    ['sim_snapshot_date', '模拟快照'],
+  ];
+  return orderedKeys.map(([key, label]) => label + '：' + safeText((anchors || {})[key])).join(' / ');
+}
+
+function humanizeRuntimeState(value) {
+  return {
+    NORMAL: '正常',
+    READY: '已就绪',
+    DEGRADED: '已降级展示',
+    BLOCKED: '阻塞',
+    UNKNOWN: '待确认',
+  }[safeText(value, 'UNKNOWN').toUpperCase()] || '待确认';
+}
+
+function humanizeHealthState(value) {
+  return {
+    OK: '正常',
+    DEGRADED: '降级',
+    UNCONFIGURED: '待配置',
+    UNKNOWN: '待确认',
+  }[safeText(value, 'UNKNOWN').toUpperCase()] || '待确认';
+}
+
+function formatTruthGaps(truthGaps) {
+  const gaps = truthGaps || {};
+  return [
+    '运行日：' + safeText(gaps.runtime_trade_date, '未确定'),
+    '周末未发布：' + String(Number(gaps.weekend_unpublished_report_count || 0)),
+    '支付样本：' + String(Number(gaps.billing_order_count || 0)),
+    '反馈样本：' + String(Number(gaps.report_feedback_count || 0)),
+    'dashboard分叉：' + (gaps.dashboard_truth_mismatch ? '是' : '否'),
+    'sim分叉：' + (gaps.sim_truth_mismatch ? '是' : '否')
+  ].join(' / ');
+}
+
+async function syncGovernanceCatalog() {
+  try {
+    const settledResults = await Promise.allSettled([
+      getFeaturesCatalog('live'),
+      getGovernanceCatalog('snapshot'),
+      getAdminSystemStatus(),
+      getHealthStatus(),
+    ]);
+    const liveCatalogResult = getSettledBridgeData(settledResults[0], '当前目录');
+    const snapshotCatalogResult = getSettledBridgeData(settledResults[1], '对照目录');
+    const systemStatusResult = getSettledBridgeData(settledResults[2], '系统状态');
+    const healthStatusResult = getSettledBridgeData(settledResults[3], '健康检查');
+    const liveCatalog = liveCatalogResult.data || {};
+    const snapshotCatalog = snapshotCatalogResult.data || {};
+    const systemStatus = systemStatusResult.data || {};
+    const healthStatus = healthStatusResult.data || {};
+
+    const driftReasons = [];
+    const partialErrors = [
+      liveCatalogResult.error,
+      snapshotCatalogResult.error,
+      systemStatusResult.error,
+      healthStatusResult.error,
+    ].filter(Boolean);
+    if (liveCatalogResult.ok && snapshotCatalogResult.ok) {
+      if (safeText(snapshotCatalog.source, 'unknown') !== 'snapshot' || safeText(snapshotCatalog.catalog_mode, 'unknown') !== 'snapshot') {
+        driftReasons.push('对照数据语义待核对');
+      }
+      if (Number(liveCatalog.total || 0) !== Number(snapshotCatalog.total || 0)) {
+        driftReasons.push('条目总数存在差异');
+      }
+      if (!sameStatusSummary(liveCatalog.status_summary || {}, snapshotCatalog.status_summary || {})) {
+        driftReasons.push('状态汇总存在差异');
+      }
+      if (!sameDenominatorSummary(liveCatalog.denominator_summary || {}, snapshotCatalog.denominator_summary || {})) {
+        driftReasons.push('ready denominator drift');
+      }
+    }
+    setNodeText(
+      'catalog-sync-status',
+      partialErrors.length
+        ? '部分读取失败 · ' + partialErrors.join(' / ')
+        : (driftReasons.length ? '存在差异 · ' + driftReasons.join(' / ') : '当前接口与对照接口一致')
+    );
+    setNodeText('catalog-live-generated-at', safeText(liveCatalog.generated_at, '未生成'));
+    setNodeText('catalog-snapshot-generated-at', safeText(snapshotCatalog.generated_at, '未生成'));
+    setNodeText(
+      'catalog-runtime-state-value',
+      systemStatusResult.ok ? humanizeRuntimeState((systemStatus.metrics || {}).runtime_state) : '暂不可用'
+    );
+    setNodeText(
+      'catalog-runtime-health-value',
+      healthStatusResult.ok ? humanizeHealthState(healthStatus.status) : '暂不可用'
+    );
+    setNodeText(
+      'catalog-runtime-anchor-strip',
+      systemStatusResult.ok ? formatRuntimeAnchors((systemStatus.metrics || {}).runtime_anchors || {}) : '关键日期暂不可用'
+    );
+    setNodeText(
+      'catalog-runtime-truth-gaps',
+      systemStatusResult.ok ? formatTruthGaps(systemStatus.truth_gaps || {}) : 'runtime truth gaps 暂不可用'
+    );
+    setNodeText(
+      'catalog-test-freshness',
+      formatGovernanceFreshness(liveCatalog)
+    );
+    setNodeText(
+      'catalog-generated-at',
+      '页面数据时间：' + safeText(liveCatalog.generated_at, '未生成')
+      + (partialErrors.length ? ' · 部分接口暂不可用' : ' · 当前汇总与对照接口已连接')
+    );
+  } catch (error) {
+    setNodeText('catalog-sync-status', '读取失败 · ' + safeText(error && error.message, 'unknown error'));
+    setNodeText('catalog-runtime-state-value', '暂不可用');
+    setNodeText('catalog-runtime-health-value', '暂不可用');
+    setNodeText('catalog-runtime-anchor-strip', '关键日期暂不可用');
+    setNodeText('catalog-runtime-truth-gaps', 'runtime truth gaps 暂不可用');
+  }
+}
+
+function toggleGroup(header) {
+  const body = header.parentElement.querySelector('.fr-group-body');
+  if (!body) return;
+  body.style.display = body.style.display === 'none' ? 'block' : 'none';
+}
+
+function filterFeatures() {
+  const q = (document.getElementById('featureSearch').value || '').toLowerCase();
+  const cards = document.querySelectorAll('.feature-entry');
+  const groups = document.querySelectorAll('.fr-group');
+  let totalVisible = 0;
+  let withGapsVisible = 0;
+  let blockedVisible = 0;
+
+  cards.forEach((card) => {
+    const searchText = (card.getAttribute('data-search') || '').toLowerCase();
+    const status = card.getAttribute('data-status') || '';
+    const vis = card.getAttribute('data-vis') || '';
+    const matchQ = !q || searchText.includes(q);
+    const matchStatus = currentStatusFilter === 'all'
+      || status === currentStatusFilter
+      || (currentStatusFilter === 'BLOCKED' && status.startsWith('BLOCKED'));
+    const matchVis = currentVisFilter === 'all' || vis === currentVisFilter;
+    const show = matchQ && matchStatus && matchVis;
+    card.style.display = show ? '' : 'none';
+    if (show) {
+      totalVisible += 1;
+      if (status === 'READY_WITH_GAPS') withGapsVisible += 1;
+      if (status.startsWith('BLOCKED')) blockedVisible += 1;
+    }
+  });
+
+  groups.forEach((group) => {
+    const visibleCards = group.querySelectorAll('.feature-entry:not([style*="display: none"])');
+    group.style.display = visibleCards.length ? '' : 'none';
+    const body = group.querySelector('.fr-group-body');
+    if (body && visibleCards.length) body.style.display = 'block';
+  });
+
+  document.getElementById('noResults').style.display = totalVisible === 0 ? 'block' : 'none';
+  document.getElementById('filterSummary').textContent =
+    '当前可见 ' + totalVisible + ' 项 · 待完善 ' + withGapsVisible + ' 项 · 阻塞 ' + blockedVisible + ' 项';
+}
+
+function setStatusFilter(value, btn) {
+  currentStatusFilter = value;
+  document.querySelectorAll('[data-filter]').forEach((item) => item.classList.remove('active'));
+  btn.classList.add('active');
+  filterFeatures();
+}
+
+function setVisFilter(value, btn) {
+  currentVisFilter = value;
+  document.querySelectorAll('[data-vis]').forEach((item) => item.classList.remove('active'));
+  btn.classList.add('active');
+  filterFeatures();
+}
+
+const featureSearchInput = document.getElementById('featureSearch');
+if (featureSearchInput) {
+  featureSearchInput.addEventListener('input', filterFeatures);
+  featureSearchInput.addEventListener('change', filterFeatures);
+}
+
+filterFeatures();
+syncGovernanceCatalog();
+</script>
+</body>
+</html>

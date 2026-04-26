@@ -1,0 +1,9 @@
+{
+  "name": "snew.145678.xyz",
+  "endpoint": "https://new.145678.xyz/v1",
+  "model": "gpt-5.4",
+  "homepage": "https://new.145678.xyz",
+  "enabled": true,
+  "resource": "provider",
+  "app": "codex"
+}

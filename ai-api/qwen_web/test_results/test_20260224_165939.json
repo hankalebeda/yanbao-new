@@ -1,0 +1,15 @@
+{
+  "passed": 0,
+  "total": 3,
+  "results": {
+    "single": {
+      "error": "Page.goto: net::ERR_CONNECTION_RESET at https://chat.qwen.ai/\nCall log:\n  - navigating to \"https://chat.qwen.ai/\", waiting until \"domcontentloaded\"\n"
+    },
+    "batch": {
+      "error": "Kweichow Moutai failed: Page.goto: net::ERR_CONNECTION_RESET at https://chat.qwen.ai/\nCall log:\n  - navigating to \"https://chat.qwen.ai/\", waiting until \"domcontentloaded\"\n"
+    },
+    "reconnect": {
+      "error": "Page.goto: net::ERR_CONNECTION_RESET at https://chat.qwen.ai/\nCall log:\n  - navigating to \"https://chat.qwen.ai/\", waiting until \"domcontentloaded\"\n"
+    }
+  }
+}

@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>隐私政策 - A股研报平台</title>
+  <link rel="stylesheet" href="/static/demo.css">
+  <style>
+    .legal-page { max-width: 800px; margin: 0 auto; padding: 48px 24px; }
+    .legal-page h1 { font-family: var(--font-display); font-size: var(--fs-2xl); margin-bottom: 24px; }
+    .legal-page h2 { font-size: var(--fs-lg); margin-top: 32px; margin-bottom: 12px; }
+    .legal-page p, .legal-page li { font-size: var(--fs-base); line-height: 1.8; color: var(--ink-secondary, #555); }
+    .legal-page ul { padding-left: 20px; }
+  </style>
+</head>
+<body>
+  {% set nav_class = 'site-nav nav-links' %}
+  {% include "_site_nav.html" %}
+  <main class="legal-page">
+    <h1>隐私政策</h1>
+    <p><strong>生效日期：</strong>2026年3月1日</p>
+
+    <h2>1. 信息收集</h2>
+    <p>为提供服务，平台会收集以下信息：</p>
+    <ul>
+      <li><strong>注册信息：</strong>邮箱地址（用于账户识别和通知）。</li>
+      <li><strong>使用数据：</strong>页面访问记录、功能使用频率（用于改善服务）。</li>
+      <li><strong>支付信息：</strong>通过第三方支付平台处理，平台不存储银行卡号等敏感信息。</li>
+    </ul>
+
+    <h2>2. 信息使用</h2>
+    <ul>
+      <li>提供并维护平台服务。</li>
+      <li>发送账户相关通知（如密码重置、会员到期提醒）。</li>
+      <li>改善平台功能和用户体验。</li>
+    </ul>
+
+    <h2>3. 信息保护</h2>
+    <ul>
+      <li>用户密码使用 bcrypt 单向加密存储。</li>
+      <li>Cookie 凭证（用于第三方数据采集）严格禁止在响应、日志和审计记录中回显。</li>
+      <li>所有 API 通信使用 HTTPS 加密传输。</li>
+    </ul>
+
+    <h2>4. 信息共享</h2>
+    <p>平台不会向任何第三方出售或共享用户个人信息，以下情况除外：</p>
+    <ul>
+      <li>用户明确同意。</li>
+      <li>法律法规要求。</li>
+      <li>保护平台合法权益所必需。</li>
+    </ul>
+
+    <h2>5. Cookie 使用</h2>
+    <p>平台使用 Cookie 维持用户登录状态和偏好设置。用户可通过浏览器设置管理 Cookie。</p>
+
+    <h2>6. 用户权利</h2>
+    <ul>
+      <li>查看和修改个人信息。</li>
+      <li>请求删除账户及相关数据。</li>
+      <li>撤回数据使用授权。</li>
+    </ul>
+
+    <h2>7. 政策变更</h2>
+    <p>本隐私政策可能随时更新，修改后将在平台公布。</p>
+
+    <div style="margin-top:48px">
+      <a href="/register" class="btn-outline">返回注册</a>
+    </div>
+  </main>
+  {% include "_footer_disclaimer.html" %}
+</body>
+</html>

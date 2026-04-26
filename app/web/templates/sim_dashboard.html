@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>模拟收益看板 - A股研报平台</title>
+  <link rel="stylesheet" href="/static/demo.css">
+</head>
+<body>
+  {% include "_site_nav.html" %}
+
+  <main class="container page-shell">
+    <section class="page-hero">
+      <div class="page-hero-main">
+        <p class="page-eyebrow">付费区</p>
+        <h1 class="page-title">模拟收益看板</h1>
+        <p class="page-summary">本页采用 FR-08 模拟实盘复利口径，关注当前账户层面的权益曲线、平仓样本与持仓状态。它和公开统计看板不是同一套样本定义，所以数字不要求一一相等。</p>
+      </div>
+      <aside class="page-hero-aside">
+        <div class="page-pill-group">
+          <span class="page-pill">FR-08 模拟口径</span>
+          <span class="page-pill">权益曲线</span>
+          <span class="page-pill">持仓快照</span>
+        </div>
+        <div class="page-note-card">
+          <strong>页面边界</strong><br>
+          这里看的是模拟账户表现，不是公开研报的结算统计；如果你要验证信号本身，请回到统计看板或单篇研报详情页。
+        </div>
+      </aside>
+    </section>
+
+    <div class="page-nav-grid">
+      <a class="page-nav-card" href="/">
+        <span class="page-nav-kicker">今日入口</span>
+        <span class="page-nav-title">返回首页</span>
+        <span class="page-nav-text">先确认今日公开批次和系统状态，再决定是否需要进入高级区。</span>
+      </a>
+      <a class="page-nav-card" href="/dashboard">
+        <span class="page-nav-kicker">公开统计</span>
+        <span class="page-nav-title">统计看板</span>
+        <span class="page-nav-text">查看 FR-07 结算口径下的胜率、盈亏比和策略有效性。</span>
+      </a>
+      <a class="page-nav-card" href="/subscribe">
+        <span class="page-nav-kicker">权限说明</span>
+        <span class="page-nav-title">订阅页</span>
+        <span class="page-nav-text">核对当前会员档位对应的能力边界和可见页面。</span>
+      </a>
+    </div>
+
+    {% if not can_see_sim %}
+    <div class="cold-start-banner">
+      {% if not is_logged_in %}
+      <p>当前页面需要登录后访问。请先 <a href="/login">登录</a>，没有账号可前往 <a href="/register">注册</a>。</p>
+      {% else %}
+      <p>模拟收益看板仅对付费会员和管理员开放。你可以前往 <a href="/subscribe">订阅页</a> 开通后再查看。</p>
+      {% endif %}
+    </div>
+    {% else %}
+
+    <div class="tabs" id="tier-tabs"></div>
+    <div id="sim-status" class="cold-start-banner" style="display:none"></div>
+    <p id="sim-source-dates" class="muted text-xs" style="margin:-8px 0 var(--space-4);"></p>
+    <p class="muted text-xs" style="margin:-10px 0 var(--space-4);">
+      本页采用 FR-08 模拟实盘复利口径；统计看板采用 FR-07 信号结算口径。这里的样本数=已平仓模拟交易笔数，不等于统计看板的已结算研报数；两页的样本数、胜率与收益率不要求一一相等。
+    </p>
+
+    <section class="metrics-grid">
+      <div class="metric-card">
+        <div class="label">累计收益</div>
+        <div class="val" id="metric-return">计算中</div>
+      </div>
+      <div class="metric-card">
+        <div class="label">胜率</div>
+        <div class="val" id="metric-win-rate">计算中</div>
+      </div>
+      <div class="metric-card">
+        <div class="label">盈亏比</div>
+        <div class="val" id="metric-pnl-ratio">计算中</div>
+      </div>
+      <div class="metric-card">
+        <div class="label">最大回撤</div>
+        <div class="val" id="metric-drawdown">计算中</div>
+      </div>
+      <div class="metric-card">
+        <div class="label">已平仓样本</div>
+        <div class="val" id="metric-sample-size">0</div>
+      </div>
+    </section>
+
+    <div id="drawdown-banner" class="drawdown-banner" style="display:none"></div>
+
+    <section class="card">
+      <h2 class="card-title">净值曲线</h2>
+      <div class="chart-placeholder" id="chart-container">
+        <svg id="equity-chart" width="100%" height="220" viewBox="0 0 960 220" preserveAspectRatio="none" style="display:none"></svg>
+        <span id="chart-empty" class="muted">净值曲线尚未形成</span>
+      </div>
+      <div id="chart-legend" style="display:none;margin-top:8px;font-size:12px;display:flex;gap:16px;flex-wrap:wrap">
+        <span><span style="display:inline-block;width:20px;height:3px;background:var(--accent);vertical-align:middle;margin-right:4px"></span>AI策略</span>
+        <span><span style="display:inline-block;width:20px;height:3px;background:var(--type-b);vertical-align:middle;margin-right:4px;border-top:2px dashed var(--type-b);height:0"></span>随机基线</span>
+        <span><span style="display:inline-block;width:20px;height:3px;background:var(--buy);vertical-align:middle;margin-right:4px;border-top:2px dashed var(--buy);height:0"></span>MA金叉基线</span>
+      </div>
+      <div id="underperform-warning" style="display:none;margin-top:8px;padding:8px 14px;background:rgba(220,38,38,.08);border:1px solid rgba(220,38,38,.25);border-radius:6px;font-size:13px;color:var(--sell)">
+        ⚠️ AI策略当前跑输随机基线，请谨慎参考
+      </div>
+      <p id="chart-hint" class="muted text-xs" style="margin-top:var(--space-2)"></p>
+    </section>
+
+    <section class="card">
+      <h2 class="card-title">当前持仓</h2>
+      <div style="overflow-x:auto">
+      <table class="data-table data-table-zebra">
+        <thead>
+          <tr>
+            <th>股票</th>
+            <th>策略</th>
+            <th>信号日</th>
+            <th>状态</th>
+            <th>操作</th>
+          </tr>
+        </thead>
+        <tbody id="open-positions">
+          <tr><td colspan="5" class="muted">等待加载</td></tr>
+        </tbody>
+      </table>
+      </div>
+    </section>
+    {% endif %}
+  </main>
+
+  <footer class="site-footer">
+    <div class="footer-inner">
+      {% include "_footer_disclaimer.html" %}
+    </div>
+  </footer>
+
+  {% if can_see_sim %}
+  {% include "_app_config.html" %}
+  <script src="/static/api-bridge.js"></script>
+  <script>
+    var currentTier = '100k';
+    var tierLabels = { '10k': '1万档', '100k': '10万档', '500k': '50万档' };
+    var simDashboardRequestSeq = 0;
+
+    function formatPct(value) {
+      return value == null ? '计算中' : (value * 100).toFixed(1) + '%';
+    }
+
+    function drawChart(payload) {
+      var svg = document.getElementById('equity-chart');
+      var emptyEl = document.getElementById('chart-empty');
+      var hintEl = document.getElementById('chart-hint');
+      var curve = Array.isArray(payload.equity_curve) ? payload.equity_curve : [];
+      if (curve.length === 0) {
+        svg.style.display = 'none';
+        var legendHidden = document.getElementById('chart-legend');
+        if (legendHidden) legendHidden.style.display = 'none';
+        var warnHidden = document.getElementById('underperform-warning');
+        if (warnHidden) warnHidden.style.display = 'none';
+        emptyEl.textContent = '净值曲线尚未形成';
+        emptyEl.style.display = '';
+        if (!hintEl.textContent && payload.display_hint) {
+          hintEl.textContent = statusCn(payload.display_hint);
+        }
+        return;
+      }
+      // Show chart even with 1-2 points (thin data)
+      svg.style.display = '';
+      emptyEl.style.display = 'none';
+      if (curve.length <= 3) {
+        hintEl.textContent = '📊 数据积累中，净值曲线将随交易日推进逐步丰富';
+      }
+
+      var allSeries = [curve];
+      if (Array.isArray(payload.baseline_random) && payload.baseline_random.length) allSeries.push(payload.baseline_random);
+      if (Array.isArray(payload.baseline_ma_cross) && payload.baseline_ma_cross.length) allSeries.push(payload.baseline_ma_cross);
+      var allValues = allSeries.flat().map(function (item) { return Number(item.equity || 0); });
+      var min = Math.min.apply(null, allValues);
+      var max = Math.max.apply(null, allValues);
+      // Ensure visible range even for flat/single-point data
+      if (max - min < max * 0.01) {
+        var center = (max + min) / 2;
+        min = center * 0.98;
+        max = center * 1.02;
+      }
+      var range = Math.max(1, max - min);
+
+      function toPath(items) {
+        if (items.length === 0) return '';
+        var divisor = Math.max(1, items.length - 1);
+        return items.map(function (item, index) {
+          var x = items.length === 1 ? 480 : 24 + (912 * index / divisor);
+          var y = 200 - ((Number(item.equity || 0) - min) / range * 170);
+          return (index === 0 ? 'M' : 'L') + x.toFixed(2) + ' ' + y.toFixed(2);
+        }).join(' ');
+      }
+      function toCircles(items, color) {
+        if (items.length > 5) return '';
+        var divisor = Math.max(1, items.length - 1);
+        return items.map(function (item, index) {
+          var x = items.length === 1 ? 480 : 24 + (912 * index / divisor);
+          var y = 200 - ((Number(item.equity || 0) - min) / range * 170);
+          return '<circle cx="' + x.toFixed(2) + '" cy="' + y.toFixed(2) + '" r="4" fill="' + color + '"></circle>';
+        }).join('');
+      }
+      function toLabels(items) {
+        if (items.length > 5) return '';
+        var divisor = Math.max(1, items.length - 1);
+        return items.map(function (item, index) {
+          var x = items.length === 1 ? 480 : 24 + (912 * index / divisor);
+          var eq = Number(item.equity || 0);
+          var label = eq >= 10000 ? (eq / 10000).toFixed(1) + '万' : eq.toFixed(0);
+          return '<text x="' + x.toFixed(2) + '" y="16" text-anchor="middle" fill="var(--fg-muted)" font-size="11">' + label + '</text>';
+        }).join('');
+      }
+
+      var mainPath = toPath(curve);
+      var randomPath = Array.isArray(payload.baseline_random) && payload.baseline_random.length ? toPath(payload.baseline_random) : '';
+      var maPath = Array.isArray(payload.baseline_ma_cross) && payload.baseline_ma_cross.length ? toPath(payload.baseline_ma_cross) : '';
+      svg.innerHTML = '' +
+        '<rect x="0" y="0" width="960" height="220" fill="var(--bg-alt)" rx="8"></rect>' +
+        '<path d="' + mainPath + '" fill="none" stroke="var(--accent)" stroke-width="2.5"></path>' +
+        toCircles(curve, 'var(--accent)') +
+        toLabels(curve) +
+        (randomPath ? '<path d="' + randomPath + '" fill="none" stroke="var(--type-b)" stroke-width="1.5" stroke-dasharray="6 4"></path>' : '') +
+        (maPath ? '<path d="' + maPath + '" fill="none" stroke="var(--buy)" stroke-width="1.5" stroke-dasharray="3 5"></path>' : '');
+
+      // Show legend when baselines exist
+      var legendEl = document.getElementById('chart-legend');
+      if (legendEl) legendEl.style.display = (randomPath || maPath) ? 'flex' : 'none';
+
+      // Show underperform warning if AI strategy trails random baseline
+      var warnEl = document.getElementById('underperform-warning');
+      if (warnEl && Array.isArray(payload.baseline_random) && payload.baseline_random.length && curve.length) {
+        var aiLast = Number(curve[curve.length - 1].equity || 0);
+        var randLast = Number(payload.baseline_random[payload.baseline_random.length - 1].equity || 0);
+        warnEl.style.display = (aiLast < randLast) ? '' : 'none';
+      }
+    }
+
+    var DS_CN = {'COMPUTING':'计算中','READY':'就绪','NOT_READY':'尚未就绪','stats_not_ready':'结算数据不足','no_data':'暂无数据','sim_dashboard_not_ready':'看板数据准备中','equity_curve_empty':'收益曲线生成中','sim_snapshot_lagging':'模拟快照补算中','home_snapshot_not_ready':'首页快照准备中','SIM_DASHBOARD_NOT_READY':'看板数据准备中','market_state_degraded':'行情数据降级','stale_ok':'数据更新中','no_etf_data_available':'ETF数据同步中','sample_lt_30':'样本积累中','PARTIAL_SUCCESS':'部分完成'};
+    var POS_CN = {'OPEN':'持仓中','TAKE_PROFIT':'止盈平仓','STOP_LOSS':'止损平仓','TIMEOUT':'超时平仓','SKIPPED':'已跳过'};
+    var DD_CN = {'NORMAL':'正常','WARNING':'预警','ALERT':'警告','STOP':'停手保护'};
+    DS_CN['baseline_pending'] = '基线对照数据计算中';
+    function statusCn(s){ return DS_CN[s]||s||'计算中'; }
+
+    function renderPositions(items) {
+      var tbody = document.getElementById('open-positions');
+      tbody.innerHTML = items.length ? items.map(function (item) {
+        var ps = (item.position_status || item.status || '').toUpperCase();
+        var posClass = ps === 'OPEN' ? 'pos-open' : ps === 'TAKE_PROFIT' ? 'pos-win' : ps === 'STOP_LOSS' ? 'pos-sl' : 'pos-expired';
+        var posLabel = POS_CN[ps] || ps || '—';
+        return '<tr>' +
+          '<td><strong>' + (item.stock_name || item.stock_code) + '</strong><br><span class="text-xs muted">' + (item.stock_code || '') + '</span></td>' +
+          '<td>' + (item.strategy_type || '—') + '</td>' +
+          '<td>' + (item.signal_date || '—') + '</td>' +
+          '<td><span class="pos-status ' + posClass + '">' + posLabel + '</span></td>' +
+          '<td><a href="/reports/' + item.report_id + '">查看研报</a></td>' +
+        '</tr>';
+      }).join('') : '<tr><td colspan="5" class="muted">当前没有持仓</td></tr>';
+    }
+
+    function resetSimDashboardView(message) {
+      var reason = message || '';
+      var statusEl = document.getElementById('sim-status');
+      var sourceDatesEl = document.getElementById('sim-source-dates');
+      var drawdownEl = document.getElementById('drawdown-banner');
+      var chartHintEl = document.getElementById('chart-hint');
+      var chartEl = document.getElementById('equity-chart');
+      var chartEmptyEl = document.getElementById('chart-empty');
+      var legendEl = document.getElementById('chart-legend');
+      var underperformEl = document.getElementById('underperform-warning');
+      var metricReturnEl = document.getElementById('metric-return');
+
+      statusEl.style.display = reason ? 'block' : 'none';
+      statusEl.textContent = reason ? ('请求失败 · ' + reason) : '';
+      sourceDatesEl.style.display = 'none';
+      sourceDatesEl.textContent = '';
+      drawdownEl.style.display = 'none';
+      drawdownEl.textContent = '';
+      metricReturnEl.textContent = '计算中';
+      metricReturnEl.className = 'val';
+      document.getElementById('metric-win-rate').textContent = '计算中';
+      document.getElementById('metric-pnl-ratio').textContent = '计算中';
+      document.getElementById('metric-drawdown').textContent = '计算中';
+      document.getElementById('metric-sample-size').textContent = '0';
+      chartEl.style.display = 'none';
+      chartEl.innerHTML = '';
+      chartEmptyEl.style.display = '';
+      chartEmptyEl.textContent = reason ? '模拟收益接口加载失败' : '净值曲线尚未形成';
+      legendEl.style.display = 'none';
+      underperformEl.style.display = 'none';
+      chartHintEl.textContent = reason ? '模拟收益接口加载失败' : '';
+      document.getElementById('open-positions').innerHTML = reason
+        ? '<tr><td colspan="5" class="muted">加载失败</td></tr>'
+        : '<tr><td colspan="5" class="muted">等待加载</td></tr>';
+    }
+
+    function renderTierTabs() {
+      var container = document.getElementById('tier-tabs');
+      container.innerHTML = Object.keys(tierLabels).map(function (tier) {
+        var active = tier === currentTier ? ' active' : '';
+        return '<a href="javascript:void(0)" data-tier="' + tier + '" class="' + active.trim() + '">' + tierLabels[tier] + '</a>';
+      }).join('');
+      container.querySelectorAll('a').forEach(function (a) {
+        a.addEventListener('click', function (e) {
+          e.preventDefault();
+          currentTier = a.dataset.tier;
+          renderTierTabs();
+          loadSimDashboard();
+        });
+      });
+    }
+
+    async function initTiers() {
+      var config = await getPlatformConfig();
+      if (config.success && config.data && config.data.capital_tiers) {
+        tierLabels = {};
+        Object.keys(config.data.capital_tiers).forEach(function (tier) {
+          var item = config.data.capital_tiers[tier] || {};
+          tierLabels[tier] = item.label || tier;
+        });
+      }
+      renderTierTabs();
+    }
+
+    async function loadSimDashboard() {
+      var requestSeq = ++simDashboardRequestSeq;
+      var response = await getPortfolioSimDashboard(currentTier);
+      if (requestSeq !== simDashboardRequestSeq) {
+        return;
+      }
+      var statusEl = document.getElementById('sim-status');
+      if (!response.success) {
+        resetSimDashboardView(response.message || response.error_code || '请稍后重试');
+        return;
+      }
+      var data = response.data || {};
+      if (data.data_status && data.data_status !== 'READY') {
+        statusEl.style.display = 'block';
+        var parts = [statusCn(data.data_status)];
+        if (data.status_reason) parts.push(statusCn(data.status_reason));
+        if (data.display_hint) parts.push(statusCn(data.display_hint));
+        statusEl.textContent = parts.join(' · ');
+      } else {
+        statusEl.style.display = 'none';
+        statusEl.textContent = '';
+      }
+      var sourceDatesEl = document.getElementById('sim-source-dates');
+      if (data.runtime_trade_date) {
+        sourceDatesEl.style.display = '';
+        if (data.snapshot_date && data.snapshot_date !== data.runtime_trade_date) {
+          sourceDatesEl.textContent = '运行日截至 ' + data.runtime_trade_date + '；当前模拟绩效快照截至 ' + data.snapshot_date;
+        } else if (data.snapshot_date) {
+          sourceDatesEl.textContent = '运行日与模拟绩效快照均截至 ' + data.snapshot_date;
+        } else {
+          sourceDatesEl.textContent = '运行日截至 ' + data.runtime_trade_date + '；模拟绩效快照尚未形成';
+        }
+      } else {
+        sourceDatesEl.style.display = 'none';
+        sourceDatesEl.textContent = '';
+      }
+
+      var dd = document.getElementById('drawdown-banner');
+      if (data.drawdown_state && data.drawdown_state !== 'NORMAL') {
+        dd.style.display = 'block';
+        dd.textContent = '⚠️ ' + (DD_CN[data.drawdown_state] || data.drawdown_state);
+      } else {
+        dd.style.display = 'none';
+        dd.textContent = '';
+      }
+
+      var retEl = document.getElementById('metric-return');
+      retEl.textContent = formatPct(data.total_return_pct);
+      retEl.className = 'val' + (data.total_return_pct > 0 ? ' positive' : data.total_return_pct < 0 ? ' negative' : '');
+      var ss = data.sample_size || 0;
+      document.getElementById('metric-win-rate').textContent = ss < 5 ? '样本不足' : formatPct(data.win_rate);
+      document.getElementById('metric-pnl-ratio').textContent = ss < 5 ? '样本不足' : (data.profit_loss_ratio == null ? '计算中' : Number(data.profit_loss_ratio).toFixed(2));
+      document.getElementById('metric-drawdown').textContent = formatPct(data.max_drawdown_pct);
+      document.getElementById('metric-sample-size').textContent = String(ss) + (ss < 5 ? ' (待结算)' : '');
+      var hints = [];
+      if (data.display_hint) hints.push(statusCn(data.display_hint));
+      if (Array.isArray(data.baseline_random) && data.baseline_random.length) {
+        hints.push('随机基线已对齐');
+      } else {
+        hints.push('随机基线计算中');
+      }
+      if (Array.isArray(data.baseline_ma_cross) && data.baseline_ma_cross.length) {
+        hints.push('MA 基线已对齐');
+      } else {
+        hints.push('MA 基线计算中');
+      }
+      document.getElementById('chart-hint').textContent = Array.from(new Set(hints)).join(' · ');
+      drawChart(data);
+      renderPositions(Array.isArray(data.open_positions) ? data.open_positions : []);
+    }
+
+    initTiers().then(loadSimDashboard);
+  </script>
+  {% endif %}
+</body>
+</html>

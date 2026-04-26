@@ -1,0 +1,11 @@
+{"id":"019d3c98-948f-7e32-a15d-5d2dfa673c1d","thread_name":"分析子代理自治基座完成度与主要问题分布","updated_at":"2026-03-30T02:35:58.448884Z"}
+{"id":"019d3c9a-4bcc-7af1-8354-fff868d38b1f","thread_name":"分析独立写回服务与promote_prep完成度","updated_at":"2026-03-30T02:37:28.2029414Z"}
+{"id":"019d3c9a-380e-7290-9838-88966a715c58","thread_name":"分析 Kestra 编排链路落地完成度","updated_at":"2026-03-30T02:37:40.075397Z"}
+{"id":"019d3c9a-6014-7ea1-a135-0c4feda7b4d4","thread_name":"分析自治修复验证链完成度和缺口整体评估","updated_at":"2026-03-30T02:37:52.0000292Z"}
+{"id":"019d3cc1-a07d-7902-835d-0998675c38aa","thread_name":"审查 Kestra 与内部 API 连接","updated_at":"2026-03-30T03:20:25.9816808Z"}
+{"id":"019d3cc1-b47b-7872-88ea-da136b4d963f","thread_name":"评估改动与运行态优先级】? Wait schema says title","updated_at":"2026-03-30T03:20:35.4374137Z"}
+{"id":"019d3cd5-f170-7733-9794-c7442348fe3f","thread_name":"复核 Wave 1 自治 API 契约","updated_at":"2026-03-30T03:42:35.7709315Z"}
+{"id":"019d3cdd-d597-7ba0-9f83-77945c801833","thread_name":"修复 New API 模型优先链失效","updated_at":"2026-03-30T03:51:39.3445892Z"}
+{"id":"019d3cde-d6ee-7360-8f42-34847b5f75c1","thread_name":"检查脚本配置的模型优先链改动点​拾​","updated_at":"2026-03-30T03:52:23.5098009Z"}
+{"id":"019d3cde-eaaf-7b82-9185-a7889745c084","thread_name":"复核 New API 池通道与慢通道命中","updated_at":"2026-03-30T03:52:26.4100309Z"}
+{"id":"019d3d1f-62e2-7dd0-9dfa-59c5fd0d2ed2","thread_name":"检查 canonical provider 缺口","updated_at":"2026-03-30T05:02:51.365753Z"}

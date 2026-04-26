@@ -1,0 +1,10 @@
+{
+  "app_base_url": "http://host.docker.internal:18100",
+  "internal_token": "replace-me",
+  "promote_prep_base_url": "http://host.docker.internal:18194",
+  "promote_prep_token": "replace-me",
+  "writeback_b_base_url": "http://host.docker.internal:18195",
+  "writeback_b_token": "replace-me",
+  "run_id": "issue-mesh-20260327-001",
+  "do_rollback_after_commit": false
+}

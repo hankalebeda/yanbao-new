@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>A股研报平台 - 首页</title>
+  <link rel="stylesheet" href="/static/demo.css">
+</head>
+<body>
+  <nav class="site-nav">
+    <a href="/" class="nav-brand">A股研报平台</a>
+    <button class="nav-toggle" aria-label="菜单" onclick="document.querySelector('.nav-links').classList.toggle('open')">☰</button>
+    <div class="nav-links">
+      {% include "_nav_links.html" %}
+    </div>
+  </nav>
+
+  <main class="container home-shell">
+    <section class="card" style="padding:14px 18px;margin-bottom:18px;">
+      <div id="home-hint" class="muted">首页摘要加载中…</div>
+      <div style="display:flex;flex-wrap:wrap;gap:10px 18px;margin-top:8px;font-size:13px;color:var(--ink-secondary, #5b6f8f);">
+        <span>状态：<strong id="home-status">LOADING</strong></span>
+        <span>交易日：<span id="home-trade-date">—</span></span>
+        <span>最新批次：<span id="latest-batch-trade-date">—</span></span>
+        <span>展示规则：<span id="trading-day-flag" data-status="unknown">等待首页批次</span></span>
+      </div>
+      <div id="market-reason" class="muted" style="margin-top:6px;">市场状态补充信息加载中…</div>
+    </section>
+
+    <section class="hero home-hero">
+      <p class="sub">输入股票代码查看或生成研报</p>
+      <form class="hero-search" id="hero-form" action="/report" method="get">
+        <input type="text" name="stock_code" id="hero-stock-code" placeholder="600519.SH" value="">
+        <button type="submit">查看研报</button>
+      </form>
+      <div class="hero-quick" id="hero-quick-links">
+        <span class="hero-quick-label">常用：</span>
+        <span id="quick-links"><span class="hero-quick-loading muted">加载中…</span></span>
+      </div>
+      <div class="summary-box market-bar" id="market-state-panel">
+        <div class="market-banner-grid" style="display:grid;gap:2px 6px">
+          <div class="market-banner-item" style="display:flex;flex-direction:column;gap:0">
+            <span class="market-label" style="line-height:1.1;margin:0">今日市场</span>
+            <span class="market-val" style="line-height:1.1;margin:0"><strong id="market-state">—</strong></span>
+          </div>
+          <div class="market-banner-item" style="display:flex;flex-direction:column;gap:0">
+            <span class="market-label" style="line-height:1.1;margin:0">沪深300近20日</span>
+            <span class="market-val" style="line-height:1.1;margin:0"><strong id="hs300-20d">—</strong></span>
+          </div>
+          <div class="market-banner-item" style="display:flex;flex-direction:column;gap:0">
+            <span class="market-label" style="line-height:1.1;margin:0">量能比</span>
+            <span class="market-tip" style="line-height:1.1;margin:0">相对5日均量</span>
+            <span class="market-val" style="line-height:1.1;margin:0"><strong id="volume-ratio">—</strong></span>
+          </div>
+          <div class="market-banner-item" style="display:flex;flex-direction:column;gap:0">
+            <span class="market-label" style="line-height:1.1;margin:0">MA20</span>
+            <span class="market-tip" style="line-height:1.1;margin:0">20日均线</span>
+            <span class="market-val" style="line-height:1.1;margin:0"><strong id="ma20-trend">—</strong></span>
+          </div>
+        </div>
+        <div class="hero-cred-metrics" style="gap:18px 24px;padding-top:14px">
+          <span class="hero-cred-pill" style="gap:12px;padding:12px 20px"><span class="hero-cred-label">胜率</span> <span id="stat-win-rate">—</span><small class="hero-cred-hint">目标≥55%</small></span>
+          <span class="hero-cred-pill" style="gap:12px;padding:12px 20px"><span class="hero-cred-label">盈亏比</span> <span id="stat-pnl-ratio">—</span><small class="hero-cred-hint">目标≥1.5</small></span>
+          <span class="hero-cred-pill" style="gap:12px;padding:12px 20px"><span class="hero-cred-label">年化 Alpha</span> <span id="stat-alpha">—</span><small class="hero-cred-hint">超额收益，目标≥10%</small></span>
+        </div>
+        <div style="display:none;">
+          <span id="overall-win-rate">—</span>
+          <span id="overall-pnl-ratio">—</span>
+        </div>
+      </div>
+      <div class="summary-box" style="margin-top:16px;">
+        <div class="market-banner-grid" style="display:grid;gap:8px 16px;align-items:start;">
+          <div class="market-banner-item" style="display:flex;flex-direction:column;gap:4px;">
+            <span class="market-label" style="line-height:1.1;margin:0">核心池股票</span>
+            <strong id="pool-size">0</strong>
+          </div>
+          <div class="market-banner-item" style="display:flex;flex-direction:column;gap:4px;">
+            <span class="market-label" style="line-height:1.1;margin:0">今日研报</span>
+            <strong id="today-report-count">0</strong>
+          </div>
+          <div class="market-banner-item" style="display:flex;flex-direction:column;gap:4px;grid-column:1 / -1;">
+            <span class="market-label" style="line-height:1.1;margin:0">股票池对齐</span>
+            <span id="pool-date">—</span>
+            <span id="pool-progress-text" class="market-tip" style="line-height:1.4;margin:0">等待加载股票池…</span>
+          </div>
+        </div>
+        <div id="pool-stocks" class="hero-quick" style="margin-top:12px;"></div>
+      </div>
+    </section>
+
+    <section class="card">
+      <h3 class="card-title">今日强信号</h3>
+      <button id="pool-toggle" class="btn-text" style="display:none">展开核心池</button>
+      <p class="signal-type-hint muted">信号类型：<span class="badge badge-type-a">A类</span> 事件驱动 · <span class="badge badge-type-b">B类</span> 趋势跟踪 · <span class="badge badge-type-c">C类</span> 低波套利</p>
+      <div id="signals-skeleton" class="signal-grid" style="display:none;">
+        <div class="skeleton skeleton-card" style="height:100px;border-radius:var(--radius);"></div>
+        <div class="skeleton skeleton-card" style="height:100px;border-radius:var(--radius);"></div>
+        <div class="skeleton skeleton-card" style="height:100px;border-radius:var(--radius);"></div>
+      </div>
+      <div id="signals-list" class="signal-grid"></div>
+      <div id="signals-empty" class="empty-state" style="display:none;">
+        <div class="empty-state-icon">📅</div>
+        <div class="empty-state-title">今日为非交易日或无强信号</div>
+        <p class="empty-state-desc">下一个交易日将生成最新研报。</p>
+        <p class="empty-state-action"><a href="/reports" class="btn-primary">查看历史研报</a></p>
+      </div>
+    </section>
+
+    <section class="platform-stats">
+      <div class="stat">
+        <div class="num" id="stat-total">—</div>
+        <div class="label">已追踪信号</div>
+      </div>
+      <div class="stat">
+        <div class="num" id="stat-win-pct">—</div>
+        <div class="label">模拟胜率</div>
+      </div>
+      <div class="stat">
+        <div class="num" id="stat-days">—</div>
+        <div class="label">运行天数</div>
+      </div>
+    </section>
+
+    <section id="latest-reports" class="latest-reports"></section>
+
+  </main>
+
+  <footer class="site-footer">
+    <div class="footer-inner">
+      {% if current_user and (current_user.role or '')|lower == 'admin' %}
+      <p class="footer-admin-link"><a href="/admin">管理后台</a> · <a href="/features">页面与接口总览</a></p>
+      {% endif %}
+      {% include "_footer_disclaimer.html" %}
+    </div>
+  </footer>
+
+  {% include "_app_config.html" %}
+  <script src="/static/api-bridge.js"></script>
+  <script>
+    var _labels = { recommendation: {BUY:'买入',SELL:'卖出',HOLD:'观望'}, market_state: {BULL:'积极',NEUTRAL:'谨慎',BEAR:'防御'}, ma_trend: {UP:'向上',DOWN:'向下',FLAT:'持平'} };
+    (async function(){ try { var r = await getPlatformConfig(); if (r && r.success && r.data && r.data.labels) _labels = r.data.labels; } catch(e){} })();
+    var _form = document.querySelector('.hero-search');
+    if (_form) {
+      _form.addEventListener('submit', function(e) {
+        var inp = this.querySelector('input');
+        if (inp && !inp.value.trim()) {
+          e.preventDefault();
+          inp.value = inp.placeholder || '600519.SH';
+          this.submit();
+        } else if (inp) {
+          var v = inp.value.trim();
+          if (/^\d{6}$/.test(v)) {
+            e.preventDefault();
+            inp.value = /^[69]/.test(v) ? v + '.SH' : v + '.SZ';
+            this.submit();
+          }
+        }
+      });
+    }
+    function toggleEmptyState(showEmpty, errMsg) {
+      var list = document.getElementById('signals-list');
+      var empty = document.getElementById('signals-empty');
+      var skeleton = document.getElementById('signals-skeleton');
+      if (skeleton) skeleton.style.display = 'none';
+      if (showEmpty) {
+        if (list) list.style.display = 'none';
+        if (empty) {
+          empty.style.display = 'block';
+          var desc = empty.querySelector('.empty-state-desc');
+          if (desc) desc.textContent = errMsg || '下一个交易日将生成最新研报。';
+        }
+      } else {
+        if (list) { list.style.display = 'flex'; }
+        if (empty) empty.style.display = 'none';
+      }
+    }
+    function pushUniqueReason(arr, reason) {
+      if (reason && arr.indexOf(reason) === -1) arr.push(reason);
+    }
+    function renderSignalCard(r) {
+      var code = (r.stock_code || '').replace(/\.(SH|SZ)$/,'');
+      var rec = r.recommendation || 'HOLD';
+      var cls = rec === 'BUY' ? 'badge-buy' : (rec === 'SELL' ? 'badge-sell' : 'badge-hold');
+      var typeCls = (r.strategy_type === 'A' ? 'badge-type-a' : (r.strategy_type === 'B' ? 'badge-type-b' : (r.strategy_type === 'C' ? 'badge-type-c' : 'badge-type-a')));
+      var conf = r.confidence != null ? Math.round((r.confidence || 0) * 100) + '%' : '';
+      var date = (r.trade_date || r.created_at || '').slice(0,10);
+      var a = document.createElement('a');
+      a.href = '/reports/' + (r.report_id || '');
+      a.className = 'signal-card';
+      a.style.cssText = 'gap:14px;padding:18px';
+      a.textContent = (r.stock_name || r.stock_code) + ' ' + code + ' ' + ((_labels.recommendation && _labels.recommendation[rec]) || '观望') + ' ' + (r.strategy_type || 'A') + '类 置信度 ' + conf + ' · ' + date + ' 查看研报 →';
+      return a;
+    }
+    function appendSignalCards(container, items) {
+      while (container.firstChild) container.removeChild(container.firstChild);
+      items.slice(0, 6).forEach(function(r) { container.appendChild(renderSignalCard(r)); });
+      var more = document.createElement('a');
+      more.href = '/reports';
+      more.className = 'more-link';
+      more.textContent = '更多研报 →';
+      container.appendChild(more);
+    }
+
+    function renderLatestReports(container, items) {
+      if (!container) return;
+      while (container.firstChild) container.removeChild(container.firstChild);
+      items.slice(0, 5).forEach(function(r) {
+        var card = document.createElement('a');
+        var confidence = r.confidence != null ? (Math.round((r.confidence || 0) * 100) + '%') : '—';
+        card.href = '/reports/' + (r.report_id || '');
+        card.className = 'card';
+        card.style.cssText = 'display:block;padding:14px 16px;margin-top:12px;text-decoration:none;color:inherit;';
+        card.textContent = (r.stock_name || r.stock_code || '未知标的') + ' · ' + (r.stock_code || '—') + ' · ' + (r.recommendation || 'HOLD') + ' · 置信度 ' + confidence;
+        container.appendChild(card);
+      });
+    }
+    function buildLinkableStockCodeMap(items) {
+      var out = {};
+      (items || []).forEach(function(it) {
+        var stockCode = ((it && it.stock_code) || '').toString().trim().toUpperCase();
+        var reportId = ((it && it.report_id) || '').toString().trim();
+        if (stockCode && reportId) out[stockCode] = reportId;
+      });
+      return out;
+    }
+    function renderHotStockLinks(container, items, linkableStockCodes) {
+      var wrap = container ? container.parentElement : null;
+      if (!container) return;
+      while (container.firstChild) container.removeChild(container.firstChild);
+      var safeItems = (items || []).filter(function(it) {
+        var stockCode = ((it && it.stock_code) || '').toString().trim().toUpperCase();
+        return !!(
+          it
+          && /^\d{6}\.(SH|SZ)$/i.test(stockCode)
+          && (it.stock_name || '').toString().trim()
+          && !!((linkableStockCodes || {})[stockCode])
+        );
+      });
+      if (wrap) wrap.style.display = safeItems.length > 0 ? 'flex' : 'none';
+      if (safeItems.length === 0) return;
+      safeItems.forEach(function(it) {
+        var code = it.stock_code || '';
+        var name = it.stock_name || code;
+        var a = document.createElement('a');
+        a.className = 'home-quick-link';
+        a.href = '/report/' + code;
+        a.textContent = name.length > 8 ? name.slice(0,8) + '…' : name;
+        container.appendChild(a);
+      });
+    }
+
+    function setTextContent(id, value) {
+      var el = document.getElementById(id);
+      if (el) el.textContent = value == null ? '' : String(value);
+    }
+
+    function marketStateLabel(state) {
+      return state === 'BULL' ? '牛市' : (state === 'BEAR' ? '熊市' : '震荡');
+    }
+
+    function renderPoolStocks(container, items, linkableStockCodes) {
+      if (!container) return;
+      while (container.firstChild) container.removeChild(container.firstChild);
+      items.forEach(function(it) {
+        var code = it.stock_code || '';
+        var name = it.stock_name || code;
+        var stockCode = String(code || '').trim().toUpperCase();
+        var canLink = !!((linkableStockCodes || {})[stockCode]);
+        var chip = document.createElement(canLink ? 'a' : 'span');
+        chip.className = 'pool-chip';
+        if (canLink) {
+          chip.href = '/report/' + code;
+        } else {
+          chip.setAttribute('aria-disabled', 'true');
+          chip.title = '暂无可用研报';
+        }
+        chip.textContent = name;
+        container.appendChild(chip);
+      });
+    }
+
+    async function loadPool(referenceTradeDate) {
+      var poolContainer = document.getElementById('pool-stocks');
+      if (!referenceTradeDate) return;
+      try {
+        var res = await getPoolStocks(referenceTradeDate);
+        var data = (res && res.data) ? res.data : {};
+        var items = Array.isArray(data.items) ? data.items : [];
+        if (res.data.trade_date && res.data.trade_date !== referenceTradeDate) {
+          var flag = document.getElementById('trading-day-flag');
+          if (flag) flag.setAttribute('data-pool-mismatch', 'true');
+          setTextContent('pool-date', referenceTradeDate);
+          setTextContent('pool-progress-text', '股票池日期与首页批次不一致，暂不展示股票池。');
+          renderPoolStocks(poolContainer, []);
+          return;
+        }
+        setTextContent('pool-size', data.total != null ? data.total : items.length);
+        setTextContent('pool-date', data.trade_date || referenceTradeDate || '—');
+        setTextContent('pool-progress-text', items.length > 0 ? ('已对齐 ' + items.length + ' 只核心池股票。') : '当前首页批次暂无核心池股票。');
+        renderPoolStocks(poolContainer, items);
+      } catch(e) {
+        setTextContent('pool-date', referenceTradeDate);
+        setTextContent('pool-progress-text', '股票池加载失败，稍后重试。');
+        renderPoolStocks(poolContainer, []);
+      }
+    }
+    async function loadHome() {
+      var bridge = window.ApiBridge || {};
+      var skel = document.getElementById('signals-skeleton');
+      var list = document.getElementById('signals-list');
+      if (skel) { skel.style.display = 'flex'; if (list) list.style.display = 'none'; }
+      var degradedReasons = [];
+      var tradingDayText = '按首页批次展示';
+      try {
+        var results = await Promise.allSettled([
+          getHomePayload(),
+          getMarketState(),
+          getReports({ recommendation: 'BUY', today: 1, limit: 6 }),
+          getPlatformSummary(),
+        ]);
+        var homeSettled = getSettledBridgeData(results[0], '首页');
+        var marketSupplement = getSettledBridgeData(results[1], '行情');
+        var reportsSettled = getSettledBridgeData(results[2], '研报');
+        var summarySettled = getSettledBridgeData(results[3], '概览');
+
+        var home = (homeSettled.ok && homeSettled.data) ? homeSettled.data : {};
+        var market = (marketSupplement.ok && marketSupplement.data) ? marketSupplement.data : {};
+        var publicPerformance = home.public_performance || {};
+
+        var homeTradeDate = resolveHomeAuthoritativeTradeDate(home);
+        var latestBatchTradeDate = home.trade_date || homeTradeDate || '';
+        var marketMismatchReason = resolveHomeAnchorMismatchReason(homeTradeDate, market);
+        var hasAnchorMismatch = !!marketMismatchReason;
+        var effectiveMarket = (!hasAnchorMismatch && marketSupplement.ok) ? market : {};
+
+        if (!marketSupplement.ok) pushUniqueReason(degradedReasons, 'market_supplement_unavailable');
+        if (hasAnchorMismatch) pushUniqueReason(degradedReasons, 'home_source_inconsistent');
+
+        setTextContent('home-trade-date', homeTradeDate || '');
+        setTextContent('latest-batch-trade-date', latestBatchTradeDate || '');
+        setTextContent('home-status', degradedReasons.length > 0 ? 'DEGRADED' : (homeTradeDate ? 'READY' : (home.data_status || 'COMPUTING')));
+        setTextContent('trading-day-flag', homeTradeDate ? '按首页批次展示' : '等待首页批次');
+        setTextContent('home-hint', homeTradeDate ? ('当前展示交易日：' + homeTradeDate) : (home.display_reason || publicPerformance.display_hint || '首页摘要尚未生成，正在等待可用批次。'));
+
+        var reasonParts = [];
+        if (!marketSupplement.ok) pushUniqueReason(reasonParts, '市场状态补充信息暂不可用');
+        if (hasAnchorMismatch) pushUniqueReason(reasonParts, '市场状态日期与首页批次不一致，已按首页批次展示');
+        if (!reasonParts.length) pushUniqueReason(reasonParts, home.display_reason || publicPerformance.display_hint || '首页摘要与市场状态已对齐');
+        setTextContent('market-reason', reasonParts.join('；'));
+        setTextContent('pool-size', home.pool_size != null ? home.pool_size : 0);
+        setTextContent('today-report-count', home.today_report_count != null ? home.today_report_count : 0);
+
+        var ms = home.market_state || effectiveMarket.market_state || 'NEUTRAL';
+        setTextContent('market-state', marketStateLabel(ms));
+        var h20 = document.getElementById('hs300-20d');
+        if (h20 && effectiveMarket.hs300_20d_return_pct != null) h20.textContent = (effectiveMarket.hs300_20d_return_pct >= 0 ? '+' : '') + effectiveMarket.hs300_20d_return_pct.toFixed(1) + '%';
+        var vr = document.getElementById('volume-ratio');
+        if (vr && effectiveMarket.volume_ratio_20d != null) vr.textContent = effectiveMarket.volume_ratio_20d.toFixed(2);
+        var ma = document.getElementById('ma20-trend');
+        if (ma && effectiveMarket.sh_ma20_trend) ma.textContent = (_labels.ma_trend && _labels.ma_trend[effectiveMarket.sh_ma20_trend]) || effectiveMarket.sh_ma20_trend;
+
+        var items = (reportsSettled.ok && reportsSettled.data && reportsSettled.data.items) ? reportsSettled.data.items : [];
+        var latestReportItems = Array.isArray(home.latest_reports) && home.latest_reports.length > 0 ? home.latest_reports : items;
+        var linkableStockCodes = buildLinkableStockCodeMap(latestReportItems);
+
+        /* Hot stocks rendered from home payload inline */
+        var hotContainer = document.getElementById('quick-links');
+        var homePoolItems = Array.isArray(home.hot_stocks) ? home.hot_stocks : [];
+        if (hotContainer) {
+          renderHotStockLinks(hotContainer, homePoolItems, linkableStockCodes);
+        }
+
+        if (homePoolItems.length > 0) {
+          renderPoolStocks(document.getElementById('pool-stocks'), homePoolItems, linkableStockCodes);
+        }
+        if (homeTradeDate) {
+          setTextContent('pool-date', homeTradeDate);
+          setTextContent('pool-progress-text', homePoolItems.length > 0 ? '按首页摘要预览核心池，正在校验股票池锚点。' : '正在校验股票池锚点。');
+        }
+        /* BF-R04: 不再用 latest_reports.length 覆盖 today_report_count。
+           home.today_report_count 已经是"按 reference_trade_date 过滤 published+ok+alive"的权威值，
+           latest_reports 可能来自 fallback（任意日期 top5），两者含义不同，覆盖会产生"今日研报 5 vs admin 0"欺骗。
+           保留 today_report_count=0 的真相。*/
+        if (skel) skel.style.display = 'none';
+        if (list) list.style.display = 'flex';
+        if (items.length > 0) {
+          appendSignalCards(list, items);
+          toggleEmptyState(false);
+        } else {
+          toggleEmptyState(true, reportsSettled.error || null);
+        }
+
+        renderLatestReports(
+          document.getElementById('latest-reports'),
+          latestReportItems
+        );
+
+        if (summarySettled.ok && summarySettled.data) {
+          var s = summarySettled.data;
+          var totalEl = document.getElementById('stat-total');
+          if (totalEl && s.total_trades != null) totalEl.textContent = String(s.total_trades);
+          var wr = document.getElementById('stat-win-rate');
+          if (wr) wr.textContent = s.win_rate != null ? (Math.round((s.win_rate||0)*1000)/10 + '%') : '—';
+          var wrCompat = document.getElementById('overall-win-rate');
+          if (wrCompat) wrCompat.textContent = wr ? wr.textContent : (s.win_rate != null ? (Math.round((s.win_rate||0)*1000)/10 + '%') : '—');
+          var pr = document.getElementById('stat-pnl-ratio');
+          if (pr) pr.textContent = s.pnl_ratio != null ? s.pnl_ratio.toFixed(1) : '—';
+          var prCompat = document.getElementById('overall-pnl-ratio');
+          if (prCompat) prCompat.textContent = pr ? pr.textContent : (s.pnl_ratio != null ? s.pnl_ratio.toFixed(1) : '—');
+          var al = document.getElementById('stat-alpha');
+          if (al) al.textContent = s.alpha != null ? (Math.round((s.alpha||0)*1000)/10 + '%') : '—';
+          var wp = document.getElementById('stat-win-pct');
+          if (wp && s.win_rate != null) wp.textContent = (Math.round((s.win_rate||0)*1000)/10) + '%';
+          var days = document.getElementById('stat-days');
+          if (days && s.period_start && s.period_end) {
+            var d1 = new Date(s.period_start), d2 = new Date(s.period_end);
+            days.textContent = Math.max(1, Math.round((d2-d1)/86400000));
+          }
+        }
+
+        loadPool(homeTradeDate || null);
+      } catch (e) {
+        if (skel) skel.style.display = 'none';
+        if (list) list.style.display = 'flex';
+        setTextContent('home-status', 'ERROR');
+        setTextContent('home-hint', '首页摘要加载失败，请稍后刷新重试。');
+        setTextContent('market-reason', '首页摘要加载失败，暂时无法展示首页批次信息。');
+        toggleEmptyState(false);
+      }
+    }
+    loadHome();
+  </script>
+</body>
+</html>

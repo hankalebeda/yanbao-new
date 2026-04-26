@@ -1,0 +1,442 @@
+[
+  {
+    "report_id": "c8a94eec-ac17-4f3d-b4db-f63454e37594",
+    "stock_code": "002304.SZ",
+    "published": 1,
+    "publish_status": "PUBLISHED",
+    "is_deleted": 1,
+    "deleted_at": "2026-04-16 08:09:25.536998",
+    "status_reason": null,
+    "updated_at": "2026-04-16 08:09:25.536998"
+  },
+  {
+    "report_id": "9b53f934-6c0b-4609-bbaf-45d49c8b7317",
+    "stock_code": "000568.SZ",
+    "published": 1,
+    "publish_status": "PUBLISHED",
+    "is_deleted": 1,
+    "deleted_at": "2026-04-17 06:46:40.754557",
+    "status_reason": "LLM_FALLBACK",
+    "updated_at": "2026-04-17 06:46:40.754557"
+  },
+  {
+    "report_id": "978cd7f4-e4c0-45f2-83ca-4a7f1b36a0f0",
+    "stock_code": "000423.SZ",
+    "published": 1,
+    "publish_status": "PUBLISHED",
+    "is_deleted": 1,
+    "deleted_at": "2026-04-16 08:21:10.160097",
+    "status_reason": null,
+    "updated_at": "2026-04-16 08:21:10.160097"
+  },
+  {
+    "report_id": "5db9b32e-a10f-4055-b668-bcf43fddab8f",
+    "stock_code": "000425.SZ",
+    "published": 1,
+    "publish_status": "PUBLISHED",
+    "is_deleted": 1,
+    "deleted_at": "2026-04-16 08:21:11.106775",
+    "status_reason": null,
+    "updated_at": "2026-04-16 08:21:11.106775"
+  },
+  {
+    "report_id": "506abce9-d0b9-4199-8e11-1ec173628422",
+    "stock_code": "000157.SZ",
+    "published": 1,
+    "publish_status": "PUBLISHED",
+    "is_deleted": 1,
+    "deleted_at": "2026-04-16 08:23:23.642447",
+    "status_reason": null,
+    "updated_at": "2026-04-16 08:23:23.642447"
+  },
+  {
+    "report_id": "d4fc7255-6b97-46cb-916f-a6cd1773d0c5",
+    "stock_code": "000001.SZ",
+    "published": 1,
+    "publish_status": "PUBLISHED",
+    "is_deleted": 1,
+    "deleted_at": "2026-04-17 06:46:40.399563",
+    "status_reason": "LLM_FALLBACK",
+    "updated_at": "2026-04-17 06:46:40.399563"
+  },
+  {
+    "report_id": "f2f609b1-b9c4-4720-87aa-12014e8de6ab",
+    "stock_code": "000333.SZ",
+    "published": 1,
+    "publish_status": "PUBLISHED",
+    "is_deleted": 1,
+    "deleted_at": "2026-04-17 06:46:41.091827",
+    "status_reason": "LLM_FALLBACK",
+    "updated_at": "2026-04-17 06:46:41.091827"
+  },
+  {
+    "report_id": "b6d02bf0-559a-42be-bf9d-c34573312486",
+    "stock_code": "000425.SZ",
+    "published": 1,
+    "publish_status": "PUBLISHED",
+    "is_deleted": 1,
+    "deleted_at": "2026-04-17 06:46:20.364593",
+    "status_reason": "LLM_FALLBACK",
+    "updated_at": "2026-04-17 06:46:20.364593"
+  },
+  {
+    "report_id": "cd8ce401-8d7c-490b-a731-37752f0c4c66",
+    "stock_code": "000858.SZ",
+    "published": 1,
+    "publish_status": "PUBLISHED",
+    "is_deleted": 1,
+    "deleted_at": "2026-04-17 06:46:40.724057",
+    "status_reason": "LLM_FALLBACK",
+    "updated_at": "2026-04-17 06:46:40.724057"
+  },
+  {
+    "report_id": "0159984b-4d87-4893-af69-2691415c5a90",
+    "stock_code": "002032.SZ",
+    "published": 1,
+    "publish_status": "PUBLISHED",
+    "is_deleted": 1,
+    "deleted_at": "2026-04-17 06:46:30.334186",
+    "status_reason": "LLM_FALLBACK",
+    "updated_at": "2026-04-17 06:46:30.334186"
+  },
+  {
+    "report_id": "e5360762-c316-49fa-a7a9-2d904112e64d",
+    "stock_code": "002050.SZ",
+    "published": 1,
+    "publish_status": "PUBLISHED",
+    "is_deleted": 1,
+    "deleted_at": "2026-04-17 06:46:40.183029",
+    "status_reason": "LLM_FALLBACK",
+    "updated_at": "2026-04-17 06:46:40.183029"
+  },
+  {
+    "report_id": "061f2bad-c05b-47c1-8417-291ad01cd9f5",
+    "stock_code": "002244.SZ",
+    "published": 1,
+    "publish_status": "PUBLISHED",
+    "is_deleted": 1,
+    "deleted_at": "2026-04-17 06:46:41.306989",
+    "status_reason": "LLM_FALLBACK",
+    "updated_at": "2026-04-17 06:46:41.306989"
+  },
+  {
+    "report_id": "af605618-fc63-4718-bdc4-f46d9786cbc8",
+    "stock_code": "002594.SZ",
+    "published": 1,
+    "publish_status": "PUBLISHED",
+    "is_deleted": 1,
+    "deleted_at": "2026-04-17 06:46:40.345284",
+    "status_reason": "LLM_FALLBACK",
+    "updated_at": "2026-04-17 06:46:40.345284"
+  },
+  {
+    "report_id": "c7cf3276-14f8-4054-9d0c-3cde33e13598",
+    "stock_code": "300750.SZ",
+    "published": 1,
+    "publish_status": "PUBLISHED",
+    "is_deleted": 1,
+    "deleted_at": "2026-04-17 06:46:40.242995",
+    "status_reason": "LLM_FALLBACK",
+    "updated_at": "2026-04-17 06:46:40.242995"
+  },
+  {
+    "report_id": "d8a2dcc9-2cc9-461a-a999-032b3532b89a",
+    "stock_code": "600036.SH",
+    "published": 1,
+    "publish_status": "PUBLISHED",
+    "is_deleted": 1,
+    "deleted_at": "2026-04-17 06:46:40.318399",
+    "status_reason": "LLM_FALLBACK",
+    "updated_at": "2026-04-17 06:46:40.318399"
+  },
+  {
+    "report_id": "cf8f78e4-d630-4c72-bd03-713ec840e174",
+    "stock_code": "600104.SH",
+    "published": 1,
+    "publish_status": "PUBLISHED",
+    "is_deleted": 1,
+    "deleted_at": "2026-04-17 06:46:40.216064",
+    "status_reason": "LLM_FALLBACK",
+    "updated_at": "2026-04-17 06:46:40.216064"
+  },
+  {
+    "report_id": "5527d65a-a34b-4e4d-b0f6-e39a1b113931",
+    "stock_code": "600177.SH",
+    "published": 1,
+    "publish_status": "PUBLISHED",
+    "is_deleted": 1,
+    "deleted_at": "2026-04-17 06:46:20.425943",
+    "status_reason": "LLM_FALLBACK",
+    "updated_at": "2026-04-17 06:46:20.425943"
+  },
+  {
+    "report_id": "df8f87a9-8bd1-4dd7-9c4c-1dc002bee258",
+    "stock_code": "600256.SH",
+    "published": 1,
+    "publish_status": "PUBLISHED",
+    "is_deleted": 1,
+    "deleted_at": "2026-04-17 06:46:31.398551",
+    "status_reason": "LLM_FALLBACK",
+    "updated_at": "2026-04-17 06:46:31.398551"
+  },
+  {
+    "report_id": "4cb9497b-c290-4e54-8fef-9f588df687bd",
+    "stock_code": "600276.SH",
+    "published": 1,
+    "publish_status": "PUBLISHED",
+    "is_deleted": 1,
+    "deleted_at": "2026-04-17 06:46:31.814522",
+    "status_reason": "LLM_FALLBACK",
+    "updated_at": "2026-04-17 06:46:31.814522"
+  },
+  {
+    "report_id": "a84302c8-261e-4649-ab02-4e9d83f58c59",
+    "stock_code": "600406.SH",
+    "published": 1,
+    "publish_status": "PUBLISHED",
+    "is_deleted": 1,
+    "deleted_at": "2026-04-17 06:46:31.752960",
+    "status_reason": "LLM_FALLBACK",
+    "updated_at": "2026-04-17 06:46:31.752960"
+  },
+  {
+    "report_id": "b29f357d-4c5e-4917-b5e3-11c310a87778",
+    "stock_code": "600519.SH",
+    "published": 1,
+    "publish_status": "PUBLISHED",
+    "is_deleted": 1,
+    "deleted_at": "2026-04-17 06:46:32.031835",
+    "status_reason": "LLM_FALLBACK",
+    "updated_at": "2026-04-17 06:46:32.031835"
+  },
+  {
+    "report_id": "957cc0ab-37e2-4407-b478-8edb4c2aefb2",
+    "stock_code": "600547.SH",
+    "published": 1,
+    "publish_status": "PUBLISHED",
+    "is_deleted": 1,
+    "deleted_at": "2026-04-17 06:46:31.215236",
+    "status_reason": "LLM_FALLBACK",
+    "updated_at": "2026-04-17 06:46:31.215236"
+  },
+  {
+    "report_id": "61ef5b01-24ab-4353-94ab-99d135753b66",
+    "stock_code": "600600.SH",
+    "published": 1,
+    "publish_status": "PUBLISHED",
+    "is_deleted": 1,
+    "deleted_at": "2026-04-17 06:46:31.714918",
+    "status_reason": "LLM_FALLBACK",
+    "updated_at": "2026-04-17 06:46:31.714918"
+  },
+  {
+    "report_id": "fb56f2fb-101b-45a3-9608-c4d18f53335b",
+    "stock_code": "600918.SH",
+    "published": 1,
+    "publish_status": "PUBLISHED",
+    "is_deleted": 1,
+    "deleted_at": "2026-04-17 06:46:31.349462",
+    "status_reason": "LLM_FALLBACK",
+    "updated_at": "2026-04-17 06:46:31.349462"
+  },
+  {
+    "report_id": "a03fada2-7d9b-4fe8-857e-1af859c3ab1e",
+    "stock_code": "600926.SH",
+    "published": 1,
+    "publish_status": "PUBLISHED",
+    "is_deleted": 1,
+    "deleted_at": "2026-04-17 06:46:20.333437",
+    "status_reason": "LLM_FALLBACK",
+    "updated_at": "2026-04-17 06:46:20.333437"
+  },
+  {
+    "report_id": "424f6a57-d5a1-4ccf-9de8-0d3677fff4fb",
+    "stock_code": "601009.SH",
+    "published": 1,
+    "publish_status": "PUBLISHED",
+    "is_deleted": 1,
+    "deleted_at": "2026-04-17 06:46:40.892477",
+    "status_reason": "LLM_FALLBACK",
+    "updated_at": "2026-04-17 06:46:40.892477"
+  },
+  {
+    "report_id": "bf61fea9-ad36-401b-bd8c-9ddb2c116eca",
+    "stock_code": "601088.SH",
+    "published": 1,
+    "publish_status": "PUBLISHED",
+    "is_deleted": 1,
+    "deleted_at": "2026-04-17 06:46:40.152500",
+    "status_reason": "LLM_FALLBACK",
+    "updated_at": "2026-04-17 06:46:40.152500"
+  },
+  {
+    "report_id": "58571914-1ff1-4f1e-a167-412cc8b380a7",
+    "stock_code": "601166.SH",
+    "published": 1,
+    "publish_status": "PUBLISHED",
+    "is_deleted": 1,
+    "deleted_at": "2026-04-17 06:46:40.428886",
+    "status_reason": "LLM_FALLBACK",
+    "updated_at": "2026-04-17 06:46:40.428886"
+  },
+  {
+    "report_id": "447ff87c-4d1a-46f0-84a7-c75cb19dfdf3",
+    "stock_code": "601169.SH",
+    "published": 1,
+    "publish_status": "PUBLISHED",
+    "is_deleted": 1,
+    "deleted_at": "2026-04-17 06:46:20.393509",
+    "status_reason": "LLM_FALLBACK",
+    "updated_at": "2026-04-17 06:46:20.393509"
+  },
+  {
+    "report_id": "23133676-8e31-48be-8b96-f76adf7027f3",
+    "stock_code": "601288.SH",
+    "published": 1,
+    "publish_status": "PUBLISHED",
+    "is_deleted": 1,
+    "deleted_at": "2026-04-17 06:46:40.515764",
+    "status_reason": "LLM_FALLBACK",
+    "updated_at": "2026-04-17 06:46:40.515764"
+  },
+  {
+    "report_id": "d2b89138-927c-4eac-9e74-42b51440bbcb",
+    "stock_code": "601318.SH",
+    "published": 1,
+    "publish_status": "PUBLISHED",
+    "is_deleted": 1,
+    "deleted_at": "2026-04-17 06:46:40.374162",
+    "status_reason": "LLM_FALLBACK",
+    "updated_at": "2026-04-17 06:46:40.374162"
+  },
+  {
+    "report_id": "31ffca9b-dcf0-4ef7-ba9a-79c7b6c1de1f",
+    "stock_code": "601328.SH",
+    "published": 1,
+    "publish_status": "PUBLISHED",
+    "is_deleted": 1,
+    "deleted_at": "2026-04-17 06:46:40.274172",
+    "status_reason": "LLM_FALLBACK",
+    "updated_at": "2026-04-17 06:46:40.274172"
+  },
+  {
+    "report_id": "41992713-d9c0-4bb9-a797-e787cd331f95",
+    "stock_code": "601628.SH",
+    "published": 1,
+    "publish_status": "PUBLISHED",
+    "is_deleted": 1,
+    "deleted_at": "2026-04-17 06:46:40.461818",
+    "status_reason": "LLM_FALLBACK",
+    "updated_at": "2026-04-17 06:46:40.461818"
+  },
+  {
+    "report_id": "b1453530-f2ae-4320-9767-5a053fb1d5e0",
+    "stock_code": "601728.SH",
+    "published": 1,
+    "publish_status": "PUBLISHED",
+    "is_deleted": 1,
+    "deleted_at": "2026-04-17 06:46:32.016716",
+    "status_reason": "LLM_FALLBACK",
+    "updated_at": "2026-04-17 06:46:32.016716"
+  },
+  {
+    "report_id": "c76d7fac-859f-4486-b2e6-d26924487b73",
+    "stock_code": "601838.SH",
+    "published": 1,
+    "publish_status": "PUBLISHED",
+    "is_deleted": 1,
+    "deleted_at": "2026-04-17 06:46:31.243122",
+    "status_reason": "LLM_FALLBACK",
+    "updated_at": "2026-04-17 06:46:31.243122"
+  },
+  {
+    "report_id": "748573fe-4aad-4809-9876-f398e6ebe7df",
+    "stock_code": "601857.SH",
+    "published": 1,
+    "publish_status": "PUBLISHED",
+    "is_deleted": 1,
+    "deleted_at": "2026-04-17 06:46:31.695357",
+    "status_reason": "LLM_FALLBACK",
+    "updated_at": "2026-04-17 06:46:31.695357"
+  },
+  {
+    "report_id": "186c2458-0f21-46e0-8533-e1cee6c43517",
+    "stock_code": "601888.SH",
+    "published": 1,
+    "publish_status": "PUBLISHED",
+    "is_deleted": 1,
+    "deleted_at": "2026-04-17 06:46:20.457498",
+    "status_reason": "LLM_FALLBACK",
+    "updated_at": "2026-04-17 06:46:20.457498"
+  },
+  {
+    "report_id": "2f8af059-fd65-436d-9f32-6e6e081ed235",
+    "stock_code": "601898.SH",
+    "published": 1,
+    "publish_status": "PUBLISHED",
+    "is_deleted": 1,
+    "deleted_at": "2026-04-17 06:46:40.133081",
+    "status_reason": "LLM_FALLBACK",
+    "updated_at": "2026-04-17 06:46:40.133081"
+  },
+  {
+    "report_id": "674ff79c-a993-4328-85c6-b8814872ba20",
+    "stock_code": "601899.SH",
+    "published": 1,
+    "publish_status": "PUBLISHED",
+    "is_deleted": 1,
+    "deleted_at": "2026-04-17 06:46:40.872023",
+    "status_reason": "LLM_FALLBACK",
+    "updated_at": "2026-04-17 06:46:40.872023"
+  },
+  {
+    "report_id": "c6280ff1-67b2-4430-939d-69ee7d1e3bdb",
+    "stock_code": "601939.SH",
+    "published": 1,
+    "publish_status": "PUBLISHED",
+    "is_deleted": 1,
+    "deleted_at": "2026-04-17 06:46:41.200986",
+    "status_reason": "LLM_FALLBACK",
+    "updated_at": "2026-04-17 06:46:41.200986"
+  },
+  {
+    "report_id": "2bfaf95a-49e1-4c75-a661-3246fc2501ad",
+    "stock_code": "601988.SH",
+    "published": 1,
+    "publish_status": "PUBLISHED",
+    "is_deleted": 1,
+    "deleted_at": "2026-04-17 06:46:20.305338",
+    "status_reason": "LLM_FALLBACK",
+    "updated_at": "2026-04-17 06:46:20.305338"
+  },
+  {
+    "report_id": "a0669b55-5243-4f0f-8964-2f2194848f11",
+    "stock_code": "603993.SH",
+    "published": 1,
+    "publish_status": "PUBLISHED",
+    "is_deleted": 1,
+    "deleted_at": "2026-04-17 06:46:31.315247",
+    "status_reason": "LLM_FALLBACK",
+    "updated_at": "2026-04-17 06:46:31.315247"
+  },
+  {
+    "report_id": "8da4d9c9-9518-4f3b-b927-5494177823cd",
+    "stock_code": "688981.SH",
+    "published": 1,
+    "publish_status": "PUBLISHED",
+    "is_deleted": 1,
+    "deleted_at": "2026-04-17 06:46:31.994738",
+    "status_reason": "LLM_FALLBACK",
+    "updated_at": "2026-04-17 06:46:31.994738"
+  },
+  {
+    "report_id": "f1084fd2-d305-44df-bc3a-d39b3d7f61b1",
+    "stock_code": "000625.SZ",
+    "published": 1,
+    "publish_status": "PUBLISHED",
+    "is_deleted": 1,
+    "deleted_at": "2026-04-17 06:46:31.279452",
+    "status_reason": "LLM_FALLBACK",
+    "updated_at": "2026-04-17 06:46:31.279452"
+  }
+]

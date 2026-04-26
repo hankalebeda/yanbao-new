@@ -1,0 +1,11 @@
+{
+  "defaults": {
+    "auto_disable": true,
+    "auto_enable": false,
+    "allow_delete": false
+  },
+  "lane_policy": {
+    "materialize_live_clones": false
+  },
+  "manual_channels": []
+}

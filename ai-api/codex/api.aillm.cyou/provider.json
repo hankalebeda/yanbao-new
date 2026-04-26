@@ -1,0 +1,9 @@
+{
+    "resource":  "provider",
+    "name":  "api.aillm.cyou",
+    "homepage":  "https://api.aillm.cyou",
+    "app":  "codex",
+    "model":  "gpt-5.4",
+    "endpoint":  "https://api.aillm.cyou/v1",
+    "enabled":  true
+}

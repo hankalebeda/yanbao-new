@@ -1,0 +1,9 @@
+{
+    "resource":  "provider",
+    "name":  "newapi.linuxdo.edu.rs",
+    "homepage":  "https://newapi.linuxdo.edu.rs",
+    "app":  "codex",
+    "model":  "gpt-5.4",
+    "endpoint":  "https://newapi.linuxdo.edu.rs/v1",
+    "enabled":  true
+}

@@ -1,0 +1,9 @@
+{
+  "name": "infiniteai.cc",
+  "endpoint": "https://api.infiniteai.cc/v1",
+  "model": "gpt-5.4",
+  "homepage": "https://api.infiniteai.cc",
+  "enabled": true,
+  "resource": "provider",
+  "app": "codex"
+}

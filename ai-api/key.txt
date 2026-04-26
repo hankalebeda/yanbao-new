@@ -1,0 +1,22 @@
+https://anyrouter.top 这个是claude的
+
+
+http://34.124.175.101:8371/v1
+<ROTATED_AI_API_KEY>
+gpt-5.3-codex
+
+
+https://api.123nhh.me/v1
+sk-4VnTvgd0JZ5gRWOjMAbQgGJYm8zCE6eJVRSoPDwYTshs6
+无限codex
+支持responses/chat接口，baseurl均加/v1
+可用模型：
+GPT-5.2
+GPT-5.1
+GPT-5.1 Codex Mini
+GPT-5.3 Codex
+GPT-5.2 Codex
+GPT-5.1 Codex Max
+GPT-5.1 Codex
+GPT-5
+GPT-5.3 Codex Spark

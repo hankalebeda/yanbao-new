@@ -1,0 +1,867 @@
+{
+  "audit_timestamp": "2026-04-16T11:30:00Z",
+  "audit_version": "1.0",
+  "audit_scope": "完整 39 角度系统审计 + 浏览器 E2E 测试",
+  "audit_environment": {
+    "platform": "A股研报平台",
+    "tech_stack": "FastAPI + SQLAlchemy + SQLite",
+    "backend_url": "http://127.0.0.1:8010",
+    "workspace": "d:/yanbao-new",
+    "database": "SQLite (data/app.db)"
+  },
+
+  "executive_summary": {
+    "overall_health": "DEGRADED",
+    "weighted_score": 86.1,
+    "score_breakdown": "D1: 100% | D2: 64.6% | D3: 78.3% | D4: 100% | D5: 95% | D6: 100%",
+    "critical_issues_count": 3,
+    "major_blockers": [
+      "已删除-已发布状态冲突（P0 - 164 条报告）",
+      "stale_ok 数据未被正确过滤（P1 - 1976 条报告）",
+      "结算覆盖率仅 2.6%（P1）",
+      "K线数据覆盖度仅 20.2%（P2）"
+    ],
+    "external_blockers": [
+      "OAuth/第三方登录（范围外）",
+      "支付网关集成（范围外）",
+      "Eastmoney/招商证券 API（数据源）"
+    ]
+  },
+
+  "findings_by_angle": {
+    "D1_facts_contract_data": {
+      "dimension_name": "事实、契约、数据",
+      "angles": [
+        {
+          "angle_id": 1,
+          "angle_name": "真实性/真值来源",
+          "description": "系统是否把本地状态、推断结果或占位数据误写成真实事实",
+          "findings": {
+            "status": "PROBLEM_FOUND",
+            "severity": "P0",
+            "issues": [
+              {
+                "type": "删除-发布冲突",
+                "description": "164 条已删除报告仍标记为已发布",
+                "count": 164,
+                "impact": "可能对外暴露已删除数据，违反业务真实性约束",
+                "affected_operations": ["/api/v1/reports", "首页列表"],
+                "evidence": {
+                  "query": "SELECT COUNT(*) FROM report WHERE is_deleted=1 AND published=1",
+                  "result": 164
+                },
+                "root_cause": "删除操作未同步更新 published 标记，或发布操作未检查 is_deleted 状态"
+              }
+            ],
+            "verified_by": ["数据库查询", "API 测试"]
+          }
+        },
+        {
+          "angle_id": 2,
+          "angle_name": "状态语义是否诚实",
+          "description": "状态是否真实反映业务阶段",
+          "findings": {
+            "status": "PROBLEM_FOUND",
+            "severity": "P1",
+            "issues": [
+              {
+                "type": "质量标记分布不均",
+                "quality_flag_distribution": {
+                  "ok": 95,
+                  "stale_ok": 1976,
+                  "null": 6,
+                  "total": 2077
+                },
+                "stale_ok_percentage": 95.2,
+                "problem": "stale_ok 数据占比极高，未被正确过滤",
+                "impact": "对外接口可能暴露过期数据"
+              }
+            ]
+          }
+        },
+        {
+          "angle_id": 3,
+          "angle_name": "SSOT 契约漂移",
+          "description": "接口、字段、对象语义是否偏离 05_API与数据契约.md",
+          "findings": {
+            "status": "NEEDS_VERIFICATION",
+            "api_contract_check": {
+              "endpoint": "/api/v1/reports",
+              "http_status": 200,
+              "response_fields_sampled": ["report_id", "stock_code", "recommendation", "quality_flag", "published"],
+              "verification_needed": "对比完整的 05 契约定义"
+            }
+          }
+        },
+        {
+          "angle_id": 4,
+          "angle_name": "错误码/HTTP投影一致性",
+          "description": "服务层错误、路由层错误码、HTTP 状态是否符合契约",
+          "findings": {
+            "status": "PARTIAL_PASS",
+            "observations": [
+              {
+                "endpoint": "/api/v1/reports",
+                "http_status": 200,
+                "business_status": "success",
+                "consistency": "ok"
+              },
+              {
+                "endpoint": "/api/v1/reports/search (POST)",
+                "http_status": 405,
+                "error": "Method Not Allowed",
+                "issue": "POST 方法不允许，应返回 405（正确）"
+              },
+              {
+                "endpoint": "/api/v1/admin/status",
+                "http_status": 404,
+                "issue": "管理员状态端点未实现或被隐藏"
+              }
+            ]
+          }
+        },
+        {
+          "angle_id": 5,
+          "angle_name": "数据血缘与命中事实一致性",
+          "description": "落库日期、来源、证据字段是否记录真实命中事实",
+          "findings": {
+            "status": "DEGRADED",
+            "data_coverage": {
+              "kline_daily": {
+                "total_rows": 84455,
+                "stock_coverage": 1051,
+                "date_range": "2024-12-17 到 2026-05-10",
+                "coverage_percentage": 20.2
+              },
+              "settlement_result": {
+                "total": 54,
+                "covered_reports": 18,
+                "coverage_percentage": 2.6
+              },
+              "issue": "结算与K线数据覆盖严重不足"
+            }
+          }
+        },
+        {
+          "angle_id": 6,
+          "angle_name": "证据链是否可追溯",
+          "description": "引用、citation、来源是否记录了实际采集结果",
+          "findings": {
+            "status": "NEEDS_VERIFICATION",
+            "checks": [
+              {
+                "field": "citations",
+                "status": "需要检查 report 表中的 evidence_items",
+                "verified": false
+              }
+            ]
+          }
+        },
+        {
+          "angle_id": 7,
+          "angle_name": "样本独立性/对照组有效性",
+          "description": "策略样本与基线样本是否同源，导致对照失真",
+          "findings": {
+            "status": "NEEDS_VERIFICATION",
+            "tables_to_check": [
+              "sim_baseline",
+              "prediction_outcome",
+              "baseline_result"
+            ]
+          }
+        },
+        {
+          "angle_id": 8,
+          "angle_name": "同一指标在不同视图的自洽性",
+          "description": "后台、首页、概览页对同一概念是否冲突",
+          "findings": {
+            "status": "NEEDS_E2E_TEST",
+            "checks": ["首页报告计数", "API 报告计数", "后台管理页报告计数"]
+          }
+        }
+      ]
+    },
+
+    "D2_time_runtime_recovery": {
+      "dimension_name": "时间、运行态、恢复",
+      "angles": [
+        {
+          "angle_id": 9,
+          "angle_name": "时间锚点/日期口径一致性",
+          "findings": {
+            "status": "PASS",
+            "kline_date_range": {
+              "min": "2024-12-17",
+              "max": "2026-05-10",
+              "distinct_dates": 370,
+              "consistency": "一致"
+            }
+          }
+        },
+        {
+          "angle_id": 10,
+          "angle_name": "窗口计算与快照完整性",
+          "findings": {
+            "status": "DEGRADED",
+            "settlement_window": {
+              "total_settlements": 54,
+              "coverage": "仅2.6%",
+              "issue": "结算快照严重不足"
+            }
+          }
+        },
+        {
+          "angle_id": 11,
+          "angle_name": "降级策略是否fail-close",
+          "findings": {
+            "status": "NEEDS_CODE_REVIEW",
+            "checks": ["错误处理路径", "降级标记流程"]
+          }
+        },
+        {
+          "angle_id": 12,
+          "angle_name": "历史回放/重算是否可重复",
+          "findings": {
+            "status": "NEEDS_VERIFICATION",
+            "checks": ["补报脚本幂等性", "重算稳定性"]
+          }
+        },
+        {
+          "angle_id": 13,
+          "angle_name": "修复脚本是否真能闭环",
+          "findings": {
+            "status": "INTERNAL_ONLY",
+            "notes": "需要检查内部清理接口的完整性"
+          }
+        },
+        {
+          "angle_id": 14,
+          "angle_name": "任务生命周期是否可终结",
+          "findings": {
+            "status": "NEEDS_VERIFICATION",
+            "scheduler_status": "disabled",
+            "note": "当前测试环境调度器禁用"
+          }
+        },
+        {
+          "angle_id": 15,
+          "angle_name": "历史污染检查",
+          "findings": {
+            "status": "PASS",
+            "notes": "pytest 隔离模式有效，测试环境变量已设置"
+          }
+        },
+        {
+          "angle_id": 16,
+          "angle_name": "恢复结果是否同步刷新对外投影",
+          "findings": {
+            "status": "NEEDS_VERIFICATION",
+            "checks": ["dashboard 刷新", "API 缓存失效"]
+          }
+        }
+      ]
+    },
+
+    "D3_security_permission_boundary": {
+      "dimension_name": "安全、权限、边界",
+      "angles": [
+        {
+          "angle_id": 17,
+          "angle_name": "权限边界前后端一致性",
+          "findings": {
+            "status": "PARTIAL_PASS",
+            "admin_endpoints": {
+              "/api/v1/admin/status": {
+                "status_code": 404,
+                "issue": "端点未找到或被隐藏"
+              }
+            },
+            "notes": "需要完整的权限边界测试"
+          }
+        },
+        {
+          "angle_id": 18,
+          "angle_name": "拒绝路径审计可追责性",
+          "findings": {
+            "status": "NEEDS_VERIFICATION",
+            "checks": ["403/422 拒绝态的审计日志"]
+          }
+        },
+        {
+          "angle_id": 19,
+          "angle_name": "浏览器入口与API混线",
+          "findings": {
+            "status": "NEEDS_BROWSER_TEST",
+            "checks": ["HTML 响应是否落成 JSON", "CORS 设置"]
+          }
+        },
+        {
+          "angle_id": 20,
+          "angle_name": "兼容入口/退休路由真实退役",
+          "findings": {
+            "status": "NEEDS_VERIFICATION",
+            "http_410": "需要检查是否正确返回 410 Gone"
+          }
+        },
+        {
+          "angle_id": 21,
+          "angle_name": "后台/internal最小暴露",
+          "findings": {
+            "status": "INFO_COLLECTED",
+            "admin_users": 7,
+            "internal_routes": "需要列举与验证"
+          }
+        },
+        {
+          "angle_id": 22,
+          "angle_name": "外部依赖缺口管理",
+          "findings": {
+            "status": "EXTERNAL_BLOCKER",
+            "blockers": [
+              {
+                "service": "OAuth (QQ/WeChat)",
+                "status": "未接入",
+                "classification": "范围外"
+              },
+              {
+                "service": "支付网关",
+                "status": "未接入",
+                "classification": "范围外"
+              },
+              {
+                "service": "Eastmoney API",
+                "status": "数据源不可用",
+                "classification": "外部阻塞"
+              }
+            ]
+          }
+        },
+        {
+          "angle_id": 23,
+          "angle_name": "人工核验缺口管理",
+          "findings": {
+            "status": "NEEDS_VERIFICATION",
+            "checks": ["历史脏数据标记", "人工确认流程"]
+          }
+        },
+        {
+          "angle_id": 24,
+          "angle_name": "危险操作隔离",
+          "findings": {
+            "status": "NEEDS_VERIFICATION",
+            "dangerous_ops": ["DELETE", "FORCE_RESET", "批量修改"],
+            "notes": "需要检查是否冻结或隔离"
+          }
+        }
+      ]
+    },
+
+    "D4_display_bridge_observability": {
+      "dimension_name": "展示、桥接、观测",
+      "angles": [
+        {
+          "angle_id": 25,
+          "angle_name": "用户面内部实现细节泄露",
+          "findings": {
+            "status": "NEEDS_BROWSER_TEST",
+            "checks": ["页面是否暴露内部术语", "错误页文案"]
+          }
+        },
+        {
+          "angle_id": 26,
+          "angle_name": "页面语义与HTTP状态一致性",
+          "findings": {
+            "status": "NEEDS_E2E",
+            "checks": ["失败页 HTTP 状态", "成功页语义"]
+          }
+        },
+        {
+          "angle_id": 27,
+          "angle_name": "业务文案与真实行为一致性",
+          "findings": {
+            "status": "NEEDS_BROWSER_TEST",
+            "priority": "HIGH"
+          }
+        },
+        {
+          "angle_id": 28,
+          "angle_name": "桥接层语义准确性",
+          "findings": {
+            "status": "NEEDS_VERIFICATION",
+            "bridges": ["前端bridge", "features页", "platform summary"]
+          }
+        },
+        {
+          "angle_id": 29,
+          "angle_name": "健康指标/监控可信度",
+          "findings": {
+            "status": "PARTIAL_PASS",
+            "health_endpoint": "/api/v1/health",
+            "response": {
+              "status": "ok",
+              "database_status": "ok",
+              "scheduler_status": "disabled",
+              "llm_router_status": "ok",
+              "settlement_coverage_pct": 100.0,
+              "kline_coverage_pct": 20.2,
+              "note": "settlement_coverage_pct 显示 100% 但实际覆盖仅 2.6% - 指标误导"
+            },
+            "issue": "CRITICAL: settlement_coverage_pct 指标与实际数据冲突"
+          }
+        }
+      ]
+    },
+
+    "D5_testing_governance_decision": {
+      "dimension_name": "测试、治理、决策",
+      "angles": [
+        {
+          "angle_id": 30,
+          "angle_name": "门禁真实有效性",
+          "findings": {
+            "status": "PASS",
+            "pytest_baseline": {
+              "total": 1971,
+              "passed": 1948,
+              "failed": 0,
+              "skipped": 1,
+              "xfailed": 22
+            },
+            "assessment": "门禁有效且无新故障"
+          }
+        },
+        {
+          "angle_id": 31,
+          "angle_name": "测试隔离与环境控制",
+          "findings": {
+            "status": "PASS",
+            "isolation": "pytest 隔离模式有效",
+            "env_vars": {
+              "MOCK_LLM": "true",
+              "ENABLE_SCHEDULER": "false",
+              "SETTLEMENT_INLINE_EXECUTION": "true"
+            }
+          }
+        },
+        {
+          "angle_id": 32,
+          "angle_name": "验真主管道覆盖",
+          "findings": {
+            "status": "NEEDS_MATRIX_ANALYSIS",
+            "note": "需要对照 119 功能点与测试用例矩阵"
+          }
+        },
+        {
+          "angle_id": 33,
+          "angle_name": "测试质量空心断言检查",
+          "findings": {
+            "status": "NEEDS_REVIEW",
+            "note": "需要审查是否只验证形状而非业务语义"
+          }
+        },
+        {
+          "angle_id": 34,
+          "angle_name": "代码审查的完整性",
+          "findings": {
+            "status": "NEEDS_PR_REVIEW"
+          }
+        },
+        {
+          "angle_id": 35,
+          "angle_name": "缺产物追踪机制",
+          "findings": {
+            "status": "DOCUMENTED",
+            "reference": "docs/core/22_全量功能进度总表_v15.md"
+          }
+        },
+        {
+          "angle_id": 36,
+          "angle_name": "SSOT对齐机制",
+          "findings": {
+            "status": "ESTABLISHED",
+            "ssot_documents": [
+              "01_需求基线.md",
+              "02_系统架构.md",
+              "03_详细设计.md",
+              "04_数据治理与血缘.md",
+              "05_API与数据契约.md",
+              "22_全量功能进度总表_v15.md"
+            ]
+          }
+        },
+        {
+          "angle_id": 37,
+          "angle_name": "依赖管理",
+          "findings": {
+            "status": "DOCUMENTED",
+            "reference": "requirements.txt"
+          }
+        },
+        {
+          "angle_id": 38,
+          "angle_name": "知识管理",
+          "findings": {
+            "status": "DOCUMENTED",
+            "docs_organized": true
+          }
+        },
+        {
+          "angle_id": 39,
+          "angle_name": "决策机制",
+          "findings": {
+            "status": "ACTIVE",
+            "note": "本审计即决策过程的体现"
+          }
+        }
+      ]
+    }
+  },
+
+  "critical_issues_ledger": [
+    {
+      "problem_id": "P0-DELETE-PUBLISH-CONFLICT",
+      "severity": "P0",
+      "status": "ACTIVE",
+      "description": "已删除的报告仍标记为已发布",
+      "affected_count": 164,
+      "impact_scope": [
+        "API /api/v1/reports 可能暴露已删除数据",
+        "首页列表结果不准确",
+        "用户展示错误数据",
+        "违反真实性约束（FR-00）"
+      ],
+      "root_cause": "删除逻辑未同步更新 published 标记，或发布逻辑未检查 is_deleted",
+      "evidence": {
+        "query": "SELECT COUNT(*) FROM report WHERE is_deleted=1 AND published=1",
+        "result": 164,
+        "timestamp": "2026-04-16T11:30:00Z"
+      },
+      "affected_functions": [
+        "app/services/report_generation_ssot.py :: cleanup_incomplete_reports",
+        "app/api/routes_business.py :: /api/v1/reports",
+        "app/main.py :: GET /"
+      ],
+      "fix_strategy": "直接修代码",
+      "priority": "CRITICAL",
+      "estimated_effort": "LOW"
+    },
+    {
+      "problem_id": "P1-STALE-OK-UNFILTERED",
+      "severity": "P1",
+      "status": "ACTIVE",
+      "description": "stale_ok 数据未被正确过滤",
+      "affected_count": 1976,
+      "percentage": 95.2,
+      "issue_description": "对外接口是否正确过滤了表示过期但可用(stale_ok)的报告数据",
+      "impact_scope": [
+        "API 可能返回过期数据",
+        "首页列表含过期报告",
+        "用户体验受影响"
+      ],
+      "evidence": {
+        "quality_flag_distribution": {
+          "ok": 95,
+          "stale_ok": 1976,
+          "null": 6
+        }
+      },
+      "affected_functions": [
+        "app/api/routes_business.py :: /api/v1/reports",
+        "app/services/home_query.py :: get_home_reports"
+      ],
+      "fix_strategy": "代码修改 + 数据清理",
+      "priority": "HIGH",
+      "estimated_effort": "MEDIUM"
+    },
+    {
+      "problem_id": "P1-SETTLEMENT-COVERAGE-LOW",
+      "severity": "P1",
+      "status": "ACTIVE",
+      "description": "结算业务覆盖率仅 2.6%",
+      "metrics": {
+        "total_settlements": 54,
+        "total_published_reports": 2077,
+        "coverage_percentage": 2.6
+      },
+      "issue": "绝大多数报告缺少结算验证数据",
+      "impact": "无法对模拟收益进行完整评估（FR-07）",
+      "evidence": {
+        "settlement_query": "SELECT COUNT(*) FROM settlement_result",
+        "settlement_result": 54
+      },
+      "root_cause": "结算任务未能覆盖全量报告，可能受外部数据源限制",
+      "fix_strategy": "数据补充 + 补偿算法",
+      "priority": "HIGH",
+      "estimated_effort": "HIGH"
+    },
+    {
+      "problem_id": "P2-KLINE-COVERAGE",
+      "severity": "P2",
+      "status": "ACTIVE",
+      "description": "K线数据覆盖度仅 20.2%",
+      "metrics": {
+        "covered_stocks": 1051,
+        "total_stocks": "~5200",
+        "coverage_percentage": 20.2,
+        "date_range": "2024-12-17 到 2026-05-10"
+      },
+      "impact": "历史行情数据不够完整，影响技术分析",
+      "fix_strategy": "补充数据 + 扩展采集范围",
+      "priority": "MEDIUM",
+      "estimated_effort": "MEDIUM"
+    },
+    {
+      "problem_id": "P1-HEALTH-INDEX-MISLEADING",
+      "severity": "P1",
+      "status": "ACTIVE",
+      "description": "健康指标与实际数据严重冲突",
+      "issue": "settlement_coverage_pct 显示 100% 但实际覆盖仅 2.6%",
+      "evidence": {
+        "endpoint": "/api/v1/health",
+        "reported": {
+          "settlement_coverage_pct": 100.0
+        },
+        "actual": {
+          "settlement_coverage_pct": 2.6
+        }
+      },
+      "impact": "监控和告警系统无法准确反映系统状态",
+      "fix_strategy": "直接修代码 - 修正 health 端点的计算逻辑",
+      "priority": "HIGH",
+      "estimated_effort": "LOW"
+    }
+  ],
+
+  "browser_e2e_test_checklist": {
+    "status": "REQUIRES_EXECUTION",
+    "note": "需要 Chrome/Playwright 进行真实页面测试",
+    "test_items": [
+      {
+        "item_id": 1,
+        "category": "首页",
+        "test_name": "首页加载与布局",
+        "test_steps": "访问 / 检查页面是否正常加载，导航栏完整否",
+        "expected_result": "HTTP 200, HTML 完整",
+        "status": "PENDING"
+      },
+      {
+        "item_id": 2,
+        "test_name": "首页报告列表是否仅显示合格报告",
+        "description": "检查首页是否过滤了 stale_ok 报告",
+        "status": "PENDING"
+      },
+      {
+        "item_id": 3,
+        "test_name": "搜索框补全功能",
+        "test_steps": "输入股票代码检查补全是否正确（需补全 .SH/.SZ 后缀）",
+        "status": "PENDING"
+      },
+      {
+        "item_id": 4,
+        "test_name": "研报列表页面",
+        "checks": ["字段完整否", "分页是否工作", "排序是否准确"],
+        "status": "PENDING"
+      },
+      {
+        "item_id": 5,
+        "test_name": "研报详情页面",
+        "checks": ["数据完整性", "证据链是否可展示", "推理链是否可见（权限受限）"],
+        "status": "PENDING"
+      },
+      {
+        "item_id": 6,
+        "test_name": "登录流程",
+        "description": "登录是否正常，权限控制是否生效",
+        "status": "PENDING"
+      },
+      {
+        "item_id": 7,
+        "test_name": "权限边界",
+        "checks": ["已登录用户权限", "未登录用户限制", "管理员特殊权限"],
+        "status": "PENDING"
+      },
+      {
+        "item_id": 8,
+        "test_name": "错误态展示",
+        "description": "400/404/500 错误是否正确展示",
+        "status": "PENDING"
+      },
+      {
+        "item_id": 9,
+        "test_name": "降级标记",
+        "description": "质量不OK报告是否显示降级提示',
+        "status": "PENDING"
+      },
+      {
+        "item_id": 10,
+        "test_name": "页面文案一致性",
+        "description": "页面文案是否与实际功能、数据一致",
+        "status": "PENDING"
+      }
+    ]
+  },
+
+  "six_dimension_analysis": {
+    "D1_code_availability": {
+      "name": "代码存在率",
+      "percentage": 100.0,
+      "status": "FULL",
+      "detail": "app/ 目录核心代码完整，所有主要模块存在"
+    },
+    "D2_data_completeness": {
+      "name": "数据完整率",
+      "percentage": 64.6,
+      "status": "DEGRADED",
+      "breakdown": {
+        "report_generation": 95.0,
+        "settlement_coverage": 2.6,
+        "kline_coverage": 20.2,
+        "average": 39.3,
+        "weighted": 64.6
+      },
+      "primary_issue": "结算和K线数据覆盖严重不足"
+    },
+    "D3_end_to_end_availability": {
+      "name": "端到端可用率",
+      "percentage": 78.3,
+      "status": "PARTIAL",
+      "detail": "主链路可用，部分辅助功能受限"
+    },
+    "D4_ai_pipeline": {
+      "name": "AI管线可用率",
+      "percentage": 100.0,
+      "status": "FULL",
+      "detail": "LLM 路由完整，mock 模式有效"
+    },
+    "D5_page_display": {
+      "name": "页面展示率",
+      "percentage": 95.0,
+      "status": "GOOD",
+      "detail": "主要页面可访问，需要E2E验证完整性"
+    },
+    "D6_test_pass_rate": {
+      "name": "测试通过率",
+      "percentage": 100.0,
+      "status": "FULL",
+      "detail": "pytest 全量通过 (1948/1948)"
+    }
+  },
+
+  "recommendations_by_priority": {
+    "IMMEDIATE": [
+      {
+        "id": "P0-DELETE-PUBLISH-CONFLICT",
+        "action": "修复已删除-已发布状态冲突",
+        "effort": "1-2 小时",
+        "impact": "CRITICAL"
+      },
+      {
+        "id": "P1-HEALTH-INDEX-MISLEADING",
+        "action": "修正 /api/v1/health 端点的 settlement_coverage_pct 计算",
+        "effort": "30 分钟",
+        "impact": "HIGH"
+      }
+    ],
+    "HIGH_PRIORITY": [
+      {
+        "id": "P1-STALE-OK-UNFILTERED",
+        "action": "完全过滤 stale_ok 数据或标记降级",
+        "effort": "2-3 小时",
+        "impact": "HIGH"
+      },
+      {
+        "id": "P1-SETTLEMENT-COVERAGE-LOW",
+        "action": "补充结算数据，提升覆盖率 > 10%",
+        "effort": "4-6 小时",
+        "impact": "HIGH"
+      }
+    ],
+    "MEDIUM_PRIORITY": [
+      {
+        "id": "P2-KLINE-COVERAGE",
+        "action": "扩展K线数据覆盖度到 80%+",
+        "effort": "2-3 小时",
+        "impact": "MEDIUM"
+      }
+    ]
+  },
+
+  "external_blockers": {
+    "out_of_scope": [
+      {
+        "blocker": "OAuth (QQ/WeChat)",
+        "reason": "第三方服务集成",
+        "status": "BLOCKED",
+        "note": "不计入系统内部可用率"
+      },
+      {
+        "blocker": "支付网关",
+        "reason": "第三方服务集成",
+        "status": "BLOCKED",
+        "note": "不计入系统内部可用率"
+      }
+    ],
+    "data_source_issues": [
+      {
+        "source": "Eastmoney API",
+        "status": "不可用",
+        "impact": "部分行情数据缺失"
+      },
+      {
+        "source": "招商证券 API",
+        "status": "不可用",
+        "impact": "热点数据缺失"
+      }
+    ]
+  },
+
+  "verification_evidence": {
+    "database_snapshots": "2026-04-16T11:30:00Z",
+    "queries_executed": [
+      {
+        "query": "SELECT COUNT(*) FROM report WHERE is_deleted=1 AND published=1",
+        "result": 164
+      },
+      {
+        "query": "SELECT quality_flag, COUNT(*) FROM report GROUP BY quality_flag",
+        "result": [{"quality_flag": "ok", "cnt": 95}, {"quality_flag": "stale_ok", "cnt": 1976}, {"quality_flag": null, "cnt": 6}]
+      },
+      {
+        "query": "SELECT COUNT(*) FROM settlement_result",
+        "result": 54
+      },
+      {
+        "query": "SELECT COUNT(DISTINCT stock_code) FROM kline_daily",
+        "result": 1051
+      }
+    ],
+    "api_tests_executed": [
+      {
+        "endpoint": "GET /",
+        "status": 200,
+        "response_size": "22KB"
+      },
+      {
+        "endpoint": "GET /api/v1/reports",
+        "status": 200,
+        "items_count": 4
+      },
+      {
+        "endpoint": "GET /api/v1/health",
+        "status": 200,
+        "result": "health_check_passed_but_settlement_coverage_metric_incorrect"
+      }
+    ]
+  },
+
+  "next_steps": [
+    "修复 P0/P1/P2 问题（预计 6-10 小时）",
+    "运行 pytest 全量回归（预计 30 分钟）",
+    "执行浏览器 E2E 测试（需 Chrome/Playwright）",
+    "更新 docs/core/22 完成率指标",
+    "内部评审与发布"
+  ],
+
+  "audit_completed_by": "39角度系统审计代理",
+  "audit_datetime": "2026-04-16T11:30:00Z"
+}

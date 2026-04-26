@@ -1,0 +1,37 @@
+{
+  "passed": 2,
+  "total": 3,
+  "results": {
+    "single": {
+      "error": "'gbk' codec can't encode character '\\U0001f4f0' in position 19: illegal multibyte sequence"
+    },
+    "batch": [
+      {
+        "code": "600519",
+        "name": "Kweichow Moutai",
+        "response": "新建对话\n社区\n项目\n新项目\n所有对话\n今天\n新建对话\n新建对话\n新建对话\n五粮液主营业务简介\n宁德时代主营业务\nA股今日重要新闻\n测试通过\n贵州茅台主营业务概述\nMysterious Message Puzzle\n测试通过\n宁德时代主营锂电池生产销售\n五粮液主营业务简介\n贵州茅台主营业务简述\nUntitled Chat History\nUntitled Chat History\n今日A股重要新闻\n测试通过\n五粮液主营高端白酒生产销售\n宁德时代主营锂电池生产销售\n五粮液主营业务概述\n今日A股重要新闻\n贵州茅台主营高端白酒生产销售\n全球金融市场核心逻辑\ncasual_conversation\n复杂系统开发指南\nModel Comparison\nhugh\n?\nQwen3.5-Plus\n\n简述贵州茅台主营业务，50字内。\n\n自动\n人工智能生成的内容可能不准确。",
+        "elapsed_s": 9.02,
+        "has_citation": false
+      },
+      {
+        "code": "000858",
+        "name": "Wuliangye",
+        "response": "已经完成思考\n五粮液主营浓香型白酒的生产与销售，核心产品为第八代五粮液等系列酒品。\n雪球",
+        "elapsed_s": 9.03,
+        "has_citation": false
+      },
+      {
+        "code": "300750",
+        "name": "CATL",
+        "response": "已经完成思考\n宁德时代主营新能源汽车动力电池系统、储能系统的研发、生产和销售，为全球新能源应用提供解决方案\nbaike.jfinfo.com\n。",
+        "elapsed_s": 9.02,
+        "has_citation": false
+      }
+    ],
+    "reconnect": {
+      "response": "已经完成思考\n测试通过",
+      "elapsed_s": 9.02,
+      "has_citation": false
+    }
+  }
+}

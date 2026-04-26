@@ -1,0 +1,44 @@
+{
+  "passed": 4,
+  "total": 4,
+  "results": {
+    "check_model": {
+      "response": "我当前基于 GPT-5.2 架构运行。",
+      "elapsed_s": 4.86,
+      "has_citation": false
+    },
+    "single": {
+      "response": "以下是 2026年2月24日（今天）A股市场最重要的一条新闻标题和来源链接：\n\nA股市场重要新闻（2026年2月24日）\n21经济网\nA股午评：创业板指涨1.76%，油气、化工股大涨\n今天\nReuters\nChina leaves benchmark lending rates unchanged for ninth straight month\n今天\n新浪财经\n操盘必读：影响股市利好或利空消息_2026年2月24日_财经新闻\n今天\n\n1. 标题： A股午评：创业板指涨1.76%，油气、化工股大涨\n来源链接： https://www.21jingji.com/article/20260224/herald/d309a2f3db2f0ec5a8e63c9f9a663e0b.html\n \n21经济网\n\n（这条为今日A股市场开市后的主要行情新闻，反映三大股指集体上涨情况。）\n\n如果需要更多实时快讯（如开盘数据、板块热点等），我也可继续整理。",
+      "elapsed_s": 6.87,
+      "has_citation": true
+    },
+    "batch": [
+      {
+        "code": "600519",
+        "name": "贵州茅台",
+        "response": "贵州茅台（600519）核心业务：生产与销售茅台酒及系列高端白酒产品。\nmoutai.com.cn\n+1",
+        "elapsed_s": 4.84,
+        "has_citation": false
+      },
+      {
+        "code": "000858",
+        "name": "五粮液",
+        "response": "五粮液（000858）核心业务：生产和销售高端白酒及相关酒类产品。\nstockanalysis.com",
+        "elapsed_s": 3.84,
+        "has_citation": false
+      },
+      {
+        "code": "300750",
+        "name": "宁德时代",
+        "response": "宁德时代（300750）核心业务是研发与制造电动汽车动力电池及储能系统电池。\nmorningstar.com.au",
+        "elapsed_s": 4.85,
+        "has_citation": false
+      }
+    ],
+    "reconnect": {
+      "response": "测试通过",
+      "elapsed_s": 5.36,
+      "has_citation": false
+    }
+  }
+}

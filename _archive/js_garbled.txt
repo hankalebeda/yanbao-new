@@ -1,0 +1,11 @@
+﻿JS L1212: <div class="kpi-card-label">閺嶇绺惧Ч鐘侯潐濡?/div>
+JS L1216: <div class="kpi-card-sub">閸欘亣鑲＄エ/div>
+JS L1242: <div class="kpi-card-label">瀵板懎顦茬€?/div>
+JS L1326: <thead><tr><th>闃舵顔?/th><th>鐘舵€?th><th>寮€濮嬫椂闂?th><th>瀹屾垚鏃堕棿</th><th>閿欒顕?/th></tr></thead>
+JS L1342: <h2 class="card-title">閹镐椒绮ㄥ鍌濐潔</h2>
+JS L1384: 鐠囥儵銆夐崣顏勭潔缁€鐑樻付鏉╂垼鐨熸惔锔剧波閺嬫粈绗岄敊璇嚖閸樼喎娲滈敍灞藉嚒闁偓娴兼垹娈戞禍鍝勪紣鐞涖儴绐囧叆鍙ｆ稉宥呭晙瀵瑰顦诲鈧弨淇扁偓?
+JS L1418: <!-- 瀵板懎顦茬€癸紕鐖洪幎?-->
+JS L1424: <h1>瀵板懎顦茬€癸紕鐖洪幎?/h1>
+JS L1438: <tr><th>鐮旀姤ID</th><th>鑲＄エ浠ｇ爜</th><th>娴溿倖妲楅弮?/th><th>婢跺秴顓哥姸鎬?th><th>鏁版嵁璐ㄩ噺</th><th>鍒涘缓鏃堕棿</th><th>鎿嶄綔</th></tr>
+JS L1464: <h1>鐢ㄦ埛姒傝顫?/h1>
+JS L1478: <tr><th>鐢ㄦ埛ID</th><th>闁喚顔?/th><th>瑙掕壊</th><th>浼氬憳绛夌骇</th><th>闁喚顔堟宀冪槈</th><th>鎿嶄綔</th></tr>

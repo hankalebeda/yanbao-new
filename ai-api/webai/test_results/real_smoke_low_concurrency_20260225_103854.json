@@ -1,0 +1,57 @@
+{
+  "started_at": "2026-02-25T10:38:27.064935",
+  "mode": "real_smoke_low_concurrency",
+  "constraints": {
+    "sequential": true,
+    "providers": [
+      "qwen"
+    ],
+    "calls_per_provider": 1,
+    "inter_call_sleep_s": 1.0,
+    "timeout_s": 120,
+    "retry": 0
+  },
+  "providers": {
+    "qwen": {
+      "pass_count": 1,
+      "total": 1,
+      "results": [
+        {
+          "attempt": 1,
+          "status_code": 200,
+          "code": 0,
+          "elapsed_wall_s": 24.61,
+          "expected": "CASE-REAL_QWEN_1771987107|OK|OK",
+          "response_preview": "CASE-REAL_QWEN_1771987107|OK|OK",
+          "match_expected": true,
+          "error": "",
+          "raw": null,
+          "pass": true
+        }
+      ]
+    }
+  },
+  "close_all": {
+    "status_code": 200,
+    "body": {
+      "code": 0,
+      "message": "ok",
+      "data": {
+        "closed": true,
+        "providers": [
+          "chatgpt",
+          "deepseek",
+          "gemini",
+          "qwen"
+        ]
+      },
+      "request_id": "ded558b3-a3ac-4b87-b406-16fbabdbd725",
+      "error": null
+    }
+  },
+  "finished_at": "2026-02-25T10:38:54.469287",
+  "summary": {
+    "total": 1,
+    "passed": 1
+  }
+}

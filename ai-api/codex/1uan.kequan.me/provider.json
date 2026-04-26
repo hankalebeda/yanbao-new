@@ -1,0 +1,9 @@
+{
+    "resource":  "provider",
+    "name":  "1uan.kequan.me",
+    "homepage":  "https://1uan.kequan.me",
+    "app":  "codex",
+    "model":  "gpt-5.4",
+    "endpoint":  "https://1uan.kequan.me/v1",
+    "enabled":  true
+}

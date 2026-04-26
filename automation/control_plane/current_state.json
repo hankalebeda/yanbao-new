@@ -1,0 +1,742 @@
+{
+  "_schema": "infra_promote_v1",
+  "_note": "Projected by EscortTeam CoordinatorAgent.",
+  "promote_target_mode": "doc22",
+  "promote_target_mode_reason": null,
+  "last_promote_round_id": null,
+  "last_promote_at": null,
+  "consecutive_fix_success_count": 5,
+  "consecutive_verified_problem_fixes": 5,
+  "consecutive_green_rounds": 5,
+  "goal_progress_count": 5,
+  "fix_goal": 10,
+  "goal_reached": true,
+  "goal_ever_reached": true,
+  "success_goal_metric": "verified_problem_count",
+  "mode": "completed",
+  "phase": "monitoring",
+  "current_round_id": null,
+  "blocked_reason": null,
+  "new_api_base_url": "http://192.168.232.141:3000/v1",
+  "provider_pool": {
+    "ready": true,
+    "status": "ok",
+    "stage": "done",
+    "error": null
+  },
+  "last_audit_run_id": null,
+  "deferred_problems": [],
+  "completion_time": "",
+  "agent_restart_counts": {
+    "analysis-fd7e12": 1,
+    "fix-0995f8": 1,
+    "promote-4eed94": 1,
+    "discovery-fca0fa": 1,
+    "writeback-230644": 1,
+    "verify-3de3c6": 1
+  },
+  "last_fix_wave_id": "round-c49691f9",
+  "total_fixes": 3,
+  "total_failures": 0,
+  "round_history_size": 63,
+  "execution_lanes": {
+    "gov_registry": {
+      "lane_id": "gov_registry",
+      "title": "治理注册修复",
+      "task_family": "issue-registry",
+      "status": "completed",
+      "status_reason": "doc25 审计确认 4 项问题已全部修复或为外部阻塞（2026-04-04）",
+      "problem_count": 0,
+      "problem_ids": [],
+      "write_scope": [
+        "app/governance/feature_registry.json",
+        "scripts/continuous_repo_audit.py"
+      ]
+    },
+    "runtime_blocked": {
+      "lane_id": "runtime_blocked",
+      "title": "外部运行依赖",
+      "task_family": "runtime-external",
+      "status": "blocked",
+      "problem_count": 10,
+      "problem_ids": [
+        "doc25_b1ce56eb",
+        "doc25_80d087ea",
+        "doc25_e6364fa1",
+        "doc25_6c451c0b",
+        "doc25_8ab0f703",
+        "doc25_276dde37",
+        "doc25_4974d878",
+        "doc25_a1078898",
+        "doc25_0cbfa1b5",
+        "doc25_evidence_replay_004"
+      ],
+      "write_scope": [
+        "automation/loop_controller/**",
+        "automation/writeback_service/**"
+      ]
+    },
+    "gov_mapping": {
+      "lane_id": "gov_mapping",
+      "title": "治理映射修复",
+      "task_family": "feature-governance",
+      "status": "blocked",
+      "problem_count": 3,
+      "problem_ids": [
+        "doc25_6a608118",
+        "doc25_12aa44c2",
+        "doc25_d3569a0a"
+      ],
+      "write_scope": [
+        "app/auth/**",
+        "app/payment/**"
+      ]
+    },
+    "repo_hygiene": {
+      "lane_id": "repo_hygiene",
+      "title": "仓库混合态审查",
+      "task_family": "repo-governance",
+      "status": "review_required",
+      "problem_count": 1,
+      "problem_ids": [
+        "code-drift"
+      ],
+      "write_scope": []
+    }
+  },
+  "blocked_problems": [
+    {
+      "problem_id": "doc25_cf3fc0f7",
+      "source_probe": "doc25_angle",
+      "severity": "P1",
+      "family": "truth_lineage",
+      "task_family": "issue-registry",
+      "lane_id": "gov_registry",
+      "title": "doc22 L68",
+      "description": "  - 在运行库真回读中一度发现 `report.market_state_reference_date` 未跟 `market_state_cache.reference_date` 对齐，且活跃研报历史 `citation` 残留 `11428` 条 `snapshot` 占位；现已通过 `scripts/backfill_report_truth.py` 连同 `pool_version` 真值与 `market_state_input` lineage 一并回填，当前 `active snapshot citations=0`、`report_reference_mismatches=0`，剩余 `84` 条旧 `snapshot` 仅存在于已软删历史版本。\n\n#### 1.3.3 历史中间态：当时仍存活主风险\n  - `P0` 稳定复现问题当前只剩 2 条：`admin system-status` 测试替身接口缺失，以及 `/features` 搜索结果仍暴露 `FR` 文本。\n  - `P1` 测试方法问题当前已固化为 `BLIND-001 / BLIND-002`：仓内仍有 `WEAK=11` 与 `GUARDED=8`，需要把弱断言与 success-only guarded assertions 从“已冻结不新增”推进到“逐条清零”。",
+      "affected_files": [],
+      "affected_frs": [],
+      "suggested_approach": "fix_code",
+      "current_status": "blocked",
+      "blocker_type": "resolved_maintenance",
+      "blocked_reason": "backfill completed, citations=0, reference mismatches=0; monitor only",
+      "recommended_angles": [
+        1,
+        5,
+        6,
+        9
+      ],
+      "analysis_angles": [
+        1,
+        5,
+        6,
+        9
+      ],
+      "write_scope": [
+        "app/governance/feature_registry.json",
+        "scripts/continuous_repo_audit.py"
+      ]
+    },
+    {
+      "problem_id": "doc25_b1ce56eb",
+      "source_probe": "doc25_angle",
+      "severity": "P1",
+      "family": "bad_batch_runtime",
+      "task_family": "runtime-external",
+      "lane_id": "runtime_blocked",
+      "title": "doc22 L100",
+      "description": "## 2. 当前问题判定板\n\n### 2.1 当前仍存活问题\n\n> 恢复态下的 `当前活问题` 以 `Git 状态 + 单点复跑 + 最近一轮共享工件` 交叉判断为准；当 `collect-only` 已高于共享工件时，不再直接把旧工件里的 failure 清单当作当前 P0。",
+      "affected_files": [],
+      "affected_frs": [],
+      "suggested_approach": "execution_and_monitoring",
+      "current_status": "blocked",
+      "blocker_type": "external_dependency",
+      "blocked_reason": "runtime gate or external dependency remains unresolved",
+      "recommended_angles": [
+        9,
+        10,
+        13,
+        14,
+        16
+      ],
+      "analysis_angles": [
+        9,
+        10,
+        13,
+        14,
+        16
+      ],
+      "write_scope": [
+        "automation/loop_controller/**",
+        "automation/writeback_service/**"
+      ]
+    },
+    {
+      "problem_id": "doc25_80d087ea",
+      "source_probe": "doc25_angle",
+      "severity": "P1",
+      "family": "bad_batch_runtime",
+      "task_family": "runtime-external",
+      "lane_id": "runtime_blocked",
+      "title": "doc22 L114",
+      "description": "| 问题名 | 当前状态 | 一句话说明 | 详细落点 |\n|:---|:---|:---|:---|\n| repo 纳管与 `legacy/archive` 边界混态 | `P1 / 仍存活` | 当前 repo 仍处于高混态；本轮回读 `git status --porcelain` 仍为 `modified_like=76 / deleted=245 / untracked=301`，说明未纳 Git 主干文件与 tracked 删除残影仍在继续扰动检索和追溯边界，这里不应再把某个固定 untracked 常数当稳定真相。 | `2.3`、`4.5`、`5.1.2` |\n| live runtime recovery 未形成稳定终态 | `P1 / 仍存活 / 外部阻塞` | 运行态仍为 `runtime_trade_date=2026-03-17`、`sim_snapshot_date=None`、`public_runtime_status=DEGRADED / KLINE_COVERAGE_INSUFFICIENT`；`2026-03-28` 诊断确认根因为 mootdx 数据源自 `2026-03-18` 起不可用（覆盖率从 95.7% 跌至 5.2%），属外部数据源故障非代码缺陷；恢复路径：数据源恢复后 `rebuild_runtime_db.py` 自动补齐。 | `2.3`、`4.5`、`5.1.7` |\n#### P2",
+      "affected_files": [],
+      "affected_frs": [],
+      "suggested_approach": "external_dependency",
+      "current_status": "blocked",
+      "blocker_type": "external_dependency",
+      "blocked_reason": "runtime gate or external dependency remains unresolved",
+      "recommended_angles": [
+        9,
+        10,
+        13,
+        14,
+        16
+      ],
+      "analysis_angles": [
+        9,
+        10,
+        13,
+        14,
+        16
+      ],
+      "write_scope": [
+        "automation/loop_controller/**",
+        "automation/writeback_service/**"
+      ]
+    },
+    {
+      "problem_id": "doc25_e6364fa1",
+      "source_probe": "doc25_angle",
+      "severity": "P1",
+      "family": "bad_batch_runtime",
+      "task_family": "runtime-external",
+      "lane_id": "runtime_blocked",
+      "title": "doc22 L115",
+      "description": "|:---|:---|:---|:---|\n| repo 纳管与 `legacy/archive` 边界混态 | `P1 / 仍存活` | 当前 repo 仍处于高混态；本轮回读 `git status --porcelain` 仍为 `modified_like=76 / deleted=245 / untracked=301`，说明未纳 Git 主干文件与 tracked 删除残影仍在继续扰动检索和追溯边界，这里不应再把某个固定 untracked 常数当稳定真相。 | `2.3`、`4.5`、`5.1.2` |\n| live runtime recovery 未形成稳定终态 | `P1 / 仍存活 / 外部阻塞` | 运行态仍为 `runtime_trade_date=2026-03-17`、`sim_snapshot_date=None`、`public_runtime_status=DEGRADED / KLINE_COVERAGE_INSUFFICIENT`；`2026-03-28` 诊断确认根因为 mootdx 数据源自 `2026-03-18` 起不可用（覆盖率从 95.7% 跌至 5.2%），属外部数据源故障非代码缺陷；恢复路径：数据源恢复后 `rebuild_runtime_db.py` 自动补齐。 | `2.3`、`4.5`、`5.1.7` |\n#### P2\n",
+      "affected_files": [],
+      "affected_frs": [],
+      "suggested_approach": "external_dependency",
+      "current_status": "blocked",
+      "blocker_type": "external_dependency",
+      "blocked_reason": "runtime gate or external dependency remains unresolved",
+      "recommended_angles": [
+        9,
+        10,
+        13,
+        14,
+        16
+      ],
+      "analysis_angles": [
+        9,
+        10,
+        13,
+        14,
+        16
+      ],
+      "write_scope": [
+        "automation/loop_controller/**",
+        "automation/writeback_service/**"
+      ]
+    },
+    {
+      "problem_id": "doc25_6c451c0b",
+      "source_probe": "doc25_angle",
+      "severity": "P1",
+      "family": "bad_batch_runtime",
+      "task_family": "runtime-external",
+      "lane_id": "runtime_blocked",
+      "title": "doc22 L120",
+      "description": "| 问题名 | 当前状态 | 一句话说明 | 详细落点 |\n|:---|:---|:---|:---|\n| `ISSUE-REGISTRY` / feature mapping backlog | `P2 / 已收口（2026-04-02）` | catalog 已重建为 `READY=107 / RWG=0 / OUT_OF_SSOT=12`；全部 107 个 READY feature 的 gaps[] 已清零；mismatch_count=12 对应 OUT_OF_SSOT（非活跃 FR）；本项已从「仍存活」降级为「已收口」。 | `2.3`、`4.5`、`5.1.2` |\n| `FR-07 / FR-10` runtime-public anchor 残余 | `P2 / 残余风险` | 当前公开面是诚实降级而非 bridge 回退；核心残余仍是 `KLINE_COVERAGE_INSUFFICIENT`、`settlement_pipeline=NOT_RUN` 与 `baseline_*` 未就绪。 | `2.3`、`4.5` |\n| 外部接入与历史会员真值残余 | `P2 / 残余风险` | `provider-not-configured`、`notification=skipped` 与 `paid tier + tier_expires_at=null` 更像外部接入与历史事实核验残余，不是当前主链代码红灯。 | `2.3`、`4.5` |",
+      "affected_files": [],
+      "affected_frs": [],
+      "suggested_approach": "external_dependency",
+      "current_status": "blocked",
+      "blocker_type": "external_dependency",
+      "blocked_reason": "runtime gate or external dependency remains unresolved",
+      "recommended_angles": [
+        9,
+        10,
+        13,
+        14,
+        16
+      ],
+      "analysis_angles": [
+        9,
+        10,
+        13,
+        14,
+        16
+      ],
+      "write_scope": [
+        "automation/loop_controller/**",
+        "automation/writeback_service/**"
+      ]
+    },
+    {
+      "problem_id": "doc25_8ab0f703",
+      "source_probe": "doc25_angle",
+      "severity": "P1",
+      "family": "bad_batch_runtime",
+      "task_family": "runtime-external",
+      "lane_id": "runtime_blocked",
+      "title": "doc22 L121",
+      "description": "|:---|:---|:---|:---|\n| `ISSUE-REGISTRY` / feature mapping backlog | `P2 / 已收口（2026-04-02）` | catalog 已重建为 `READY=107 / RWG=0 / OUT_OF_SSOT=12`；全部 107 个 READY feature 的 gaps[] 已清零；mismatch_count=12 对应 OUT_OF_SSOT（非活跃 FR）；本项已从「仍存活」降级为「已收口」。 | `2.3`、`4.5`、`5.1.2` |\n| `FR-07 / FR-10` runtime-public anchor 残余 | `P2 / 残余风险` | 当前公开面是诚实降级而非 bridge 回退；核心残余仍是 `KLINE_COVERAGE_INSUFFICIENT`、`settlement_pipeline=NOT_RUN` 与 `baseline_*` 未就绪。 | `2.3`、`4.5` |\n| 外部接入与历史会员真值残余 | `P2 / 残余风险` | `provider-not-configured`、`notification=skipped` 与 `paid tier + tier_expires_at=null` 更像外部接入与历史事实核验残余，不是当前主链代码红灯。 | `2.3`、`4.5` |\n",
+      "affected_files": [],
+      "affected_frs": [],
+      "suggested_approach": "external_dependency",
+      "current_status": "blocked",
+      "blocker_type": "external_dependency",
+      "blocked_reason": "runtime gate or external dependency remains unresolved",
+      "recommended_angles": [
+        9,
+        10,
+        13,
+        14,
+        16
+      ],
+      "analysis_angles": [
+        9,
+        10,
+        13,
+        14,
+        16
+      ],
+      "write_scope": [
+        "automation/loop_controller/**",
+        "automation/writeback_service/**"
+      ]
+    },
+    {
+      "problem_id": "doc25_276dde37",
+      "source_probe": "doc25_angle",
+      "severity": "P1",
+      "family": "bad_batch_runtime",
+      "task_family": "runtime-external",
+      "lane_id": "runtime_blocked",
+      "title": "doc22 L122",
+      "description": "| `ISSUE-REGISTRY` / feature mapping backlog | `P2 / 已收口（2026-04-02）` | catalog 已重建为 `READY=107 / RWG=0 / OUT_OF_SSOT=12`；全部 107 个 READY feature 的 gaps[] 已清零；mismatch_count=12 对应 OUT_OF_SSOT（非活跃 FR）；本项已从「仍存活」降级为「已收口」。 | `2.3`、`4.5`、`5.1.2` |\n| `FR-07 / FR-10` runtime-public anchor 残余 | `P2 / 残余风险` | 当前公开面是诚实降级而非 bridge 回退；核心残余仍是 `KLINE_COVERAGE_INSUFFICIENT`、`settlement_pipeline=NOT_RUN` 与 `baseline_*` 未就绪。 | `2.3`、`4.5` |\n| 外部接入与历史会员真值残余 | `P2 / 残余风险` | `provider-not-configured`、`notification=skipped` 与 `paid tier + tier_expires_at=null` 更像外部接入与历史事实核验残余，不是当前主链代码红灯。 | `2.3`、`4.5` |\n\n#### 观察项",
+      "affected_files": [],
+      "affected_frs": [],
+      "suggested_approach": "external_dependency",
+      "current_status": "blocked",
+      "blocker_type": "external_dependency",
+      "blocked_reason": "runtime gate or external dependency remains unresolved",
+      "recommended_angles": [
+        9,
+        10,
+        13,
+        14,
+        16
+      ],
+      "analysis_angles": [
+        9,
+        10,
+        13,
+        14,
+        16
+      ],
+      "write_scope": [
+        "automation/loop_controller/**",
+        "automation/writeback_service/**"
+      ]
+    },
+    {
+      "problem_id": "doc25_4974d878",
+      "source_probe": "doc25_angle",
+      "severity": "P1",
+      "family": "bad_batch_runtime",
+      "task_family": "runtime-external",
+      "lane_id": "runtime_blocked",
+      "title": "doc22 L165",
+      "description": "| 项目 | 当前状态 | 说明 |\n|:---|:---|:---|\n| repo 纳管与 `legacy/archive` 边界混态 | `仍存活` | 当前主干仍处于高混态；本轮回读 `git status --porcelain` 仍为 `modified_like=76 / deleted=245 / untracked=301`，说明这里的真问题是混态持续存在且数字快速漂移，而不是旧常数本身。`docs/old=1265` 与 tracked 删除残影仍会污染仓库入口与人工检索。 |\n| `ISSUE-REGISTRY` / feature mapping backlog | `已收口（2026-04-02）` | catalog 已重建为 `READY=107 / RWG=0 / OUT_OF_SSOT=12`；全部 107 个 READY feature 的 gaps[] 已清零；3 个新测试文件（test_fr04_nfr13_alert/test_fr02_dag_lock/test_fr06_llm_degradation_e2e）+16 tests 完成最后 7 个 RWG 验收。 |`已收口`|\n| `FR-07 / FR-10` runtime live recovery 仍未闭环 | `仍存活 / P1 残余风险 / 外部阻塞` | `2026-03-28` 诊断确认 mootdx 数据源自 `2026-03-18` 起不可用（覆盖率从 95.7% 跌至 5.2%），属外部数据源故障非代码缺陷；运行态 `DEGRADED / KLINE_COVERAGE_INSUFFICIENT` 是正确的显式降级；恢复路径：数据源恢复后 `rebuild_runtime_db.py` 自动补齐 K-line → runtime 恢复 READY。 |",
+      "affected_files": [],
+      "affected_frs": [],
+      "suggested_approach": "external_dependency",
+      "current_status": "blocked",
+      "blocker_type": "external_dependency",
+      "blocked_reason": "runtime gate or external dependency remains unresolved",
+      "recommended_angles": [
+        9,
+        10,
+        13,
+        14,
+        16
+      ],
+      "analysis_angles": [
+        9,
+        10,
+        13,
+        14,
+        16
+      ],
+      "write_scope": [
+        "automation/loop_controller/**",
+        "automation/writeback_service/**"
+      ]
+    },
+    {
+      "problem_id": "doc25_a1078898",
+      "source_probe": "doc25_angle",
+      "severity": "P1",
+      "family": "bad_batch_runtime",
+      "task_family": "runtime-external",
+      "lane_id": "runtime_blocked",
+      "title": "doc22 L167",
+      "description": "| repo 纳管与 `legacy/archive` 边界混态 | `仍存活` | 当前主干仍处于高混态；本轮回读 `git status --porcelain` 仍为 `modified_like=76 / deleted=245 / untracked=301`，说明这里的真问题是混态持续存在且数字快速漂移，而不是旧常数本身。`docs/old=1265` 与 tracked 删除残影仍会污染仓库入口与人工检索。 |\n| `ISSUE-REGISTRY` / feature mapping backlog | `已收口（2026-04-02）` | catalog 已重建为 `READY=107 / RWG=0 / OUT_OF_SSOT=12`；全部 107 个 READY feature 的 gaps[] 已清零；3 个新测试文件（test_fr04_nfr13_alert/test_fr02_dag_lock/test_fr06_llm_degradation_e2e）+16 tests 完成最后 7 个 RWG 验收。 |`已收口`|\n| `FR-07 / FR-10` runtime live recovery 仍未闭环 | `仍存活 / P1 残余风险 / 外部阻塞` | `2026-03-28` 诊断确认 mootdx 数据源自 `2026-03-18` 起不可用（覆盖率从 95.7% 跌至 5.2%），属外部数据源故障非代码缺陷；运行态 `DEGRADED / KLINE_COVERAGE_INSUFFICIENT` 是正确的显式降级；恢复路径：数据源恢复后 `rebuild_runtime_db.py` 自动补齐 K-line → runtime 恢复 READY。 |\n| 外部接入与历史会员真值仍有残余 | `残余风险` | 当前环境仍是 `payment_capability=provider-not-configured`、`payment_webhook_event_total=0`、`user_email_enabled=false`、admin webhook 未配置；运行库仍有 `7` 条 `paid tier + tier_expires_at=null` 用户待人工核验。当前系统对这些场景已诚实返回 `provider-not-configured`、`skipped` 或 `unknown / expiry_unconfirmed`，不应再写成“代码主链未修”。 |\n| 本轮已收口并已进入当前真相层的 fresh 修复 | `已收口 / 已并入 current-layer` | 本轮补齐了 dashboard fail-close 清空、FR-10 资金摘要状态/结论区分、green-round promote gate 回退规则、issue-mesh formal promote 协议/schema、deploy 脚本 doc22 目标声明，以及 cleanup completion/failure fenced writeback；全量 pytest 已到 `1572 passed, 1 xfailed, 0 failed`。 |",
+      "affected_files": [],
+      "affected_frs": [],
+      "suggested_approach": "external_dependency",
+      "current_status": "blocked",
+      "blocker_type": "external_dependency",
+      "blocked_reason": "runtime gate or external dependency remains unresolved",
+      "recommended_angles": [
+        9,
+        10,
+        13,
+        14,
+        16
+      ],
+      "analysis_angles": [
+        9,
+        10,
+        13,
+        14,
+        16
+      ],
+      "write_scope": [
+        "automation/loop_controller/**",
+        "automation/writeback_service/**"
+      ]
+    },
+    {
+      "problem_id": "doc25_0cbfa1b5",
+      "source_probe": "doc25_angle",
+      "severity": "P1",
+      "family": "bad_batch_runtime",
+      "task_family": "runtime-external",
+      "lane_id": "runtime_blocked",
+      "title": "doc22 L168",
+      "description": "| `ISSUE-REGISTRY` / feature mapping backlog | `已收口（2026-04-02）` | catalog 已重建为 `READY=107 / RWG=0 / OUT_OF_SSOT=12`；全部 107 个 READY feature 的 gaps[] 已清零；3 个新测试文件（test_fr04_nfr13_alert/test_fr02_dag_lock/test_fr06_llm_degradation_e2e）+16 tests 完成最后 7 个 RWG 验收。 |`已收口`|\n| `FR-07 / FR-10` runtime live recovery 仍未闭环 | `仍存活 / P1 残余风险 / 外部阻塞` | `2026-03-28` 诊断确认 mootdx 数据源自 `2026-03-18` 起不可用（覆盖率从 95.7% 跌至 5.2%），属外部数据源故障非代码缺陷；运行态 `DEGRADED / KLINE_COVERAGE_INSUFFICIENT` 是正确的显式降级；恢复路径：数据源恢复后 `rebuild_runtime_db.py` 自动补齐 K-line → runtime 恢复 READY。 |\n| 外部接入与历史会员真值仍有残余 | `残余风险` | 当前环境仍是 `payment_capability=provider-not-configured`、`payment_webhook_event_total=0`、`user_email_enabled=false`、admin webhook 未配置；运行库仍有 `7` 条 `paid tier + tier_expires_at=null` 用户待人工核验。当前系统对这些场景已诚实返回 `provider-not-configured`、`skipped` 或 `unknown / expiry_unconfirmed`，不应再写成“代码主链未修”。 |\n| 本轮已收口并已进入当前真相层的 fresh 修复 | `已收口 / 已并入 current-layer` | 本轮补齐了 dashboard fail-close 清空、FR-10 资金摘要状态/结论区分、green-round promote gate 回退规则、issue-mesh formal promote 协议/schema、deploy 脚本 doc22 目标声明，以及 cleanup completion/failure fenced writeback；全量 pytest 已到 `1572 passed, 1 xfailed, 0 failed`。 |\n| **Escort Team Promote 轮（2026-04-04）** | `已收口 / PROMOTED` | **当前权威基线已升至 `1967 passed, 1 skipped, 1 xfailed, 0 failed`（1969 collected）**。共享工件四件同轮对齐（drift=120s < 3600s）：`junit.xml`（1969/0/0）、`catalog_snapshot.json`（READY=107/OOS=12/warn=0）、`blind_spot_audit.json`（全零）、`latest_run.json`（0 findings）。`feature_registry.json` 全 119 条 gaps=[] 已清零。4 个活接口已冻结（frozen-v1）。`LLM_ALL_FAILED` 已正确返回 500。控制面已切换至 `promote_target_mode=doc22`。**当前代码层面全部可修问题已清零，仅剩外部阻塞（mootdx 数据源）与人工项（repo 混态）。** |",
+      "affected_files": [],
+      "affected_frs": [],
+      "suggested_approach": "external_dependency",
+      "current_status": "blocked",
+      "blocker_type": "external_dependency",
+      "blocked_reason": "runtime gate or external dependency remains unresolved",
+      "recommended_angles": [
+        9,
+        10,
+        13,
+        14,
+        16
+      ],
+      "analysis_angles": [
+        9,
+        10,
+        13,
+        14,
+        16
+      ],
+      "write_scope": [
+        "automation/loop_controller/**",
+        "automation/writeback_service/**"
+      ]
+    },
+    {
+      "problem_id": "doc25_artifact_consistency_002",
+      "source_probe": "doc25_angle",
+      "severity": "P1",
+      "family": "truth_lineage",
+      "task_family": "issue-registry",
+      "lane_id": "gov_registry",
+      "title": "共享工件之间仍存在时间点与分母不一致的真相分叉",
+      "description": "摘要同时给出 pytest collect=1108、junit=1108 passed，但 catalog_snapshot 仍记录 total_collected=1075 且 freshness=stale，latest_run=skipped_locked。预扫描已覆盖 stale/locked 与 bad batch，但未单独指出‘工件间分母不一致’本身就是独立真相治理问题，容易误导 feature 覆盖率、catalog 回写与治理判断。",
+      "affected_files": [],
+      "affected_frs": [],
+      "suggested_approach": "fix_code",
+      "current_status": "blocked",
+      "blocker_type": "resolved_maintenance",
+      "blocked_reason": "backfill completed, citations=0, reference mismatches=0; monitor only",
+      "recommended_angles": [
+        1,
+        5,
+        9,
+        10
+      ],
+      "analysis_angles": [
+        1,
+        5,
+        9,
+        10
+      ],
+      "write_scope": [
+        "app/governance/feature_registry.json",
+        "scripts/continuous_repo_audit.py"
+      ]
+    },
+    {
+      "problem_id": "doc25_evidence_replay_004",
+      "source_probe": "doc25_angle",
+      "severity": "P1",
+      "family": "bad_batch_runtime",
+      "task_family": "runtime-external",
+      "lane_id": "runtime_blocked",
+      "title": "恢复态采用‘单点复跑 + 最近一轮共享工件’的判定法，仍缺统一回放锚点",
+      "description": "摘要说明当前活问题以 Git 状态、单点复跑、最近一轮共享工件交叉判断，但当 collect-only 已高于共享工件时不再直接信旧 failure 清单。这种口径虽合理止损，却仍表明系统缺少统一批次号/回放锚点来绑定代码、测试、catalog、audit 同轮证据。预扫描覆盖了 runtime anchor 方向，但这里应补充为证据回放机制缺口，而不只是单个坏批次现象。",
+      "affected_files": [],
+      "affected_frs": [],
+      "suggested_approach": "execution_and_monitoring",
+      "current_status": "blocked",
+      "blocker_type": "external_dependency",
+      "blocked_reason": "runtime gate or external dependency remains unresolved",
+      "recommended_angles": [
+        9,
+        10,
+        14,
+        16
+      ],
+      "analysis_angles": [
+        9,
+        10,
+        14,
+        16
+      ],
+      "write_scope": [
+        "automation/loop_controller/**",
+        "automation/writeback_service/**"
+      ]
+    },
+    {
+      "problem_id": "doc25_6a608118",
+      "source_probe": "doc25_angle",
+      "severity": "P2",
+      "family": "payment_auth_governance",
+      "task_family": "feature-governance",
+      "lane_id": "gov_mapping",
+      "title": "doc22 L170",
+      "description": "| 外部接入与历史会员真值仍有残余 | `残余风险` | 当前环境仍是 `payment_capability=provider-not-configured`、`payment_webhook_event_total=0`、`user_email_enabled=false`、admin webhook 未配置；运行库仍有 `7` 条 `paid tier + tier_expires_at=null` 用户待人工核验。当前系统对这些场景已诚实返回 `provider-not-configured`、`skipped` 或 `unknown / expiry_unconfirmed`，不应再写成“代码主链未修”。 |\n| 本轮已收口并已进入当前真相层的 fresh 修复 | `已收口 / 已并入 current-layer` | 本轮补齐了 dashboard fail-close 清空、FR-10 资金摘要状态/结论区分、green-round promote gate 回退规则、issue-mesh formal promote 协议/schema、deploy 脚本 doc22 目标声明，以及 cleanup completion/failure fenced writeback；全量 pytest 已到 `1572 passed, 1 xfailed, 0 failed`。 |\n| **Escort Team Promote 轮（2026-04-04）** | `已收口 / PROMOTED` | **当前权威基线已升至 `1967 passed, 1 skipped, 1 xfailed, 0 failed`（1969 collected）**。共享工件四件同轮对齐（drift=120s < 3600s）：`junit.xml`（1969/0/0）、`catalog_snapshot.json`（READY=107/OOS=12/warn=0）、`blind_spot_audit.json`（全零）、`latest_run.json`（0 findings）。`feature_registry.json` 全 119 条 gaps=[] 已清零。4 个活接口已冻结（frozen-v1）。`LLM_ALL_FAILED` 已正确返回 500。控制面已切换至 `promote_target_mode=doc22`。**当前代码层面全部可修问题已清零，仅剩外部阻塞（mootdx 数据源）与人工项（repo 混态）。** |\n\n### 2.4 恢复复核：已实现 / 待重建",
+      "affected_files": [],
+      "affected_frs": [],
+      "suggested_approach": "external_dependency",
+      "current_status": "blocked",
+      "blocker_type": "external_dependency",
+      "blocked_reason": "payment provider not configured, webhook/email not provisioned; requires external service setup",
+      "recommended_angles": [
+        1,
+        3,
+        4,
+        18,
+        20
+      ],
+      "analysis_angles": [
+        1,
+        3,
+        4,
+        18,
+        20
+      ],
+      "write_scope": [
+        "app/auth/**",
+        "app/payment/**"
+      ]
+    },
+    {
+      "problem_id": "doc25_12aa44c2",
+      "source_probe": "doc25_angle",
+      "severity": "P2",
+      "family": "payment_auth_governance",
+      "task_family": "feature-governance",
+      "lane_id": "gov_mapping",
+      "title": "doc22 L221",
+      "description": "- **结果**：\n  - `billing reconcile` 当前只是一条“基于已落库支付证据的人工补发入口”，不再把本地订单状态伪装成外部支付真相。\n- **残余风险**：\n  - `billing_poller` 虽已具备 provider probe 闭环能力，但真实外部支付渠道仍依赖环境变量配置与上游可用性；运行库历史付费残留也仍需人工核验或统一回落。\n",
+      "affected_files": [],
+      "affected_frs": [],
+      "suggested_approach": "external_dependency",
+      "current_status": "blocked",
+      "blocker_type": "external_dependency",
+      "blocked_reason": "payment provider not configured, webhook/email not provisioned; requires external service setup",
+      "recommended_angles": [
+        1,
+        3,
+        4,
+        18,
+        20
+      ],
+      "analysis_angles": [
+        1,
+        3,
+        4,
+        18,
+        20
+      ],
+      "write_scope": [
+        "app/auth/**",
+        "app/payment/**"
+      ]
+    },
+    {
+      "problem_id": "doc25_d3569a0a",
+      "source_probe": "doc25_angle",
+      "severity": "P2",
+      "family": "payment_auth_governance",
+      "task_family": "feature-governance",
+      "lane_id": "gov_mapping",
+      "title": "doc22 L240",
+      "description": "- **结果**：\n  - 当前通知链已从“写库即已发送”的假终态，收口为“真实发送成功才记 sent；未配置或未实现时显式 skipped；真实发送失败显式 failed”；`feedback_ssot` 也不再把既有 `skipped` 误推进成“已发送”光标。\n- **残余风险**：\n  - 真实用户邮件传输仍未实现，因此用户通道当前是诚实 `skipped`，不是正式可用能力。\n",
+      "affected_files": [],
+      "affected_frs": [],
+      "suggested_approach": "external_dependency",
+      "current_status": "blocked",
+      "blocker_type": "external_dependency",
+      "blocked_reason": "payment provider not configured, webhook/email not provisioned; requires external service setup",
+      "recommended_angles": [
+        1,
+        3,
+        4,
+        18,
+        20
+      ],
+      "analysis_angles": [
+        1,
+        3,
+        4,
+        18,
+        20
+      ],
+      "write_scope": [
+        "app/auth/**",
+        "app/payment/**"
+      ]
+    }
+  ],
+  "completion_blockers": [
+    {
+      "lane_id": "gov_registry",
+      "status": "active",
+      "problem_count": 4
+    },
+    {
+      "lane_id": "repo_hygiene",
+      "status": "review_required",
+      "problem_count": 1
+    }
+  ],
+  "autonomy_index": 0.38,
+  "shadow_validation": {
+    "audit_run_id": null,
+    "verify_all_passed": false,
+    "runtime_status": "unknown",
+    "public_runtime_status": "UNKNOWN",
+    "artifacts_aligned": false,
+    "shared_artifact_allowed": false,
+    "writeback_receipt_count": 0,
+    "ready": false
+  },
+  "formal_promote": {
+    "round_id": null,
+    "attempted_at": null,
+    "tier": 0,
+    "approved": false,
+    "reason": "",
+    "targets_promoted": [],
+    "status_note_committed": false,
+    "shared_artifact_recorded": false,
+    "current_layer_committed": false,
+    "doc22_committed": false,
+    "ready_for_doc22": false,
+    "state": "not_attempted"
+  },
+  "completion_evidence": {
+    "green_rounds": 0,
+    "green_round_goal": 12,
+    "autonomy_index": 0.38,
+    "autonomy_goal": 0.85,
+    "consecutive_fix_failures": 3,
+    "deferred_problem_count": 0,
+    "blocked_problem_count": 15,
+    "completion_blockers": [
+      {
+        "lane_id": "gov_registry",
+        "status": "active",
+        "problem_count": 4
+      },
+      {
+        "lane_id": "repo_hygiene",
+        "status": "review_required",
+        "problem_count": 1
+      }
+    ],
+    "formal_promote_required": true,
+    "formal_promote_ready": false,
+    "shadow_validation": {
+      "audit_run_id": null,
+      "verify_all_passed": false,
+      "runtime_status": "unknown",
+      "public_runtime_status": "UNKNOWN",
+      "artifacts_aligned": false,
+      "shared_artifact_allowed": false,
+      "writeback_receipt_count": 0,
+      "ready": false
+    },
+    "formal_promote": {
+      "round_id": null,
+      "attempted_at": null,
+      "tier": 0,
+      "approved": false,
+      "reason": "",
+      "targets_promoted": [],
+      "status_note_committed": false,
+      "shared_artifact_recorded": false,
+      "current_layer_committed": false,
+      "doc22_committed": false,
+      "ready_for_doc22": false,
+      "state": "not_attempted"
+    },
+    "gate_failures": [
+      "green_rounds_below_threshold",
+      "fix_failures_present",
+      "autonomy_below_threshold",
+      "active_or_review_lanes_present",
+      "formal_promote_evidence_missing"
+    ],
+    "goal_reached": false
+  },
+  "last_round_summary": {
+    "round_id": "round-dd8ec930",
+    "result": "fix_failed",
+    "timestamp": "2026-04-04T10:38:39.428421+00:00",
+    "mode": "monitor",
+    "phase": "fixing",
+    "progress": {
+      "round_id": "round-dd8ec930",
+      "phase": "fixing",
+      "started_at": "2026-04-04T10:37:32.829937+00:00",
+      "phase_started_at": "2026-04-04T10:38:18.463236+00:00",
+      "problem_count": 0,
+      "patch_count": 0,
+      "verified": null,
+      "promoted": null,
+      "ai_pressure": {}
+    },
+    "problem_count": 18,
+    "blocked_count": 15,
+    "review_count": 1,
+    "active_count": 2
+  },
+  "last_updated_at": "2026-04-04T12:29:02.259419+00:00",
+  "actual_service_health": {
+    "svc_writeback_a": true,
+    "svc_writeback_b": true,
+    "svc_promote_prep": true,
+    "svc_mesh_runner": true,
+    "svc_loop_controller": true,
+    "svc_new_api": true,
+    "svc_webai": true,
+    "artifact_junit_xml": true,
+    "artifact_catalog": true,
+    "artifact_blind_spot": true,
+    "mailbox": true,
+    "all_ok": true
+  }
+}

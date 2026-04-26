@@ -1,0 +1,399 @@
+{
+  "results": {
+    "FR00-AUTH-01": {
+      "status": "PASS",
+      "http": 200,
+      "detail": ""
+    },
+    "FR00-AUTH-01b": {
+      "status": "FAIL",
+      "http": 422,
+      "detail": ""
+    },
+    "FR00-AUTH-02": {
+      "status": "PASS",
+      "http": 200,
+      "detail": ""
+    },
+    "FR00-AUTH-03": {
+      "status": "PASS",
+      "http": 200,
+      "detail": ""
+    },
+    "FR01-POOL-01": {
+      "status": "FAIL",
+      "http": 404,
+      "detail": ""
+    },
+    "FR01-POOL-02": {
+      "status": "FAIL",
+      "http": 404,
+      "detail": ""
+    },
+    "FR01-POOL-03": {
+      "status": "FAIL",
+      "http": 404,
+      "detail": ""
+    },
+    "FR01-POOL-05": {
+      "status": "FAIL",
+      "http": 404,
+      "detail": ""
+    },
+    "FR02-SCHED-01": {
+      "status": "FAIL",
+      "http": 404,
+      "detail": ""
+    },
+    "FR02-SCHED-05": {
+      "status": "FAIL",
+      "http": 404,
+      "detail": ""
+    },
+    "FR03-COOKIE-01": {
+      "status": "FAIL",
+      "http": 404,
+      "detail": ""
+    },
+    "FR04-DATA-01": {
+      "status": "FAIL",
+      "http": 404,
+      "detail": ""
+    },
+    "FR04-DATA-03": {
+      "status": "FAIL",
+      "http": 404,
+      "detail": ""
+    },
+    "FR05-MKT-01": {
+      "status": "PASS",
+      "http": 200,
+      "detail": ""
+    },
+    "FR06-LLM-01": {
+      "status": "FAIL",
+      "http": 401,
+      "detail": ""
+    },
+    "FR06-LLM-02": {
+      "status": "FAIL",
+      "http": 401,
+      "detail": ""
+    },
+    "FR06-LLM-03": {
+      "status": "PASS",
+      "http": 200,
+      "detail": ""
+    },
+    "FR07-SETTLE-01": {
+      "status": "FAIL",
+      "http": 200,
+      "detail": "settled=12, coverage low"
+    },
+    "FR08-SIM-01": {
+      "status": "FAIL",
+      "http": 404,
+      "detail": ""
+    },
+    "FR08-SIM-02": {
+      "status": "PASS",
+      "http": 200,
+      "detail": ""
+    },
+    "FR08-SIM-03": {
+      "status": "PASS",
+      "http": 200,
+      "detail": ""
+    },
+    "FR08-SIM-04": {
+      "status": "PASS",
+      "http": 200,
+      "detail": ""
+    },
+    "FR09-AUTH-01": {
+      "status": "PASS",
+      "http": 200,
+      "detail": ""
+    },
+    "FR09-AUTH-02": {
+      "status": "PASS",
+      "http": 200,
+      "detail": ""
+    },
+    "FR09-AUTH-04": {
+      "status": "FAIL",
+      "http": 404,
+      "detail": ""
+    },
+    "FR09-AUTH-06": {
+      "status": "FAIL",
+      "http": 404,
+      "detail": ""
+    },
+    "FR09b-CLEAN-01": {
+      "status": "FAIL",
+      "http": 404,
+      "detail": ""
+    },
+    "FR10-HOME-01": {
+      "status": "PASS",
+      "http": 200,
+      "detail": ""
+    },
+    "FR10-LIST-01": {
+      "status": "PASS",
+      "http": 200,
+      "detail": ""
+    },
+    "FR10-LIST-01-api": {
+      "status": "PASS",
+      "http": 200,
+      "detail": ""
+    },
+    "FR10-DETAIL-01": {
+      "status": "PASS",
+      "http": 200,
+      "detail": ""
+    },
+    "FR10-DETAIL-01-api": {
+      "status": "PASS",
+      "http": 200,
+      "detail": ""
+    },
+    "FR10-DETAIL-02": {
+      "status": "PASS",
+      "http": 200,
+      "detail": ""
+    },
+    "FR10-BOARD-01": {
+      "status": "PASS",
+      "http": 200,
+      "detail": ""
+    },
+    "FR10-BOARD-01-api": {
+      "status": "PASS",
+      "http": 200,
+      "detail": ""
+    },
+    "FR10-PLATFORM-01": {
+      "status": "PASS",
+      "http": 200,
+      "detail": ""
+    },
+    "FR11-FEEDBACK-01": {
+      "status": "FAIL",
+      "http": 422,
+      "detail": ""
+    },
+    "FR12-ADMIN-01": {
+      "status": "PASS",
+      "http": 200,
+      "detail": ""
+    },
+    "FR12-ADMIN-02": {
+      "status": "PASS",
+      "http": 200,
+      "detail": ""
+    },
+    "FR12-ADMIN-03": {
+      "status": "PASS",
+      "http": 200,
+      "detail": ""
+    },
+    "FR12-ADMIN-04": {
+      "status": "FAIL",
+      "http": 404,
+      "detail": ""
+    },
+    "FR12-ADMIN-05": {
+      "status": "FAIL",
+      "http": 404,
+      "detail": ""
+    },
+    "FR12-ADMIN-06": {
+      "status": "PASS",
+      "http": 200,
+      "detail": ""
+    },
+    "FR13-EVENT-01": {
+      "status": "FAIL",
+      "http": 404,
+      "detail": ""
+    }
+  },
+  "issues": [
+    {
+      "fid": "FR00-AUTH-01b",
+      "label": "Published report immutability",
+      "http_status": 422,
+      "expected": 200,
+      "detail": "",
+      "response_preview": "{\"success\": false, \"message\": \"error\", \"data\": null, \"request_id\": \"e5a47982-901a-4e5e-b9bc-3c0c08f53563\", \"error\": \"INVALID_PAYLOAD\", \"error_code\": \"INVALID_PAYLOAD\", \"error_message\": \"INVALID_PAYLOA"
+    },
+    {
+      "fid": "FR01-POOL-01",
+      "label": "股票池快照列表",
+      "http_status": 404,
+      "expected": 200,
+      "detail": "",
+      "response_preview": "{\"success\": false, \"message\": \"error\", \"data\": null, \"request_id\": \"346b0bd1-4ac3-4cc4-b7bc-407dc03b239f\", \"error\": \"Not Found\", \"error_code\": \"NOT_FOUND\", \"error_message\": \"NOT_FOUND\"}"
+    },
+    {
+      "fid": "FR01-POOL-02",
+      "label": "股票池评分",
+      "http_status": 404,
+      "expected": 200,
+      "detail": "",
+      "response_preview": "{\"success\": false, \"message\": \"error\", \"data\": null, \"request_id\": \"4f345de1-ac65-4c47-9e5c-44cd1b94bf8c\", \"error\": \"Not Found\", \"error_code\": \"NOT_FOUND\", \"error_message\": \"NOT_FOUND\"}"
+    },
+    {
+      "fid": "FR01-POOL-03",
+      "label": "核心池查询",
+      "http_status": 404,
+      "expected": 200,
+      "detail": "",
+      "response_preview": "{\"success\": false, \"message\": \"error\", \"data\": null, \"request_id\": \"ab09dd25-503e-4d81-a89e-98361bc6cc3c\", \"error\": \"Not Found\", \"error_code\": \"NOT_FOUND\", \"error_message\": \"NOT_FOUND\"}"
+    },
+    {
+      "fid": "FR01-POOL-05",
+      "label": "淘汰列表",
+      "http_status": 404,
+      "expected": 200,
+      "detail": "",
+      "response_preview": "{\"success\": false, \"message\": \"error\", \"data\": null, \"request_id\": \"55df3ba1-0536-4141-921d-c5dded14f955\", \"error\": \"Not Found\", \"error_code\": \"NOT_FOUND\", \"error_message\": \"NOT_FOUND\"}"
+    },
+    {
+      "fid": "FR02-SCHED-01",
+      "label": "调度器状态",
+      "http_status": 404,
+      "expected": 200,
+      "detail": "",
+      "response_preview": "{\"success\": false, \"message\": \"error\", \"data\": null, \"request_id\": \"6e00bafb-08af-4e61-9b90-c885378a5eb0\", \"error\": \"Not Found\", \"error_code\": \"NOT_FOUND\", \"error_message\": \"NOT_FOUND\"}"
+    },
+    {
+      "fid": "FR02-SCHED-05",
+      "label": "DAG 汇总",
+      "http_status": 404,
+      "expected": 200,
+      "detail": "",
+      "response_preview": "{\"success\": false, \"message\": \"error\", \"data\": null, \"request_id\": \"afb4f4ab-61a7-4fc7-a563-f8db184078c5\", \"error\": \"Not Found\", \"error_code\": \"NOT_FOUND\", \"error_message\": \"NOT_FOUND\"}"
+    },
+    {
+      "fid": "FR03-COOKIE-01",
+      "label": "Cookie 列表",
+      "http_status": 404,
+      "expected": 200,
+      "detail": "",
+      "response_preview": "{\"success\": false, \"message\": \"error\", \"data\": null, \"request_id\": \"5a293f3f-92df-4eeb-ad15-27aa2ae43079\", \"error\": \"Not Found\", \"error_code\": \"NOT_FOUND\", \"error_message\": \"NOT_FOUND\"}"
+    },
+    {
+      "fid": "FR04-DATA-01",
+      "label": "热点查询",
+      "http_status": 404,
+      "expected": 200,
+      "detail": "",
+      "response_preview": "{\"success\": false, \"message\": \"error\", \"data\": null, \"request_id\": \"9df1c427-3ed7-4f54-9f50-3de5cdbe80e1\", \"error\": \"Not Found\", \"error_code\": \"NOT_FOUND\", \"error_message\": \"NOT_FOUND\"}"
+    },
+    {
+      "fid": "FR04-DATA-03",
+      "label": "热点展示(首页)",
+      "http_status": 404,
+      "expected": 200,
+      "detail": "",
+      "response_preview": "{\"success\": false, \"message\": \"error\", \"data\": null, \"request_id\": \"13e7dfcf-03b1-4398-869d-5dd173761000\", \"error\": \"Not Found\", \"error_code\": \"NOT_FOUND\", \"error_message\": \"NOT_FOUND\"}"
+    },
+    {
+      "fid": "FR05-MKT-01",
+      "label": "市场状态降级",
+      "detail": "state=NEUTRAL, reason=computed_from_reference_date=2026-04-10;market_state_degraded=true"
+    },
+    {
+      "fid": "FR06-LLM-01",
+      "label": "LLM 健康检查",
+      "http_status": 401,
+      "expected": 200,
+      "detail": "",
+      "response_preview": "{\"success\": false, \"message\": \"error\", \"data\": null, \"request_id\": \"afae1d8e-6445-4c1d-a4c1-3fecf41adb9f\", \"error\": \"UNAUTHORIZED\", \"error_code\": \"UNAUTHORIZED\", \"error_message\": \"UNAUTHORIZED\"}"
+    },
+    {
+      "fid": "FR06-LLM-02",
+      "label": "运行时门禁",
+      "http_status": 401,
+      "expected": 200,
+      "detail": "",
+      "response_preview": "{\"success\": false, \"message\": \"error\", \"data\": null, \"request_id\": \"5602e69e-8d64-4311-89bc-6da47c36dd35\", \"error\": \"UNAUTHORIZED\", \"error_code\": \"UNAUTHORIZED\", \"error_message\": \"UNAUTHORIZED\"}"
+    },
+    {
+      "fid": "FR07-SETTLE-01",
+      "label": "结算概览",
+      "http_status": 200,
+      "expected": 200,
+      "detail": "settled=12, coverage low",
+      "response_preview": "{\"success\": true, \"message\": \"ok\", \"data\": {\"window_days\": 30, \"total_reports\": 1380, \"total_settled\": 12, \"overall_win_rate\": null, \"overall_profit_loss_ratio\": null, \"overall_cumulative_return_pct\":"
+    },
+    {
+      "fid": "FR08-SIM-01",
+      "label": "模拟看板",
+      "http_status": 404,
+      "expected": 200,
+      "detail": "",
+      "response_preview": "{\"success\": false, \"message\": \"error\", \"data\": null, \"request_id\": \"c659bf4f-be63-4453-bf46-912eb6f7516c\", \"error\": \"Not Found\", \"error_code\": \"NOT_FOUND\", \"error_message\": \"NOT_FOUND\"}"
+    },
+    {
+      "fid": "FR09-AUTH-04",
+      "label": "用户信息",
+      "http_status": 404,
+      "expected": 200,
+      "detail": "",
+      "response_preview": "{\"success\": false, \"message\": \"error\", \"data\": null, \"request_id\": \"d1cdaa47-fdb9-43a6-8f87-4a4aedc89683\", \"error\": \"Not Found\", \"error_code\": \"NOT_FOUND\", \"error_message\": \"NOT_FOUND\"}"
+    },
+    {
+      "fid": "FR09-AUTH-06",
+      "label": "套餐列表",
+      "http_status": 404,
+      "expected": 200,
+      "detail": "",
+      "response_preview": "{\"success\": false, \"message\": \"error\", \"data\": null, \"request_id\": \"b6995ebe-1594-4aca-8447-76d09e624c1d\", \"error\": \"Not Found\", \"error_code\": \"NOT_FOUND\", \"error_message\": \"NOT_FOUND\"}"
+    },
+    {
+      "fid": "FR09b-CLEAN-01",
+      "label": "清理任务列表",
+      "http_status": 404,
+      "expected": 200,
+      "detail": "",
+      "response_preview": "{\"success\": false, \"message\": \"error\", \"data\": null, \"request_id\": \"a1b395b5-e33b-4b20-9a2c-e246921cf686\", \"error\": \"Not Found\", \"error_code\": \"NOT_FOUND\", \"error_message\": \"NOT_FOUND\"}"
+    },
+    {
+      "fid": "FR11-FEEDBACK-01",
+      "label": "反馈提交",
+      "http_status": 422,
+      "expected": 200,
+      "detail": "",
+      "response_preview": "{\"success\": false, \"message\": \"error\", \"data\": null, \"request_id\": \"f42c6dd3-4cc7-41bb-b2ee-3a55d0e5345b\", \"error\": \"INVALID_PAYLOAD\", \"error_code\": \"INVALID_PAYLOAD\", \"error_message\": \"INVALID_PAYLOA"
+    },
+    {
+      "fid": "FR12-ADMIN-04",
+      "label": "审计日志",
+      "http_status": 404,
+      "expected": 200,
+      "detail": "",
+      "response_preview": "{\"success\": false, \"message\": \"error\", \"data\": null, \"request_id\": \"ae9a3adb-fe8e-4cc1-8cfb-5239c56ac6d8\", \"error\": \"Not Found\", \"error_code\": \"NOT_FOUND\", \"error_message\": \"NOT_FOUND\"}"
+    },
+    {
+      "fid": "FR12-ADMIN-05",
+      "label": "系统状态",
+      "http_status": 404,
+      "expected": 200,
+      "detail": "",
+      "response_preview": "{\"success\": false, \"message\": \"error\", \"data\": null, \"request_id\": \"d1de2d19-e341-4473-b44e-069acc9a9420\", \"error\": \"Not Found\", \"error_code\": \"NOT_FOUND\", \"error_message\": \"NOT_FOUND\"}"
+    },
+    {
+      "fid": "FR13-EVENT-01",
+      "label": "事件投递",
+      "http_status": 404,
+      "expected": 200,
+      "detail": "",
+      "response_preview": "{\"success\": false, \"message\": \"error\", \"data\": null, \"request_id\": \"4239b7b2-2530-465f-aa50-924410061bef\", \"error\": \"Not Found\", \"error_code\": \"NOT_FOUND\", \"error_message\": \"NOT_FOUND\"}"
+    }
+  ]
+}

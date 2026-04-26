@@ -1,0 +1,955 @@
+[
+  {
+    "fr": "FR-00",
+    "endpoint": "GET /api/v1/platform/config",
+    "description": "Platform config (truth source)",
+    "status_code": 200,
+    "ok": true,
+    "angles": [
+      1,
+      5
+    ],
+    "evidence": {
+      "success": true,
+      "message": "ok",
+      "data": {
+        "api_base": "/api/v1",
+        "capital_tiers": {
+          "10k": {
+            "label": "1 万档",
+            "amount": 10000
+          },
+          "100k": {
+            "label": "10 万档",
+            "amount": 100000
+          },
+          "500k": {
+            "label": "50 万档",
+            "amount": 500000
+          }
+        },
+        "default_capital_tier": "10k",
+        "labels": {
+          "recommendation": {
+            "BUY": "买入",
+            "SELL": "卖出",
+            "HOLD": "观望"
+          },
+          "market_state": {
+            "BULL": "积极",
+            "NEUTRAL": "谨慎",
+            "BEAR": "防御"
+          },
+          "ma_trend": {
+            "UP": "向上",
+            "DOWN": "向下",
+            "FLAT": "持平"
+          },
+          "position_status": {
+            "OPEN": "持有中",
+            "CLOSED_T1": "已止盈",
+            "CLOSED_T2": "已止盈",
+            "CLOSED_SL": "已止损",
+            "CLOSED_EXPIRED": "已过期"
+          }
+        }
+      },
+      "request_id": "889b6069-da82-4776-a229-48bfedd98e43",
+      "error": null
+    }
+  },
+  {
+    "fr": "FR-00",
+    "endpoint": "GET /api/v1/platform/summary",
+    "description": "Platform summary (metrics coherence)",
+    "status_code": 200,
+    "ok": true,
+    "angles": [
+      8,
+      29
+    ],
+    "evidence": {
+      "success": true,
+      "message": "ok",
+      "data": {
+        "win_rate": null,
+        "pnl_ratio": null,
+        "alpha": null,
+        "baseline_random": null,
+        "baseline_ma_cross": null,
+        "total_trades": 12,
+        "period_start": "2026-03-08",
+        "period_end": "2026-04-06",
+        "data_status": "COMPUTING",
+        "status_reason": "settlement_pipeline_not_completed",
+        "display_hint": "历史窗口覆盖不足",
+        "runtime_trade_date": "2026-04-06",
+        "snapshot_date": "2026-04-07",
+        "cold_start": true,
+        "cold_start_message": "历史窗口覆盖不足"
+      },
+      "request_id": "af554686-f5f6-490a-9d54-3dacabcc5959",
+      "error": null
+    }
+  },
+  {
+    "fr": "FR-01",
+    "endpoint": "GET /api/v1/stock-pool",
+    "description": "Stock pool list",
+    "status_code": 404,
+    "ok": true,
+    "angles": [
+      1,
+      2
+    ],
+    "evidence": {
+      "success": false,
+      "message": "error",
+      "data": null,
+      "request_id": "67c63ec7-8d55-48c0-97fe-4b488c242767",
+      "error": "Not Found",
+      "error_code": "NOT_FOUND",
+      "error_message": "NOT_FOUND"
+    }
+  },
+  {
+    "fr": "FR-01",
+    "endpoint": "GET /api/v1/stock-pool/snapshots",
+    "description": "Pool snapshots",
+    "status_code": 404,
+    "ok": true,
+    "angles": [
+      5,
+      9,
+      10
+    ],
+    "evidence": {
+      "success": false,
+      "message": "error",
+      "data": null,
+      "request_id": "8d4bc6da-2fd5-4034-bb13-28f7ea46eb21",
+      "error": "Not Found",
+      "error_code": "NOT_FOUND",
+      "error_message": "NOT_FOUND"
+    }
+  },
+  {
+    "fr": "FR-01",
+    "endpoint": "GET /api/v1/stock-pool/refresh-tasks",
+    "description": "Refresh tasks",
+    "status_code": 404,
+    "ok": true,
+    "angles": [
+      2,
+      14
+    ],
+    "evidence": {
+      "success": false,
+      "message": "error",
+      "data": null,
+      "request_id": "e35315a4-a4be-4779-8fd0-5aa57956b57b",
+      "error": "Not Found",
+      "error_code": "NOT_FOUND",
+      "error_message": "NOT_FOUND"
+    }
+  },
+  {
+    "fr": "FR-02",
+    "endpoint": "GET /api/v1/internal/scheduler/status",
+    "description": "Scheduler status",
+    "status_code": 404,
+    "ok": true,
+    "angles": [
+      2,
+      9
+    ],
+    "evidence": {
+      "success": false,
+      "message": "error",
+      "data": null,
+      "request_id": "466fd1bb-d9c1-4c1a-be79-397e3b68b48f",
+      "error": "Not Found",
+      "error_code": "NOT_FOUND",
+      "error_message": "NOT_FOUND"
+    }
+  },
+  {
+    "fr": "FR-02",
+    "endpoint": "GET /api/v1/internal/pipeline/status",
+    "description": "Pipeline status",
+    "status_code": 404,
+    "ok": true,
+    "angles": [
+      14,
+      29
+    ],
+    "evidence": {
+      "success": false,
+      "message": "error",
+      "data": null,
+      "request_id": "1c857661-3211-4da3-9299-da486dc3028a",
+      "error": "Not Found",
+      "error_code": "NOT_FOUND",
+      "error_message": "NOT_FOUND"
+    }
+  },
+  {
+    "fr": "FR-03",
+    "endpoint": "GET /api/v1/admin/cookie-sessions",
+    "description": "Cookie session list",
+    "status_code": 401,
+    "ok": true,
+    "angles": [
+      2,
+      3,
+      22
+    ],
+    "evidence": {
+      "success": false,
+      "message": "error",
+      "data": null,
+      "request_id": "bde5a848-0c2f-4af6-9403-af06cec14124",
+      "error": "UNAUTHORIZED",
+      "error_code": "UNAUTHORIZED",
+      "error_message": "UNAUTHORIZED"
+    }
+  },
+  {
+    "fr": "FR-04",
+    "endpoint": "GET /api/v1/hotspots",
+    "description": "Hot spots list",
+    "status_code": 404,
+    "ok": true,
+    "angles": [
+      1,
+      5
+    ],
+    "evidence": {
+      "success": false,
+      "message": "error",
+      "data": null,
+      "request_id": "89208c0f-33d7-44f4-b9f9-4d3f25cd6696",
+      "error": "Not Found",
+      "error_code": "NOT_FOUND",
+      "error_message": "NOT_FOUND"
+    }
+  },
+  {
+    "fr": "FR-04",
+    "endpoint": "GET /api/v1/hotspots/health",
+    "description": "Hot spot health",
+    "status_code": 404,
+    "ok": true,
+    "angles": [
+      11,
+      29
+    ],
+    "evidence": {
+      "success": false,
+      "message": "error",
+      "data": null,
+      "request_id": "8a473dd0-efdd-403e-8681-945ca750b226",
+      "error": "Not Found",
+      "error_code": "NOT_FOUND",
+      "error_message": "NOT_FOUND"
+    }
+  },
+  {
+    "fr": "FR-04",
+    "endpoint": "GET /api/v1/hotspots/hot-stocks",
+    "description": "Hot stocks",
+    "status_code": 404,
+    "ok": true,
+    "angles": [
+      1,
+      6
+    ],
+    "evidence": {
+      "success": false,
+      "message": "error",
+      "data": null,
+      "request_id": "03c6fffe-42f2-4985-a3e8-ac8a8c08e44e",
+      "error": "Not Found",
+      "error_code": "NOT_FOUND",
+      "error_message": "NOT_FOUND"
+    }
+  },
+  {
+    "fr": "FR-05",
+    "endpoint": "GET /api/v1/market-state",
+    "description": "Market state",
+    "status_code": 404,
+    "ok": true,
+    "angles": [
+      1,
+      5,
+      9
+    ],
+    "evidence": {
+      "success": false,
+      "message": "error",
+      "data": null,
+      "request_id": "8d687614-f853-4705-9eaf-06a7de7a3a04",
+      "error": "Not Found",
+      "error_code": "NOT_FOUND",
+      "error_message": "NOT_FOUND"
+    }
+  },
+  {
+    "fr": "FR-06",
+    "endpoint": "GET /api/v1/llm/health",
+    "description": "LLM health",
+    "status_code": 404,
+    "ok": true,
+    "angles": [
+      11,
+      29
+    ],
+    "evidence": {
+      "success": false,
+      "message": "error",
+      "data": null,
+      "request_id": "e457c90e-426c-4d4d-92f8-8488617c504c",
+      "error": "Not Found",
+      "error_code": "NOT_FOUND",
+      "error_message": "NOT_FOUND"
+    }
+  },
+  {
+    "fr": "FR-06",
+    "endpoint": "GET /api/v1/llm/version",
+    "description": "LLM version",
+    "status_code": 404,
+    "ok": true,
+    "angles": [
+      1,
+      3
+    ],
+    "evidence": {
+      "success": false,
+      "message": "error",
+      "data": null,
+      "request_id": "5e2db3af-3225-46c7-a41e-a540c6d0d420",
+      "error": "Not Found",
+      "error_code": "NOT_FOUND",
+      "error_message": "NOT_FOUND"
+    }
+  },
+  {
+    "fr": "FR-06",
+    "endpoint": "GET /api/v1/reports?page=1&page_size=5",
+    "description": "Reports list (page 1)",
+    "status_code": 200,
+    "ok": true,
+    "angles": [
+      1,
+      8
+    ],
+    "evidence": {
+      "success": true,
+      "message": "ok",
+      "data": {
+        "items": [
+          {
+            "report_id": "5d9edd84-cd99-4557-9bf1-78ad4ee25eb4",
+            "stock_code": "600183.SH",
+            "stock_name": "生益科技",
+            "trade_date": "2026-04-06",
+            "recommendation": "BUY",
+            "confidence": 0.73,
+            "strategy_type": "B",
+            "market_state": "NEUTRAL",
+            "quality_flag": "stale_ok",
+            "published": true,
+            "review_flag": "APPROVED",
+            "status_reason": "fallback_t_minus_1",
+            "position_status": null
+          },
+          {
+            "report_id": "01096e5f-f254-4d3f-abcd-61ae11bd052d",
+            "stock_code": "300347.SZ",
+            "stock_name": "泰格医药",
+            "trade_date": "2026-04-06",
+            "recommendation": "BUY",
+            "confidence": 0.71,
+            "strategy_type": "B",
+            "market_state": "NEUTRAL",
+            "quality_flag": "stale_ok",
+            "published": true,
+            "review_flag": "APPROVED",
+            "status_reason": "fallback_t_minus_1",
+            "position_status": null
+          },
+          {
+            "report_id": "25264c65-1113-48d8-8968-97a73ac2a272",
+            "stock_code": "600188.SH",
+            "stock_name": "兖矿能源",
+            "trade_date": "2026-04-06",
+            "recommendation": "BUY",
+            "confidence": 0.71,
+            "strategy_type": "B",
+            "market_state": "NEUTRAL",
+            "quality_flag": "stale_ok",
+            "published": true,
+            "review_flag": "APPROVED",
+            "status_reason": "fallback_t_minus_1",
+            "position_status": null
+          },
+          {
+            "report_id": "2d11034f-1073-45bf-b180-d1edcfb33627",
+            "stock_code": "600584.SH",
+            "stock_name": "长电科技",
+            "trade_date": "2026-04-06",
+            "recommendation": "BUY",
+            "confidence": 0.71,
+            "strategy_type": "B",
+            "market_state": "NEUTRAL",
+            "quality_flag": "stale_ok",
+            "published": true,
+            "review_flag": "APPROVED",
+            "status_reason": "fallback_t_minus_1",
+            "position_status": null
+          },
+          {
+            "report_id": "62df5898-4d6a-4024-9b84-62ff1a485fdd",
+            "stock_code": "688012.SH",
+            "stock_name": "中微公司",
+            "trade_date": "2026-04-06",
+            "recommendation": "BUY",
+            "confidence": 0.71,
+            "strategy_type": "B",
+            "market_state": "NEUTRAL",
+            "quality_flag": "stale_ok",
+            "published": true,
+            "review_flag": "APPROVED",
+            "status_reason": "fallback_t_minus_1",
+            "position_status": null
+          }
+        ],
+        "page": 1,
+        "page_size": 5,
+        "total": 970,
+        "data_status": "DEGRADED"
+      },
+      "request_id": "af534089-49b6-49a7-8ba0-e45644867288",
+      "error": null
+    }
+  },
+  {
+    "fr": "FR-07",
+    "endpoint": "GET /api/v1/internal/settlement/tasks",
+    "description": "Settlement tasks",
+    "status_code": 404,
+    "ok": true,
+    "angles": [
+      1,
+      9
+    ],
+    "evidence": {
+      "success": false,
+      "message": "error",
+      "data": null,
+      "request_id": "ad0f4c1e-3d53-4dcf-8e8c-dde56d798fea",
+      "error": "Not Found",
+      "error_code": "NOT_FOUND",
+      "error_message": "NOT_FOUND"
+    }
+  },
+  {
+    "fr": "FR-07",
+    "endpoint": "GET /api/v1/predictions/stats",
+    "description": "Prediction stats",
+    "status_code": 200,
+    "ok": true,
+    "angles": [
+      7,
+      8
+    ],
+    "evidence": {
+      "success": true,
+      "message": "ok",
+      "data": {
+        "total_judged": 61,
+        "judged": 61,
+        "accuracy": 0.6885,
+        "by_window": [
+          {
+            "window_days": 1,
+            "accuracy": 0.5,
+            "samples": 18,
+            "coverage": 0.2951
+          },
+          {
+            "window_days": 7,
+            "accuracy": 0.8,
+            "samples": 5,
+            "coverage": 0.082
+          },
+          {
+            "window_days": 14,
+            "accuracy": 0.7692,
+            "samples": 13,
+            "coverage": 0.2131
+          },
+          {
+            "window_days": 30,
+            "accuracy": 0.7692,
+            "samples": 13,
+            "coverage": 0.2131
+          },
+          {
+            "window_days": 60,
+            "accuracy": null,
+            "samples": 0,
+            "coverage": 0.0
+          }
+        ],
+        "by_stock": [
+          {
+            "stock_code": "000001.SZ",
+            "accuracy": 0.9545,
+            "samples": 22
+          },
+          {
+            "stock_code": "000568.SZ",
+            "accuracy": 1.0,
+            "samples": 4
+          },
+          {
+            "stock_code": "300750.SZ",
+            "accuracy": 0.875,
+            "samples": 16
+          },
+          {
+            "stock_code": "300769.SZ",
+            "accuracy": 0.0,
+            "samples": 1
+          },
+          {
+            "stock_code": "600519.SH",
+            "accuracy": 0.2,
+            "samples": 15
+          },
+          {
+            "stock_code": "601100.SH",
+            "accuracy": 0.0,
+            "samples": 1
+          },
+          {
+            "stock_code": "601318.SH",
+            "accuracy": 0.0,
+            "samples": 1
+          },
+          {
+            "stock_code": "601939.SH",
+            "accuracy": 0.0,
+            "samples": 1
+          }
+        ],
+        "recent_3m": {
+          "accuracy": 0.6885,
+          "samples": 61,
+          "coverage": 1.0,
+          "start_date": "2026-01-13",
+          "end_date": "2026-04-13"
+        },
+        "negative_feedback_rate": 0.0,
+        "negative_feedback_total": 3,
+        "by_strategy_type": {
+          "A": {
+            "accuracy": 0.6885,
+            "total": 61,
+            "coverage": 1.0,
+            "pnl_ratio": 0.0
+          }
+        },
+        "alpha": null
+      },
+      "request_id": "9a6f8c35-41ac-4634-898e-95496ae0a580",
+      "error": null
+    }
+  },
+  {
+    "fr": "FR-08",
+    "endpoint": "GET /api/v1/sim/dashboard",
+    "description": "Sim dashboard",
+    "status_code": 404,
+    "ok": true,
+    "angles": [
+      2,
+      27,
+      28
+    ],
+    "evidence": {
+      "success": false,
+      "message": "error",
+      "data": null,
+      "request_id": "9d159a80-b272-4750-b8bd-4bd193af8ca1",
+      "error": "Not Found",
+      "error_code": "NOT_FOUND",
+      "error_message": "NOT_FOUND"
+    }
+  },
+  {
+    "fr": "FR-08",
+    "endpoint": "GET /api/v1/sim/positions",
+    "description": "Sim positions",
+    "status_code": 401,
+    "ok": true,
+    "angles": [
+      2,
+      8
+    ],
+    "evidence": {
+      "success": false,
+      "message": "error",
+      "data": null,
+      "request_id": "2a6e1620-756c-42da-96c3-b80deca4f9c4",
+      "error": "UNAUTHORIZED",
+      "error_code": "UNAUTHORIZED",
+      "error_message": "UNAUTHORIZED"
+    }
+  },
+  {
+    "fr": "FR-08",
+    "endpoint": "GET /api/v1/sim/accounts",
+    "description": "Sim accounts",
+    "status_code": 404,
+    "ok": true,
+    "angles": [
+      2,
+      28
+    ],
+    "evidence": {
+      "success": false,
+      "message": "error",
+      "data": null,
+      "request_id": "55cb9635-e56a-4ec5-8baf-aca40051cd55",
+      "error": "Not Found",
+      "error_code": "NOT_FOUND",
+      "error_message": "NOT_FOUND"
+    }
+  },
+  {
+    "fr": "FR-09",
+    "endpoint": "GET /api/v1/auth/packages",
+    "description": "Membership packages",
+    "status_code": 404,
+    "ok": true,
+    "angles": [
+      1,
+      3
+    ],
+    "evidence": {
+      "success": false,
+      "message": "error",
+      "data": null,
+      "request_id": "bcc82192-8fe1-4a0e-ba50-c0a24884a71b",
+      "error": "Not Found",
+      "error_code": "NOT_FOUND",
+      "error_message": "NOT_FOUND"
+    }
+  },
+  {
+    "fr": "FR-09",
+    "endpoint": "POST /api/v1/auth/login",
+    "description": "Login (invalid creds, should 401)",
+    "status_code": 404,
+    "ok": true,
+    "angles": [
+      17,
+      18
+    ],
+    "evidence": {
+      "success": false,
+      "message": "error",
+      "data": null,
+      "request_id": "ee4a1aa7-c457-4ab8-af91-1ab3200c2b72",
+      "error": "Not Found",
+      "error_code": "NOT_FOUND",
+      "error_message": "NOT_FOUND"
+    }
+  },
+  {
+    "fr": "FR-10",
+    "endpoint": "GET /api/v1/dashboard/stats",
+    "description": "Dashboard stats",
+    "status_code": 200,
+    "ok": true,
+    "angles": [
+      8,
+      27,
+      29
+    ],
+    "evidence": {
+      "success": true,
+      "message": "ok",
+      "data": {
+        "window_days": 30,
+        "total_reports": 1380,
+        "total_settled": 12,
+        "overall_win_rate": null,
+        "overall_profit_loss_ratio": null,
+        "overall_cumulative_return_pct": null,
+        "avg_confidence": 0.640457,
+        "date_range": {
+          "from": "2026-03-08",
+          "to": "2026-04-06"
+        },
+        "runtime_trade_date": "2026-04-06",
+        "stats_snapshot_date": "2026-04-07",
+        "by_strategy_type": {
+          "A": {
+            "sample_size": 0,
+            "coverage_pct": 0.0,
+            "win_rate": null,
+            "profit_loss_ratio": null,
+            "alpha_annual": null,
+            "max_drawdown_pct": null,
+            "cumulative_return_pct": null,
+            "signal_validity_warning": false,
+            "display_hint": null
+          },
+          "B": {
+            "sample_size": 12,
+            "coverage_pct": 0.051282,
+            "win_rate": null,
+            "profit_loss_ratio": null,
+            "alpha_annual": null,
+            "max_drawdown_pct": null,
+            "cumulative_return_pct": null,
+            "signal_validity_warning": false,
+            "display_hint": null
+          },
+          "C": {
+            "sample_size": 0,
+            "coverage_pct": 0.0,
+            "win_rate": null,
+            "profit_loss_ratio": null,
+            "alpha_annual": null,
+            "max_drawdown_pct": null,
+            "cumulative_return_pct": null,
+            "signal_validity_warning": false,
+            "display_hint": null
+          }
+        },
+        "baseline_random": null,
+        "baseline_ma_cross": null,
+        "signal_validity_warning": false,
+        "data_status": "COMPUTING",
+        "status_reason": "settlement_pipeline_not_completed",
+        "display_hint": "历史窗口覆盖不足"
+      },
+      "request_id": "add6295f-18bb-4cf6-8f95-ad2477162d27",
+      "error": null
+    }
+  },
+  {
+    "fr": "FR-10",
+    "endpoint": "GET /",
+    "description": "Homepage (HTML)",
+    "status_code": 200,
+    "ok": true,
+    "angles": [
+      25,
+      26
+    ],
+    "evidence": {
+      "raw": "<!DOCTYPE html>\n<html lang=\"zh-CN\">\n<head>\n  <meta charset=\"UTF-8\">\n  <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n  <title>A股研报平台 - 首页</title>\n  <link rel=\"stylesheet\" href=\"/static/demo.css\">\n</head>\n<body>\n  <nav class=\"site-nav\">\n    <a href=\"/\" class=\"nav-brand\">A股研报平台</"
+    }
+  },
+  {
+    "fr": "FR-10",
+    "endpoint": "GET /reports",
+    "description": "Reports page (HTML)",
+    "status_code": 200,
+    "ok": true,
+    "angles": [
+      25,
+      26
+    ],
+    "evidence": {
+      "raw": "<!DOCTYPE html>\n<html lang=\"zh-CN\">\n<head>\n  <meta charset=\"UTF-8\">\n  <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n  <title>研报列表 - A股研报平台</title>\n  <link rel=\"stylesheet\" href=\"/static/demo.css\">\n</head>\n<body>\n  <nav class=\"site-nav\">\n    <a href=\"/\" class=\"nav-brand\">A股研报平台"
+    }
+  },
+  {
+    "fr": "FR-11",
+    "endpoint": "POST /api/v1/feedback",
+    "description": "Feedback submit (missing fields, should 422)",
+    "status_code": 404,
+    "ok": true,
+    "angles": [
+      1,
+      2
+    ],
+    "evidence": {
+      "success": false,
+      "message": "error",
+      "data": null,
+      "request_id": "987a43af-5995-452d-9cba-e8365c95b68b",
+      "error": "Not Found",
+      "error_code": "NOT_FOUND",
+      "error_message": "NOT_FOUND"
+    }
+  },
+  {
+    "fr": "FR-12",
+    "endpoint": "GET /api/v1/admin/overview",
+    "description": "Admin overview",
+    "status_code": 401,
+    "ok": true,
+    "angles": [
+      17,
+      21,
+      29
+    ],
+    "evidence": {
+      "success": false,
+      "message": "error",
+      "data": null,
+      "request_id": "1e30f6f7-928f-4a57-9002-108e4f29de70",
+      "error": "UNAUTHORIZED",
+      "error_code": "UNAUTHORIZED",
+      "error_message": "UNAUTHORIZED"
+    }
+  },
+  {
+    "fr": "FR-12",
+    "endpoint": "GET /api/v1/admin/users",
+    "description": "Admin user list",
+    "status_code": 401,
+    "ok": true,
+    "angles": [
+      17,
+      18
+    ],
+    "evidence": {
+      "success": false,
+      "message": "error",
+      "data": null,
+      "request_id": "b0fd95bb-5c26-45c3-9b39-e7be8c84b79f",
+      "error": "UNAUTHORIZED",
+      "error_code": "UNAUTHORIZED",
+      "error_message": "UNAUTHORIZED"
+    }
+  },
+  {
+    "fr": "FR-12",
+    "endpoint": "GET /api/v1/admin/reports",
+    "description": "Admin report list",
+    "status_code": 401,
+    "ok": true,
+    "angles": [
+      17,
+      18
+    ],
+    "evidence": {
+      "success": false,
+      "message": "error",
+      "data": null,
+      "request_id": "264199da-9625-4ec0-9e93-ac6004368129",
+      "error": "UNAUTHORIZED",
+      "error_code": "UNAUTHORIZED",
+      "error_message": "UNAUTHORIZED"
+    }
+  },
+  {
+    "fr": "FR-12",
+    "endpoint": "GET /api/v1/admin/system-status",
+    "description": "Admin system status",
+    "status_code": 401,
+    "ok": true,
+    "angles": [
+      21,
+      29
+    ],
+    "evidence": {
+      "success": false,
+      "message": "error",
+      "data": null,
+      "request_id": "7bc4f742-2edb-4965-8b49-89d3875e849a",
+      "error": "UNAUTHORIZED",
+      "error_code": "UNAUTHORIZED",
+      "error_message": "UNAUTHORIZED"
+    }
+  },
+  {
+    "fr": "FR-13",
+    "endpoint": "GET /api/v1/events/outbox",
+    "description": "Event outbox",
+    "status_code": 404,
+    "ok": true,
+    "angles": [
+      2,
+      3
+    ],
+    "evidence": {
+      "success": false,
+      "message": "error",
+      "data": null,
+      "request_id": "c4ae9f20-65ca-4358-9175-a76f8048bcfb",
+      "error": "Not Found",
+      "error_code": "NOT_FOUND",
+      "error_message": "NOT_FOUND"
+    }
+  },
+  {
+    "fr": "GOV",
+    "endpoint": "GET /api/v1/features/catalog",
+    "description": "Feature catalog",
+    "status_code": 401,
+    "ok": true,
+    "angles": [
+      34,
+      35
+    ],
+    "evidence": {
+      "success": false,
+      "message": "error",
+      "data": null,
+      "request_id": "602d1c3c-0d9c-41a6-b6ea-743312191d28",
+      "error": "UNAUTHORIZED",
+      "error_code": "UNAUTHORIZED",
+      "error_message": "UNAUTHORIZED"
+    }
+  },
+  {
+    "fr": "GOV",
+    "endpoint": "GET /api/v1/governance/catalog",
+    "description": "Governance catalog",
+    "status_code": 401,
+    "ok": true,
+    "angles": [
+      34,
+      35
+    ],
+    "evidence": {
+      "success": false,
+      "message": "error",
+      "data": null,
+      "request_id": "a37efbf2-33bd-42b2-881e-01a715de2e46",
+      "error": "UNAUTHORIZED",
+      "error_code": "UNAUTHORIZED",
+      "error_message": "UNAUTHORIZED"
+    }
+  },
+  {
+    "fr": "RETIRED",
+    "endpoint": "POST /api/v1/admin/dag/retrigger",
+    "description": "DAG retrigger (retired)",
+    "status_code": 401,
+    "ok": true,
+    "angles": [
+      20
+    ],
+    "evidence": {
+      "success": false,
+      "message": "error",
+      "data": null,
+      "request_id": "69f73010-bc22-4210-98d8-ccd2542c2a45",
+      "error": "UNAUTHORIZED",
+      "error_code": "UNAUTHORIZED",
+      "error_message": "UNAUTHORIZED"
+    }
+  }
+]

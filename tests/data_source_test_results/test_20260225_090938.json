@@ -1,0 +1,164 @@
+{
+  "started_at": "2026-02-25T09:09:27.535846",
+  "tests": {
+    "eastmoney_realtime_600519": {
+      "status": "ok",
+      "code": "600519",
+      "name": "贵州茅台",
+      "last_price": 0.0,
+      "pct_change": 0.0,
+      "high_limit_price": 1613.48,
+      "low_limit_price": 1320.12,
+      "elapsed_s": 1.031,
+      "has_limit_price": true
+    },
+    "eastmoney_realtime_000858": {
+      "status": "ok",
+      "code": "000858",
+      "name": "五 粮 液",
+      "last_price": 0.0,
+      "pct_change": 0.0,
+      "high_limit_price": 115.68,
+      "low_limit_price": 94.64,
+      "elapsed_s": 0.779,
+      "has_limit_price": true
+    },
+    "eastmoney_kline_600519": {
+      "status": "ok",
+      "code": "600519",
+      "count": 30,
+      "latest_record": "2026-02-24,1521.00,1466.80,1524.40,1463.60,41913",
+      "earliest_record": "2026-01-06,1432.55,1428.01,1436.97,1416.53,39586",
+      "elapsed_s": 0.745
+    },
+    "eastmoney_capital_flow_600519": {
+      "status": "ok",
+      "code": "600519",
+      "count": 20,
+      "latest_record": "2026-02-24,-445960704.0,-254544.0,446215248.0,-206392032.0,-239568672.0,-7.19,-0.00,7.20,-3.33,-3.86,1466.80,-1.25,0.00,0.00",
+      "elapsed_s": 0.726
+    },
+    "eastmoney_index_sh000001": {
+      "status": "ok",
+      "index_code": "000001",
+      "name": "上证指数",
+      "count": 30,
+      "latest_record": "2026-02-24,4129.13,4117.41,4131.55,4105.94,566322249",
+      "elapsed_s": 0.728
+    },
+    "eastmoney_index_hs300": {
+      "status": "ok",
+      "index_code": "000300",
+      "name": "沪深300",
+      "count": 30,
+      "latest_record": "2026-02-24,4727.30,4707.54,4727.37,4698.35,218488890",
+      "elapsed_s": 0.835
+    },
+    "eastmoney_news_600519": {
+      "status": "ok",
+      "code": "600519",
+      "count": 0,
+      "latest_title": null,
+      "elapsed_s": 0.734
+    },
+    "margin_realtime_snapshot_600519": {
+      "status": "ok",
+      "code": "600519",
+      "name": "贵州茅台",
+      "rzye_yuan": 1252270215.0,
+      "rqye_yuan": 71500000.0,
+      "has_realtime_margin": true,
+      "note": "融资融券历史接口已失效，仅有实时快照（f277/f278）",
+      "elapsed_s": 0.794
+    },
+    "mootdx_network": {
+      "status": "ok",
+      "mode": "network",
+      "count": 1,
+      "sample": {
+        "market": 1,
+        "code": "600519",
+        "active1": 0,
+        "price": 0.0,
+        "last_close": 1466.8,
+        "open": 0.0,
+        "high": 0.0,
+        "low": 0.0,
+        "servertime": "8:45:15.006",
+        "reversed_bytes0": 8452501,
+        "reversed_bytes1": 0,
+        "vol": 0,
+        "cur_vol": 0,
+        "amount": 5.877471754111438e-39,
+        "s_vol": 0,
+        "b_vol": 0,
+        "reversed_bytes2": 0,
+        "reversed_bytes3": 0,
+        "bid1": 0.0,
+        "ask1": 0.0,
+        "bid_vol1": 0,
+        "ask_vol1": 0,
+        "bid2": 0.0,
+        "ask2": 0.0,
+        "bid_vol2": 0,
+        "ask_vol2": 0,
+        "bid3": 0.0,
+        "ask3": 0.0,
+        "bid_vol3": 0,
+        "ask_vol3": 0,
+        "bid4": 0.0,
+        "ask4": 0.0,
+        "bid_vol4": 0,
+        "ask_vol4": 0,
+        "bid5": 0.0,
+        "ask5": 0.0,
+        "bid_vol5": 0,
+        "ask_vol5": 0,
+        "reversed_bytes4": [
+          4
+        ],
+        "reversed_bytes5": 0,
+        "reversed_bytes6": 0,
+        "reversed_bytes7": 0,
+        "reversed_bytes8": 0,
+        "reversed_bytes9": 0.0,
+        "active2": 0,
+        "volume": 0
+      },
+      "elapsed_s": 0.283
+    },
+    "tdx_local_file": {
+      "status": "ok",
+      "found": [
+        {
+          "base_dir": "C:\\new_tdx",
+          "sh_file_count": 5867,
+          "sz_file_count": 5696,
+          "sample_sh": [
+            "sh000001.day",
+            "sh000002.day",
+            "sh000003.day"
+          ]
+        }
+      ]
+    },
+    "weibo_hot_search": {
+      "status": "ok",
+      "count": 50,
+      "top3": [
+        "平顶山再通报打人事件",
+        "宝马7系降价约27万",
+        "九组数据感受万马奔腾的活力春节"
+      ],
+      "has_cookie": false,
+      "note": "需要微博Cookie(SUB字段)才能获取完整数据",
+      "elapsed_s": 0.825
+    }
+  },
+  "summary": {
+    "passed": 11,
+    "total": 11,
+    "pass_rate": "11/11",
+    "critical_issues": []
+  }
+}

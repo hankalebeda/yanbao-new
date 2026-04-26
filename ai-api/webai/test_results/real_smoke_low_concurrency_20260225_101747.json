@@ -1,0 +1,100 @@
+{
+  "started_at": "2026-02-25T10:17:22.843497",
+  "mode": "real_smoke_low_concurrency",
+  "constraints": {
+    "sequential": true,
+    "providers": [
+      "chatgpt",
+      "deepseek",
+      "gemini",
+      "qwen"
+    ],
+    "calls_per_provider": 1,
+    "inter_call_sleep_s": 6.0,
+    "timeout_s": 120,
+    "retry": 0
+  },
+  "providers": {
+    "chatgpt": {
+      "pass_count": 0,
+      "total": 1,
+      "results": [
+        {
+          "attempt": 1,
+          "status_code": 0,
+          "code": -1,
+          "elapsed_wall_s": 0.01,
+          "expected": "CASE-REAL_CHATGPT_1771985843|OK|OK",
+          "response_preview": "",
+          "match_expected": false,
+          "error": "[WinError 10054] 远程主机强迫关闭了一个现有的连接。",
+          "raw": null,
+          "pass": false
+        }
+      ]
+    },
+    "deepseek": {
+      "pass_count": 0,
+      "total": 1,
+      "results": [
+        {
+          "attempt": 1,
+          "status_code": 0,
+          "code": -1,
+          "elapsed_wall_s": 0.0,
+          "expected": "CASE-REAL_DEEPSEEK_1771985849|OK|OK",
+          "response_preview": "",
+          "match_expected": false,
+          "error": "Expecting value: line 1 column 1 (char 0)",
+          "raw": null,
+          "pass": false
+        }
+      ]
+    },
+    "gemini": {
+      "pass_count": 0,
+      "total": 1,
+      "results": [
+        {
+          "attempt": 1,
+          "status_code": 0,
+          "code": -1,
+          "elapsed_wall_s": 0.0,
+          "expected": "CASE-REAL_GEMINI_1771985855|OK|OK",
+          "response_preview": "",
+          "match_expected": false,
+          "error": "Expecting value: line 1 column 1 (char 0)",
+          "raw": null,
+          "pass": false
+        }
+      ]
+    },
+    "qwen": {
+      "pass_count": 0,
+      "total": 1,
+      "results": [
+        {
+          "attempt": 1,
+          "status_code": 0,
+          "code": -1,
+          "elapsed_wall_s": 0.0,
+          "expected": "CASE-REAL_QWEN_1771985861|OK|OK",
+          "response_preview": "",
+          "match_expected": false,
+          "error": "Expecting value: line 1 column 1 (char 0)",
+          "raw": null,
+          "pass": false
+        }
+      ]
+    }
+  },
+  "close_all": {
+    "status_code": 0,
+    "error": "Expecting value: line 1 column 1 (char 0)"
+  },
+  "finished_at": "2026-02-25T10:17:47.477002",
+  "summary": {
+    "total": 4,
+    "passed": 0
+  }
+}

@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>统计看板 - A股研报平台</title>
+  <link rel="stylesheet" href="/static/demo.css">
+  <style>
+    /* 统计看板专项样式 */
+    .db-header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: var(--space-3); margin-bottom: var(--space-5); }
+    .db-header h1 { margin: 0; }
+    .db-window-tabs { display: flex; gap: 4px; background: var(--bg-alt); padding: 4px; border-radius: var(--radius); border: 1px solid var(--border); }
+    .db-window-tab { padding: 6px 14px; border-radius: var(--radius-sm); font-size: var(--fs-sm); font-weight: 500; color: var(--muted); cursor: pointer; border: none; background: transparent; font-family: var(--font-body); transition: all .15s; }
+    .db-window-tab:hover { color: var(--accent); }
+    .db-window-tab.active { background: var(--card); color: var(--accent); font-weight: 700; box-shadow: var(--shadow); }
+
+    /* 摘要横幅 */
+    .db-summary-bar { display: grid; grid-template-columns: repeat(2, 1fr); gap: var(--space-3); margin-bottom: var(--space-5); }
+    @media (min-width: 540px) { .db-summary-bar { grid-template-columns: repeat(4, 1fr); } }
+    .db-sum-card { background: var(--card); border: 1px solid rgba(226,232,240,.6); border-radius: var(--radius); padding: 16px 18px; box-shadow: var(--shadow); }
+    .db-sum-label { font-size: 11px; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: .04em; margin-bottom: 6px; }
+    .db-sum-val { font-size: var(--fs-3xl); font-weight: 700; font-family: var(--font-display); color: var(--ink); letter-spacing: -.02em; line-height: 1.1; }
+    .db-sum-val.positive { color: var(--buy); }
+    .db-sum-val.warn { color: var(--hold); }
+    .db-sum-sub { font-size: 11px; color: var(--muted); margin-top: 4px; }
+
+    /* 日期区间条 */
+    .db-date-bar { display: flex; align-items: center; gap: var(--space-3); margin-bottom: var(--space-5); padding: 10px 16px; background: var(--card); border-radius: var(--radius-sm); border: 1px solid var(--border); font-size: var(--fs-sm); flex-wrap: wrap; }
+    .db-date-label { color: var(--muted); font-size: var(--fs-xs); font-weight: 600; text-transform: uppercase; }
+    .db-date-val { font-weight: 600; color: var(--ink); font-family: var(--font-display); }
+
+    /* 策略卡 */
+    .db-strategy-grid { display: grid; grid-template-columns: repeat(1, 1fr); gap: var(--space-4); margin-bottom: var(--space-5); }
+    @media (min-width: 480px) { .db-strategy-grid { grid-template-columns: repeat(3, 1fr); } }
+    .db-strategy-card { background: var(--card); border: 1px solid rgba(226,232,240,.6); border-radius: var(--radius-lg); padding: var(--card-pad); box-shadow: var(--shadow); transition: box-shadow .15s; position: relative; overflow: hidden; }
+    .db-strategy-card:hover { box-shadow: var(--shadow-md); }
+    .db-strategy-card::before { content:''; position:absolute; top:0; left:0; right:0; height:3px; border-radius: var(--radius-lg) var(--radius-lg) 0 0; }
+    .db-strategy-card.type-a::before { background: var(--type-a); }
+    .db-strategy-card.type-b::before { background: var(--type-b); }
+    .db-strategy-card.type-c::before { background: var(--type-c); }
+    .db-strategy-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-3); }
+    .db-strategy-name { font-size: var(--fs-xs); font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; }
+    .db-strategy-win { font-size: var(--fs-3xl); font-weight: 700; font-family: var(--font-display); letter-spacing: -.02em; line-height: 1; margin-bottom: 6px; }
+    .db-strategy-win.positive { color: var(--buy); }
+    .db-strategy-win.muted-val { color: var(--muted); font-size: var(--fs-xl); }
+    .db-strategy-stats { display: flex; flex-direction: column; gap: 4px; }
+    .db-strategy-stat { display: flex; justify-content: space-between; align-items: center; font-size: var(--fs-xs); }
+    .db-strategy-stat-label { color: var(--muted); }
+    .db-strategy-stat-val { font-weight: 600; color: var(--ink); }
+    .db-strategy-hint { font-size: 11px; color: var(--muted); margin-top: var(--space-2); }
+
+    /* 状态条幅 */
+    .db-status-bar { padding: 10px 16px; background: var(--hold-bg); border: 1px solid rgba(217,119,6,.2); border-radius: var(--radius-sm); font-size: var(--fs-sm); color: #92400e; margin-bottom: var(--space-4); display: none; }
+    .db-status-bar.error { background: var(--sell-bg); border-color: rgba(220,38,38,.2); color: #991b1b; }
+    .db-warning-bar { padding: 10px 16px; background: #fff7ed; border: 1px solid rgba(234,88,12,.2); border-radius: var(--radius-sm); font-size: var(--fs-sm); color: #9a3412; margin-bottom: var(--space-4); display: none; }
+  </style>
+</head>
+<body>
+  {% include "_site_nav.html" %}
+
+  <main class="container page-shell">
+    {% set is_admin = current_user and (current_user.role or '')|lower in ['admin', 'super_admin'] %}
+    {% set is_paid = current_user and (current_user.tier or current_user.membership_level or '') in ['Pro', 'Enterprise'] %}
+    <section class="page-hero">
+      <div class="page-hero-main">
+        <p class="page-eyebrow">统计复盘</p>
+        <h1>统计看板</h1>
+        <p class="page-summary">本页固定使用 FR-07 信号结算口径，关注窗口内已结算 BUY 信号的真实表现。它回答的是“策略最近跑得怎么样”，不是“当前持仓赚了多少”。</p>
+      </div>
+      <aside class="page-hero-aside">
+        <div class="page-pill-group">
+          <span class="page-pill">FR-07 结算口径</span>
+          <span class="page-pill">窗口切换</span>
+          <span class="page-pill">基线对照</span>
+        </div>
+        <div class="page-note-card">
+          <strong>看板读法</strong><br>
+          先看总体胜率和盈亏比，再看策略分组，最后用基线对照确认信号是否真有超额效果。
+        </div>
+      </aside>
+    </section>
+
+    <div class="page-nav-grid">
+      <a class="page-nav-card" href="/">
+        <span class="page-nav-kicker">今日入口</span>
+        <span class="page-nav-title">返回首页</span>
+        <span class="page-nav-text">看今天的数据状态、核心池和最新研报是否已经准备好。</span>
+      </a>
+      <a class="page-nav-card" href="/reports">
+        <span class="page-nav-kicker">历史回看</span>
+        <span class="page-nav-title">研报列表</span>
+        <span class="page-nav-text">从统计异常点回跳到具体研报，交叉验证结论与样本来源。</span>
+      </a>
+      {% if current_user and (is_admin or is_paid) %}
+      <a class="page-nav-card" href="/portfolio/sim-dashboard">
+        <span class="page-nav-kicker">付费区</span>
+        <span class="page-nav-title">模拟收益</span>
+        <span class="page-nav-text">切换到 FR-08 模拟实盘口径，查看当前仓位与权益曲线。</span>
+      </a>
+      {% endif %}
+    </div>
+
+    <!-- ① 标题 + 窗口切换 -->
+    <div class="db-header">
+      <div>
+        <p class="page-eyebrow" style="color:var(--muted);margin-bottom:6px;">窗口选择</p>
+        <h2 class="page-title" style="margin:0">统计窗口</h2>
+      </div>
+      <div class="db-window-tabs" id="window-tabs">
+        <button class="db-window-tab" data-window="1">1日</button>
+        <button class="db-window-tab" data-window="7">7日</button>
+        <button class="db-window-tab" data-window="14">14日</button>
+        <button class="db-window-tab active" data-window="30">30日</button>
+        <button class="db-window-tab" data-window="60">60日</button>
+      </div>
+    </div>
+
+    <!-- 状态提示 -->
+    <div id="dashboard-status" class="db-status-bar"></div>
+    <div id="dashboard-warning" class="db-warning-bar"></div>
+
+    <!-- ② 日期区间 -->
+    <div class="db-date-bar">
+      <span class="db-date-label">统计区间</span>
+      <span class="db-date-val" id="date-range">加载中…</span>
+      <span style="color:var(--border)">|</span>
+      <span class="muted" style="font-size:var(--fs-xs)">研报数 <strong id="total-reports" style="color:var(--ink)">0</strong> 份</span>
+      <span style="color:var(--border)">|</span>
+      <span class="muted" style="font-size:var(--fs-xs)">已结算 <strong id="total-settled" style="color:var(--ink)">0</strong> 份</span>
+      <span style="color:var(--border)">|</span>
+      <span class="muted" style="font-size:var(--fs-xs)" id="stats-anchor-note">统计锚点加载中...</span>
+      <span style="color:var(--border)">|</span>
+      <span class="muted" style="font-size:var(--fs-xs)">研报总数含 BUY/HOLD/SELL；已结算样本仅统计已到持有期的 BUY 信号（A T+2 / B T+3 / C T+5）</span>
+    </div>
+
+    <!-- ③ 核心绩效 4 格 -->
+    <div class="db-summary-bar">
+      <div class="db-sum-card">
+        <div class="db-sum-label">总体胜率</div>
+        <div class="db-sum-val" id="overall-win-rate">—</div>
+        <div class="db-sum-sub">已结算研报胜率</div>
+      </div>
+      <div class="db-sum-card">
+        <div class="db-sum-label">盈亏比</div>
+        <div class="db-sum-val" id="overall-pnl-ratio">—</div>
+        <div class="db-sum-sub">盈利/亏损金额比</div>
+      </div>
+      <div class="db-sum-card">
+        <div class="db-sum-label">已结算样本</div>
+        <div class="db-sum-val" id="kpi-settled">0</div>
+        <div class="db-sum-sub">可统计的研报数</div>
+      </div>
+      <div class="db-sum-card">
+        <div class="db-sum-label">研报总数</div>
+        <div class="db-sum-val" id="kpi-total">0</div>
+        <div class="db-sum-sub">窗口内生成数</div>
+      </div>
+    </div>
+
+    <!-- ④ 策略分组 -->
+    <h2 style="margin-bottom:var(--space-3)">按策略类型</h2>
+    <div class="db-strategy-grid" id="strategy-grid"></div>
+
+    <!-- ⑤ 对照基线 -->
+    <section class="card">
+      <h2 class="card-title">对照基线</h2>
+      <p class="muted" style="font-size:var(--fs-sm);margin-bottom:var(--space-4)">与随机买卖和 MA 均线交叉策略的对比，胜率显著高于基线说明策略有效。</p>
+      <div style="overflow-x:auto">
+        <table class="data-table data-table-zebra">
+          <thead>
+            <tr><th>基线</th><th>已结算样本</th><th>胜率</th><th>盈亏比</th><th>累计收益</th><th>提示</th></tr>
+          </thead>
+          <tbody id="baseline-body">
+            <tr><td colspan="6" class="muted" style="text-align:center;padding:24px">加载中...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+  </main>
+
+  <footer class="site-footer">
+    <div class="footer-inner">
+      {% include "_footer_disclaimer.html" %}
+    </div>
+  </footer>
+
+  {% include "_app_config.html" %}
+  <script src="/static/api-bridge.js"></script>
+  <script>
+    var currentWindow = 30;
+    var dashboardRequestSeq = 0;
+
+    function formatPct(value) {
+      return value == null ? '—' : (value * 100).toFixed(1) + '%';
+    }
+
+    function formatCount(value) {
+      return value == null ? '未知' : String(value);
+    }
+
+    function isSampleAccumulating(sampleSize) {
+      return sampleSize == null || Number(sampleSize) < 30;
+    }
+
+    function humanHint(value) {
+      return DATA_STATUS_CN[value] || value || '';
+    }
+
+    var DATA_STATUS_CN = {
+      'COMPUTING':'统计计算中','READY':'数据就绪','NOT_READY':'数据未就绪',
+      'DEGRADED':'部分数据同步中','stats_not_ready':'统计结果准备中',
+      'stats_history_truncated':'历史窗口覆盖不足',
+      'stats_source_degraded':'部分研报数据尚在更新','no_data':'暂无数据',
+      'ERROR':'计算出错','sample_lt_30':'样本积累中','baseline_pending':'基线对照数据计算中'
+    };
+    function statusCn(s) { return humanHint(s) || '计算中'; }
+
+    function dashboardPendingLabel(statusReason) {
+      return statusReason === 'stats_history_truncated' ? '历史覆盖不足' : '统计计算中';
+    }
+
+    function hasUsableDegradedSnapshot(dataStatus, statusReason) {
+      return dataStatus === 'DEGRADED' && statusReason === 'stats_source_degraded';
+    }
+
+    function renderStrategyCards(byStrategyType, dataStatus, statusReason) {
+      var container = document.getElementById('strategy-grid');
+      var TYPE_CN = {'A':'事件驱动','B':'趋势跟踪','C':'低波套利'};
+      var TYPE_CLS = {'A':'type-a','B':'type-b','C':'type-c'};
+      var BADGE_CLS = {'A':'badge-type-a','B':'badge-type-b','C':'badge-type-c'};
+      var pendingLabel = dashboardPendingLabel(statusReason);
+      var usableDegradedSnapshot = hasUsableDegradedSnapshot(dataStatus, statusReason);
+      container.innerHTML = ['A','B','C'].map(function(key) {
+        var item = (byStrategyType || {})[key] || {};
+        var pending = dataStatus && dataStatus !== 'READY' && !usableDegradedSnapshot;
+        var accumulating = !pending && isSampleAccumulating(item.sample_size);
+        var winCls = (pending || accumulating) ? 'muted-val' : (item.win_rate > 0.55 ? 'positive' : '');
+        var hintParts = [];
+        if (pending) hintParts.push(pendingLabel);
+        if (accumulating) hintParts.push('样本积累中');
+        if (item.display_hint) hintParts.push(humanHint(item.display_hint));
+        if (item.signal_validity_warning) hintParts.push('当前信号有效性低于随机基线');
+        var hintText = Array.from(new Set(hintParts.filter(Boolean))).join(' · ');
+        return '<div class="db-strategy-card ' + TYPE_CLS[key] + '">' +
+          '<div class="db-strategy-header">' +
+            '<span class="db-strategy-name">策略 ' + key + '</span>' +
+            '<span class="badge ' + BADGE_CLS[key] + '">' + TYPE_CN[key] + '</span>' +
+          '</div>' +
+          (pending
+            ? '<div class="db-strategy-win muted-val">' + pendingLabel + '</div>' +
+              '<div class="db-strategy-stats">' +
+                '<div class="db-strategy-stat"><span class="db-strategy-stat-label">已结算样本</span><span class="db-strategy-stat-val">' + (item.sample_size || 0) + '</span></div>' +
+                '<div class="db-strategy-stat"><span class="db-strategy-stat-label">覆盖率</span><span class="db-strategy-stat-val">' + formatPct(item.coverage_pct) + '</span></div>' +
+                '<div class="db-strategy-stat"><span class="db-strategy-stat-label">胜率</span><span class="db-strategy-stat-val">' + pendingLabel + '</span></div>' +
+              '</div>'
+            : accumulating
+            ? '<div class="db-strategy-win muted-val">样本积累中</div>' +
+              '<div class="db-strategy-stats">' +
+                '<div class="db-strategy-stat"><span class="db-strategy-stat-label">已结算样本</span><span class="db-strategy-stat-val">' + (item.sample_size || 0) + '</span></div>' +
+                '<div class="db-strategy-stat"><span class="db-strategy-stat-label">覆盖率</span><span class="db-strategy-stat-val">' + formatPct(item.coverage_pct) + '</span></div>' +
+              '</div>'
+            : '<div class="db-strategy-win ' + winCls + '">' + formatPct(item.win_rate) + '</div>' +
+              '<div class="db-strategy-stats">' +
+                '<div class="db-strategy-stat"><span class="db-strategy-stat-label">盈亏比</span><span class="db-strategy-stat-val">' + (item.profit_loss_ratio == null ? '—' : Number(item.profit_loss_ratio).toFixed(2)) + '</span></div>' +
+                '<div class="db-strategy-stat"><span class="db-strategy-stat-label">已结算样本</span><span class="db-strategy-stat-val">' + (item.sample_size || 0) + '</span></div>' +
+                '<div class="db-strategy-stat"><span class="db-strategy-stat-label">覆盖率</span><span class="db-strategy-stat-val">' + formatPct(item.coverage_pct) + '</span></div>' +
+                '<div class="db-strategy-stat"><span class="db-strategy-stat-label">年化 Alpha</span><span class="db-strategy-stat-val">' + formatPct(item.alpha_annual) + '</span></div>' +
+              '</div>'
+          ) +
+          (hintText ? '<div class="db-strategy-hint">' + hintText + '</div>' : '') +
+        '</div>';
+      }).join('');
+    }
+
+    var BASELINE_CN = { 'baseline_random':'随机基线', 'baseline_ma_cross':'MA 交叉基线' };
+    function renderBaselineRows(data) {
+      var rows = [['baseline_random', data.baseline_random], ['baseline_ma_cross', data.baseline_ma_cross]]
+        .filter(function(e) { return e[1] !== undefined; });
+      var body = document.getElementById('baseline-body');
+      var pendingLabel = dashboardPendingLabel(data.status_reason);
+      var usableDegradedSnapshot = hasUsableDegradedSnapshot(data.data_status, data.status_reason);
+      body.innerHTML = rows.length
+        ? rows.map(function(entry) {
+            var name = BASELINE_CN[entry[0]] || entry[0]; var item = entry[1];
+            if (!item) return '<tr><td>' + name + '</td><td colspan="5" class="muted">' + pendingLabel + '</td></tr>';
+            var accumulating = (data.data_status === 'READY' || usableDegradedSnapshot) && isSampleAccumulating(item.sample_size);
+            var hintText = accumulating ? (item.display_hint ? humanHint(item.display_hint) : '样本积累中') : (item.display_hint ? humanHint(item.display_hint) : '—');
+            return '<tr>' +
+              '<td style="font-weight:500">' + name + '</td>' +
+              '<td>' + (item.sample_size || 0) + '</td>' +
+              '<td>' + (accumulating ? '<span class="muted">样本积累中</span>' : formatPct(item.win_rate)) + '</td>' +
+              '<td>' + (accumulating ? '<span class="muted">样本积累中</span>' : (item.profit_loss_ratio == null ? '—' : Number(item.profit_loss_ratio).toFixed(2))) + '</td>' +
+              '<td>' + (accumulating ? '<span class="muted">样本积累中</span>' : formatPct(item.cumulative_return_pct)) + '</td>' +
+              '<td class="muted">' + hintText + '</td>' +
+            '</tr>';
+          }).join('')
+        : '<tr><td colspan="6" class="muted" style="text-align:center;padding:24px">暂无基线数据</td></tr>';
+    }
+
+    function resetDashboardView(message) {
+      var reason = message || '未知错误';
+      var winRateEl = document.getElementById('overall-win-rate');
+      var pnlEl = document.getElementById('overall-pnl-ratio');
+      document.getElementById('date-range').textContent = '加载失败';
+      document.getElementById('total-reports').textContent = '0';
+      document.getElementById('total-settled').textContent = '0';
+      document.getElementById('stats-anchor-note').textContent = '统计接口加载失败：' + reason;
+      document.getElementById('kpi-settled').textContent = '0';
+      document.getElementById('kpi-total').textContent = '0';
+      winRateEl.textContent = '—';
+      pnlEl.textContent = '—';
+      winRateEl.classList.remove('positive', 'warn');
+      pnlEl.classList.remove('positive', 'warn');
+      document.getElementById('strategy-grid').innerHTML =
+        '<div class="db-strategy-card"><div class="db-strategy-name">策略分布</div><div class="db-strategy-win muted-val">加载失败</div><div class="db-strategy-hint">统计接口暂不可用：' + reason + '</div></div>';
+      document.getElementById('baseline-body').innerHTML =
+        '<tr><td colspan="6" class="muted" style="text-align:center;padding:24px">⚠ 统计接口加载失败：' + reason + '</td></tr>';
+    }
+
+    async function loadDashboard() {
+      var requestSeq = ++dashboardRequestSeq;
+      var statusEl = document.getElementById('dashboard-status');
+      var warningEl = document.getElementById('dashboard-warning');
+      statusEl.style.display = 'none';
+      statusEl.textContent = '';
+      warningEl.style.display = 'none';
+      warningEl.textContent = '';
+      var response = await getDashboardStats(currentWindow);
+      if (requestSeq !== dashboardRequestSeq) {
+        return;
+      }
+      if (!response.success) {
+        resetDashboardView(response.message || response.error_code || '请稍后重试');
+        statusEl.style.display = 'block';
+        statusEl.className = 'db-status-bar error';
+        statusEl.textContent = '⚠ 请求失败 · ' + (response.message || '请稍后重试');
+        return;
+      }
+      var data = response.data || {};
+      if (data.signal_validity_warning) {
+        warningEl.style.display = 'block';
+        warningEl.textContent = '风险提示：当前信号有效性低于随机水平，建议谨慎参考。';
+      }
+      if (data.data_status && (data.data_status !== 'READY' || data.status_reason || data.display_hint)) {
+        statusEl.style.display = 'block';
+        statusEl.className = 'db-status-bar';
+        var parts = [statusCn(data.data_status)];
+        if (data.status_reason) parts.push(statusCn(data.status_reason));
+        if (data.display_hint) parts.push(humanHint(data.display_hint));
+        statusEl.textContent = parts.join(' · ');
+      } else {
+        statusEl.textContent = '';
+      }
+
+      var dateRange = data.date_range || {};
+      document.getElementById('date-range').textContent = (dateRange.from || '未知') + ' ~ ' + (dateRange.to || '未知');
+      document.getElementById('total-reports').textContent = formatCount(data.total_reports);
+      document.getElementById('total-settled').textContent = formatCount(data.total_settled);
+      var statsAnchorNote = '窗口截至 ' + (dateRange.to || '未知');
+      if (data.stats_snapshot_date && data.stats_snapshot_date !== dateRange.to) {
+        statsAnchorNote += '；最新完整绩效快照 ' + data.stats_snapshot_date;
+      } else {
+        statsAnchorNote += '；绩效快照已对齐';
+      }
+      statsAnchorNote += '；研报总数含 BUY/HOLD/SELL';
+      if ((data.total_reports || 0) > 0 && (data.total_settled || 0) === 0) {
+        statsAnchorNote += '；已结算仅统计持有期已完成的历史 BUY 信号，当日报告不计入已结算样本';
+      }
+      document.getElementById('stats-anchor-note').textContent = statsAnchorNote;
+      document.getElementById('kpi-settled').textContent = formatCount(data.total_settled);
+      document.getElementById('kpi-total').textContent = formatCount(data.total_reports);
+
+      var insufficient = data.total_settled == null || data.total_settled < 30 || data.overall_win_rate == null;
+      var pendingStats = data.data_status && data.data_status !== 'READY' && !hasUsableDegradedSnapshot(data.data_status, data.status_reason);
+      var winRateEl = document.getElementById('overall-win-rate');
+      var pnlEl = document.getElementById('overall-pnl-ratio');
+      var pendingLabel = dashboardPendingLabel(data.status_reason);
+      winRateEl.classList.remove('positive', 'warn');
+      pnlEl.classList.remove('positive');
+      if (pendingStats) {
+        winRateEl.textContent = pendingLabel;
+        winRateEl.classList.add('warn');
+        pnlEl.textContent = pendingLabel;
+      } else if (insufficient) {
+        winRateEl.textContent = '样本积累中';
+        winRateEl.classList.add('warn');
+        pnlEl.textContent = '—';
+      } else {
+        winRateEl.textContent = formatPct(data.overall_win_rate);
+        winRateEl.classList.toggle('positive', data.overall_win_rate > 0.55);
+        pnlEl.textContent = data.overall_profit_loss_ratio == null ? '—' : Number(data.overall_profit_loss_ratio).toFixed(2);
+        pnlEl.classList.toggle('positive', data.overall_profit_loss_ratio > 1.5);
+      }
+
+      renderStrategyCards(data.by_strategy_type, data.data_status, data.status_reason);
+      renderBaselineRows(data);
+    }
+
+    document.querySelectorAll('.db-window-tab').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        currentWindow = Number(btn.dataset.window || '30');
+        document.querySelectorAll('.db-window-tab').forEach(function(b) { b.classList.remove('active'); });
+        btn.classList.add('active');
+        loadDashboard();
+      });
+    });
+
+    loadDashboard();
+  </script>
+</body>
+</html>

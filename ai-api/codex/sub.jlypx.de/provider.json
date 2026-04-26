@@ -1,0 +1,9 @@
+{
+  "name": "sub.jlypx.de",
+  "endpoint": "https://sub.jlypx.de",
+  "model": "gpt-5.4",
+  "homepage": "https://sub.jlypx.de",
+  "enabled": true,
+  "resource": "provider",
+  "app": "codex"
+}

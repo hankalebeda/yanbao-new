@@ -1,0 +1,10 @@
+{
+  "resource": "provider",
+  "name": "aimux.top",
+  "homepage": "https://aimux.top",
+  "app": "codex",
+  "model": "gpt-5.4",
+  "review_model": "gpt-5.3-codex",
+  "endpoint": "https://aimux.top/v1",
+  "enabled": true
+}

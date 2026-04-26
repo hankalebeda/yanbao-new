@@ -1,0 +1,8 @@
+{
+  "base_sha256": "b7253435210dd571f46b737d7dc609c8cc3ac05d725027fd270e644b5ea4b50b",
+  "current_sha256": "b7253435210dd571f46b737d7dc609c8cc3ac05d725027fd270e644b5ea4b50b",
+  "patch_hash": "8bafc667dab0b61ac56efe69df2826821f801a8e0170fade4439303b86ddbee7",
+  "patched_sha256": "8bafc667dab0b61ac56efe69df2826821f801a8e0170fade4439303b86ddbee7",
+  "previewed_at": "2026-03-29T20:17:29.030403+00:00",
+  "relative_path": "app/ssot_schema.py"
+}

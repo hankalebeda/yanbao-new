@@ -1,0 +1,82 @@
+﻿<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>研报生成中</title>
+  <style>
+    :root {
+      --bg:#eef4fb;
+      --card:#ffffff;
+      --ink:#10233f;
+      --muted:#5b6f8f;
+      --accent:#0f8b70;
+      --line:#d6dfec;
+    }
+    body { margin:0; font-family:"Source Han Sans SC","Noto Sans SC","Microsoft YaHei",sans-serif; background:linear-gradient(180deg,#ecf4ff 0%,#f7fbff 60%,#eef4fb 100%); color:var(--ink); }
+    .wrap { max-width:760px; margin:48px auto; padding:0 16px; }
+    .card { background:var(--card); border:1px solid var(--line); border-radius:14px; padding:20px; box-shadow:0 10px 28px rgba(15,33,64,.08); }
+    .bar { height:8px; background:#e8eef7; border-radius:999px; overflow:hidden; margin:14px 0; }
+    .bar > i { display:block; height:100%; width:36%; background:linear-gradient(90deg,#2dbb9f,#0f8b70); animation:run 1.2s ease-in-out infinite; }
+    @keyframes run { 0% { transform:translateX(-110%);} 100% { transform:translateX(320%);} }
+    .muted { color:var(--muted); font-size:14px; }
+    .mono { font-family:Consolas,Menlo,monospace; font-size:12px; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card">
+      <h2>正在生成 {{ stock_code }} 实时研报</h2>
+      <p class="muted">页面已切换为异步模式：先返回壳页，再后台生成并自动跳转到最新报告。</p>
+      <div class="bar progress-bar"><i></i></div>
+      <p id="msg" class="muted">正在拉取行情、新闻与政策数据...</p>
+      <p class="mono">status: <span id="status">running</span></p>
+      <p class="mono">attempt: <span id="attempt">0</span></p>
+    </div>
+  </div>
+
+  <script>
+    const statusUrl = {{ status_url | tojson }};
+    const viewUrl = {{ view_url | tojson }};
+    const msgEl = document.getElementById('msg');
+    const statusEl = document.getElementById('status');
+    const attemptEl = document.getElementById('attempt');
+
+    let tries = 0;
+    const maxTries = 120;
+
+    async function tick() {
+      tries += 1;
+      attemptEl.textContent = String(tries);
+      try {
+        const r = await fetch(statusUrl, { cache: 'no-store' });
+        const j = await r.json();
+        const job = (j && j.data && j.data.job) ? j.data.job : { status: 'unknown' };
+        const st = job.status || 'unknown';
+        statusEl.textContent = st;
+
+        if (job.ready) {
+          msgEl.textContent = '生成完成，正在跳转到报告页...';
+          window.location.replace(viewUrl);
+          return;
+        }
+        if (st === 'failed') {
+          msgEl.textContent = '生成失败：' + (job.error || 'unknown_error');
+          return;
+        }
+      } catch (e) {
+        statusEl.textContent = 'poll_error';
+        msgEl.textContent = '状态轮询异常，自动重试中...';
+      }
+
+      if (tries >= maxTries) {
+        msgEl.textContent = '等待超时，请稍后刷新页面重试。';
+        return;
+      }
+      setTimeout(tick, 1000);
+    }
+
+    setTimeout(tick, 200);
+  </script>
+</body>
+</html>

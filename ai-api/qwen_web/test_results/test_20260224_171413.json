@@ -1,0 +1,17 @@
+{
+  "passed": 1,
+  "total": 3,
+  "results": {
+    "single": {
+      "error": "HTTP Error 502: Bad Gateway"
+    },
+    "batch": {
+      "error": "response too short"
+    },
+    "reconnect": {
+      "response": "已经完成思考",
+      "elapsed_s": 9.02,
+      "has_citation": false
+    }
+  }
+}

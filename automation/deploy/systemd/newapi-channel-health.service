@@ -1,0 +1,20 @@
+[Unit]
+Description=NewAPI Channel Health Probe (oneshot)
+After=network.target docker.service
+Wants=docker.service
+
+[Service]
+Type=oneshot
+User=hugh
+WorkingDirectory=/home/hugh/yanbao
+Environment=NEWAPI_BASE_URL=http://localhost:3000
+Environment=NEWAPI_ADMIN_USER=naadmin
+Environment=NEWAPI_ADMIN_PASS=Qwer1234..
+ExecStart=/home/hugh/yanbao/.venv/bin/python scripts/channel_health_daemon.py --log-dir /var/log/newapi-channel-health
+TimeoutStartSec=300
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=newapi-channel-health
+
+[Install]
+WantedBy=multi-user.target

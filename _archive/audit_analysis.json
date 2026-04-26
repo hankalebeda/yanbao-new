@@ -1,0 +1,305 @@
+{
+  "timestamp": "2026-04-15T19:39:17.116189",
+  "problems": [
+    {
+      "p_level": "P1",
+      "issue_key": "P1_SETTLEMENT_COMPLETE_MISSING",
+      "finding": {
+        "angle": [
+          1,
+          5
+        ],
+        "evidence": "settlement_result 表 0 条记录，对应 2032 条已发布报告",
+        "coverage": "0%"
+      }
+    },
+    {
+      "p_level": "P1",
+      "issue_key": "P1_KLINE_COVERAGE_LOW",
+      "finding": {
+        "angle": [
+          1,
+          5,
+          9
+        ],
+        "evidence": "K-line 覆盖 451/5197 = 8.7%，预期 ≥20%",
+        "coverage": "8.7%"
+      }
+    },
+    {
+      "p_level": "P2",
+      "issue_key": "P2_STALE_OK_DOMINANT",
+      "finding": {
+        "angle": [
+          2,
+          8
+        ],
+        "evidence": "164 条报告质量标记为 stale_ok，占比 820.0%",
+        "coverage": "820.0%"
+      }
+    },
+    {
+      "p_level": "P2",
+      "issue_key": "P2_ERROR_CODE_INCONSISTENCY",
+      "finding": {
+        "angle": [
+          4,
+          26
+        ],
+        "status": 404,
+        "evidence": "404 响应缺少标准错误消息格式"
+      }
+    }
+  ],
+  "db_snapshot": {
+    "sample_reports": [
+      {
+        "report_id": "b7f952ec-e25e-40b8-af8b-1e7a54fc6ea3",
+        "stock_code": "600519.SH",
+        "recommendation": "HOLD",
+        "quality_flag": "ok",
+        "published": 1,
+        "is_deleted": 0,
+        "created_at": "2026-04-04 16:28:37.820058",
+        "updated_at": "2026-04-15 05:26:51.137813+00:00"
+      },
+      {
+        "report_id": "f727e3e0-24d4-48fe-ace2-84a302708057",
+        "stock_code": "300750.SZ",
+        "recommendation": "HOLD",
+        "quality_flag": "ok",
+        "published": 1,
+        "is_deleted": 0,
+        "created_at": "2026-04-04 16:33:59.371704",
+        "updated_at": "2026-04-15 05:26:51.135956+00:00"
+      },
+      {
+        "report_id": "7e64d222-5d9c-4512-8f8e-fbef3e96d264",
+        "stock_code": "600519.SH",
+        "recommendation": "HOLD",
+        "quality_flag": "ok",
+        "published": 1,
+        "is_deleted": 0,
+        "created_at": "2026-04-04 16:34:59.469310",
+        "updated_at": "2026-04-15 05:26:51.128180+00:00"
+      },
+      {
+        "report_id": "05834099-c588-4e01-9e87-3aaf1656509c",
+        "stock_code": "300750.SZ",
+        "recommendation": "BUY",
+        "quality_flag": "ok",
+        "published": 1,
+        "is_deleted": 0,
+        "created_at": "2026-04-04 16:42:55.884722",
+        "updated_at": "2026-04-15 05:26:50.670101+00:00"
+      },
+      {
+        "report_id": "39baaa7c-eb3d-4a2a-b010-5fa40439867e",
+        "stock_code": "600519.SH",
+        "recommendation": "HOLD",
+        "quality_flag": "ok",
+        "published": 1,
+        "is_deleted": 0,
+        "created_at": "2026-04-04 16:45:43.541098",
+        "updated_at": "2026-04-15 05:26:50.585148+00:00"
+      },
+      {
+        "report_id": "9937aa18-86d0-487e-975e-e63081dcfd83",
+        "stock_code": "000001.SZ",
+        "recommendation": "BUY",
+        "quality_flag": "ok",
+        "published": 1,
+        "is_deleted": 0,
+        "created_at": "2026-04-04 16:47:19.332378",
+        "updated_at": "2026-04-15 05:26:50.584139+00:00"
+      },
+      {
+        "report_id": "f838a278-5686-4f0f-8347-97c1d7851713",
+        "stock_code": "300750.SZ",
+        "recommendation": "BUY",
+        "quality_flag": "ok",
+        "published": 1,
+        "is_deleted": 0,
+        "created_at": "2026-04-04 16:48:47.238948",
+        "updated_at": "2026-04-15 05:26:50.583638+00:00"
+      },
+      {
+        "report_id": "5c30dc5e-5e98-478e-9fa4-3af1fba18f70",
+        "stock_code": "600519.SH",
+        "recommendation": "HOLD",
+        "quality_flag": "ok",
+        "published": 1,
+        "is_deleted": 0,
+        "created_at": "2026-04-04 16:52:24.230585",
+        "updated_at": "2026-04-15 05:26:50.456141+00:00"
+      },
+      {
+        "report_id": "752df615-bc5a-4644-8ae9-61e44d51168b",
+        "stock_code": "300750.SZ",
+        "recommendation": "BUY",
+        "quality_flag": "ok",
+        "published": 1,
+        "is_deleted": 0,
+        "created_at": "2026-04-04 16:53:59.095250",
+        "updated_at": "2026-04-15 05:26:50.264860+00:00"
+      },
+      {
+        "report_id": "1491be8f-5dde-4cc9-875e-ce53055f3c4b",
+        "stock_code": "000001.SZ",
+        "recommendation": "BUY",
+        "quality_flag": "ok",
+        "published": 1,
+        "is_deleted": 0,
+        "created_at": "2026-04-04 16:54:13.803336",
+        "updated_at": "2026-04-15 05:26:50.455113+00:00"
+      },
+      {
+        "report_id": "a5b7eba3-cf88-4bd4-9cee-f6571869fa0a",
+        "stock_code": "300750.SZ",
+        "recommendation": "HOLD",
+        "quality_flag": "ok",
+        "published": 1,
+        "is_deleted": 0,
+        "created_at": "2026-04-04 16:56:55.140528",
+        "updated_at": "2026-04-15 05:26:50.454106+00:00"
+      },
+      {
+        "report_id": "9def9424-9f22-47b2-a019-2cf11b404af4",
+        "stock_code": "000001.SZ",
+        "recommendation": "BUY",
+        "quality_flag": "ok",
+        "published": 1,
+        "is_deleted": 0,
+        "created_at": "2026-04-04 17:00:23.954827",
+        "updated_at": "2026-04-15 05:26:50.263857+00:00"
+      },
+      {
+        "report_id": "424c9aec-b3db-4e14-aa1f-1ee3aa5a7bed",
+        "stock_code": "000001.SZ",
+        "recommendation": "BUY",
+        "quality_flag": "ok",
+        "published": 1,
+        "is_deleted": 0,
+        "created_at": "2026-04-04 17:01:37.840125",
+        "updated_at": "2026-04-15 05:26:51.126669+00:00"
+      },
+      {
+        "report_id": "695f88be-55ef-4358-ab61-85a493228f05",
+        "stock_code": "300750.SZ",
+        "recommendation": "HOLD",
+        "quality_flag": "ok",
+        "published": 1,
+        "is_deleted": 0,
+        "created_at": "2026-04-04 17:03:39.702123",
+        "updated_at": "2026-04-15 05:26:51.125666+00:00"
+      },
+      {
+        "report_id": "0a192ec1-32fc-4cdb-a582-2210632b24a6",
+        "stock_code": "600519.SH",
+        "recommendation": "HOLD",
+        "quality_flag": "stale_ok",
+        "published": 1,
+        "is_deleted": 0,
+        "created_at": "2026-04-06 08:28:39.457961",
+        "updated_at": "2026-04-15 05:26:49.765054+00:00"
+      },
+      {
+        "report_id": "42a6c9f6-ecc9-4f9d-8c83-d9b19d41bc01",
+        "stock_code": "300750.SZ",
+        "recommendation": "HOLD",
+        "quality_flag": "stale_ok",
+        "published": 1,
+        "is_deleted": 0,
+        "created_at": "2026-04-06 08:30:08.224485",
+        "updated_at": "2026-04-15 05:26:49.756913+00:00"
+      },
+      {
+        "report_id": "7434e4a1-d4c5-4514-b9b7-f47dd567ce41",
+        "stock_code": "000001.SZ",
+        "recommendation": "HOLD",
+        "quality_flag": "stale_ok",
+        "published": 1,
+        "is_deleted": 0,
+        "created_at": "2026-04-06 08:31:16.528965",
+        "updated_at": "2026-04-15 05:26:49.749518+00:00"
+      },
+      {
+        "report_id": "686784ab-0eff-4582-a738-75efe0099d9b",
+        "stock_code": "000001.SZ",
+        "recommendation": "HOLD",
+        "quality_flag": "stale_ok",
+        "published": 1,
+        "is_deleted": 0,
+        "created_at": "2026-04-09 16:14:10.457704",
+        "updated_at": "2026-04-15 05:26:51.200842+00:00"
+      },
+      {
+        "report_id": "a5aedeed-23f4-446b-86e6-637a1b620a74",
+        "stock_code": "000001.SZ",
+        "recommendation": "HOLD",
+        "quality_flag": "stale_ok",
+        "published": 1,
+        "is_deleted": 0,
+        "created_at": "2026-04-09 16:50:14.271128",
+        "updated_at": "2026-04-15 05:26:51.774147+00:00"
+      },
+      {
+        "report_id": "40a23aee-8aaa-49b4-93ba-8c94c0bcec39",
+        "stock_code": "300750.SZ",
+        "recommendation": "HOLD",
+        "quality_flag": "stale_ok",
+        "published": 1,
+        "is_deleted": 0,
+        "created_at": "2026-04-09 17:01:44.483280",
+        "updated_at": "2026-04-15 05:26:51.759448+00:00"
+      }
+    ]
+  },
+  "api_responses": {
+    "reports_list": {
+      "status": 200,
+      "headers_keys": [
+        "date",
+        "server",
+        "content-length",
+        "content-type",
+        "x-request-id",
+        "x-content-type-options",
+        "x-frame-options",
+        "referrer-policy",
+        "permissions-policy"
+      ],
+      "content_type": "application/json"
+    },
+    "home": {
+      "status": 200,
+      "headers_keys": [
+        "date",
+        "server",
+        "content-length",
+        "content-type",
+        "x-request-id",
+        "x-content-type-options",
+        "x-frame-options",
+        "referrer-policy",
+        "permissions-policy"
+      ],
+      "content_type": "application/json"
+    },
+    "create_report": {
+      "status": 405,
+      "headers_keys": [
+        "date",
+        "server",
+        "content-length",
+        "content-type",
+        "x-request-id",
+        "x-content-type-options",
+        "x-frame-options",
+        "referrer-policy",
+        "permissions-policy"
+      ],
+      "content_type": "application/json"
+    }
+  }
+}

@@ -1,0 +1,8 @@
+{
+  "base_sha256": "4460f7f2b1e678c6c40383c021a0e6306b5899d3bc38c0ebc4e835f06adc118b",
+  "current_sha256": "4460f7f2b1e678c6c40383c021a0e6306b5899d3bc38c0ebc4e835f06adc118b",
+  "patch_hash": "4460f7f2b1e678c6c40383c021a0e6306b5899d3bc38c0ebc4e835f06adc118b",
+  "patched_sha256": "4460f7f2b1e678c6c40383c021a0e6306b5899d3bc38c0ebc4e835f06adc118b",
+  "previewed_at": "2026-03-30T06:27:42.441450+00:00",
+  "relative_path": "automation/kestra/README.md"
+}

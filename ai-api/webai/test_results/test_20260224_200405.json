@@ -1,0 +1,174 @@
+{
+  "started_at": "2026-02-24T20:01:31.868004",
+  "providers": {
+    "chatgpt": {
+      "single": {
+        "status_code": 200,
+        "elapsed_wall_s": 25.57,
+        "data": {
+          "provider": "chatgpt",
+          "response": "CASE-SINGLE_CHATGPT|ONE|OK",
+          "elapsed_s": 4.43,
+          "has_citation": false
+        }
+      },
+      "batch": {
+        "status_code": 200,
+        "elapsed_wall_s": 10.8,
+        "data": {
+          "provider": "chatgpt",
+          "count": 3,
+          "results": [
+            {
+              "code": "600519",
+              "name": "A1",
+              "response": "CASE-B1_CHATGPT|A1|OK",
+              "elapsed_s": 3.86,
+              "has_citation": false
+            },
+            {
+              "code": "000858",
+              "name": "A2",
+              "response": "CASE-B2_CHATGPT|A2|OK",
+              "elapsed_s": 4.41,
+              "has_citation": false
+            },
+            {
+              "code": "300750",
+              "name": "A3",
+              "response": "CASE-B3_CHATGPT|A3|OK",
+              "elapsed_s": 5.43,
+              "has_citation": false
+            }
+          ]
+        }
+      }
+    },
+    "deepseek": {
+      "single": {
+        "error": "envelope code != 0: {'code': 503, 'message': 'error', 'data': {'error_code': 3001}, 'request_id': '41c1b91b-0de6-4ed5-8d3d-fc883e1e84cf', 'error': 'DeepSeek session is not logged in. Please log in at https://chat.deepseek.com/ and retry.'}"
+      },
+      "batch": {
+        "error": "envelope code != 0: {'code': 503, 'message': 'error', 'data': {'error_code': 3001}, 'request_id': '593d389a-fa9a-4391-a1f8-6f6610e8482d', 'error': 'DeepSeek session is not logged in. Please log in at https://chat.deepseek.com/ and retry.'}"
+      }
+    },
+    "gemini": {
+      "single": {
+        "status_code": 200,
+        "elapsed_wall_s": 29.53,
+        "data": {
+          "provider": "gemini",
+          "response": "CASE-SINGLE_GEMINI|ONE|OK",
+          "elapsed_s": 13.79,
+          "has_citation": false
+        }
+      },
+      "batch": {
+        "status_code": 200,
+        "elapsed_wall_s": 14.79,
+        "data": {
+          "provider": "gemini",
+          "count": 3,
+          "results": [
+            {
+              "code": "600519",
+              "name": "A1",
+              "response": "CASE-B1_GEMINI|A1|OK",
+              "elapsed_s": 4.96,
+              "has_citation": false
+            },
+            {
+              "code": "000858",
+              "name": "A2",
+              "response": "CASE-B2_GEMINI|A2|OK",
+              "elapsed_s": 5.52,
+              "has_citation": false
+            },
+            {
+              "code": "300750",
+              "name": "A3",
+              "response": "CASE-B3_GEMINI|A3|OK",
+              "elapsed_s": 4.34,
+              "has_citation": false
+            }
+          ]
+        }
+      }
+    },
+    "qwen": {
+      "single": {
+        "error": "envelope code != 0: {'code': 503, 'message': 'error', 'data': {'error_code': 3001}, 'request_id': 'ba071674-096c-4e13-9499-4996120ca121', 'error': 'Qwen requires login for chat. Log in first and retry.'}"
+      },
+      "batch": {
+        "status_code": 200,
+        "elapsed_wall_s": 14.27,
+        "data": {
+          "provider": "qwen",
+          "count": 3,
+          "results": [
+            {
+              "code": "600519",
+              "name": "A1",
+              "response": "已经完成思考\nCASE-B1_QWEN|A1|OK",
+              "elapsed_s": 9.03,
+              "has_citation": false
+            },
+            {
+              "code": "000858",
+              "name": "A2",
+              "response": "已经完成思考\nCASE-B2_QWEN|A2|OK",
+              "elapsed_s": 9.03,
+              "has_citation": false
+            },
+            {
+              "code": "300750",
+              "name": "A3",
+              "response": "已经完成思考\nCASE-B3_QWEN|A3|OK",
+              "elapsed_s": 9.01,
+              "has_citation": false
+            }
+          ]
+        }
+      }
+    }
+  },
+  "summary": {
+    "passed": 8,
+    "total": 10
+  },
+  "session_status": {
+    "chatgpt": {
+      "provider": "chatgpt",
+      "initialized": true,
+      "ready": true,
+      "model_probe": {
+        "raw": "GPT-5.2",
+        "is_5x": true
+      }
+    },
+    "deepseek": {
+      "provider": "deepseek",
+      "initialized": true,
+      "ready": false
+    },
+    "gemini": {
+      "provider": "gemini",
+      "initialized": true,
+      "ready": true
+    },
+    "qwen": {
+      "provider": "qwen",
+      "initialized": true,
+      "ready": true
+    }
+  },
+  "close_all": {
+    "closed": true,
+    "providers": [
+      "chatgpt",
+      "deepseek",
+      "gemini",
+      "qwen"
+    ]
+  }
+}

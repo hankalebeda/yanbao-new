@@ -1,0 +1,118 @@
+{
+  "started_at": "2026-02-24T20:04:57.437823",
+  "providers": {
+    "chatgpt": {
+      "single": {
+        "status_code": 200,
+        "elapsed_wall_s": 23.76,
+        "data": {
+          "provider": "chatgpt",
+          "response": "CASE-SINGLE_CHATGPT|ONE|OK",
+          "elapsed_s": 3.93,
+          "has_citation": false
+        }
+      },
+      "batch": {
+        "status_code": 200,
+        "elapsed_wall_s": 12.87,
+        "data": {
+          "provider": "chatgpt",
+          "count": 3,
+          "results": [
+            {
+              "code": "600519",
+              "name": "A1",
+              "response": "CASE-B1_CHATGPT|A1|OK",
+              "elapsed_s": 6.48,
+              "has_citation": false
+            },
+            {
+              "code": "000858",
+              "name": "A2",
+              "response": "CASE-B2_CHATGPT|A2|OK",
+              "elapsed_s": 3.97,
+              "has_citation": false
+            },
+            {
+              "code": "300750",
+              "name": "A3",
+              "response": "CASE-B3_CHATGPT|A3|OK",
+              "elapsed_s": 4.92,
+              "has_citation": false
+            }
+          ]
+        }
+      }
+    },
+    "deepseek": {
+      "single": {
+        "error": "envelope code != 0: {'code': 503, 'message': 'error', 'data': {'error_code': 3001}, 'request_id': '11efafe7-698d-4958-90c0-4b23649f5798', 'error': 'DeepSeek session is not logged in. Please log in at https://chat.deepseek.com/ and retry.'}"
+      },
+      "batch": {
+        "error": "envelope code != 0: {'code': 503, 'message': 'error', 'data': {'error_code': 3001}, 'request_id': '0969a59f-2a89-4cd7-bcd6-d37f239182ae', 'error': 'DeepSeek session is not logged in. Please log in at https://chat.deepseek.com/ and retry.'}"
+      }
+    },
+    "gemini": {
+      "single": {
+        "error": "missing tag: expected CASE-SINGLE_GEMINI|ONE|OK got='登录\\nGemini\\n关于 Gemini\\n在新窗口中打开\\nGemini 应用\\n在新窗口中打开\\n订阅\\n在新窗口中打开\\n企业应用场景\\n在新窗口中打开\\n与 Gemini 对话\\n\\n\\n\\n\\n快速\\n\\nGemini 是一款 AI 工具，其回答未必正确无误。\\n'"
+      },
+      "batch": {
+        "error": "missing tag: expected CASE-B3_GEMINI|A3|OK got=''"
+      }
+    },
+    "qwen": {
+      "single": {
+        "status_code": 200,
+        "elapsed_wall_s": 78.38,
+        "data": {
+          "provider": "qwen",
+          "response": "已经完成思考\nCASE-SINGLE_QWEN|ONE|OK",
+          "elapsed_s": 9.01,
+          "has_citation": false
+        }
+      },
+      "batch": {
+        "error": "missing tag: expected CASE-B1_QWEN|A1|OK got='已经完成思考\\nCASE-B1_QW'"
+      }
+    }
+  },
+  "summary": {
+    "passed": 6,
+    "total": 10
+  },
+  "session_status": {
+    "chatgpt": {
+      "provider": "chatgpt",
+      "initialized": true,
+      "ready": true,
+      "model_probe": {
+        "raw": "GPT-5.2",
+        "is_5x": true
+      }
+    },
+    "deepseek": {
+      "provider": "deepseek",
+      "initialized": true,
+      "ready": false
+    },
+    "gemini": {
+      "provider": "gemini",
+      "initialized": true,
+      "ready": true
+    },
+    "qwen": {
+      "provider": "qwen",
+      "initialized": true,
+      "ready": true
+    }
+  },
+  "close_all": {
+    "closed": true,
+    "providers": [
+      "chatgpt",
+      "deepseek",
+      "gemini",
+      "qwen"
+    ]
+  }
+}

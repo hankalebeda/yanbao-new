@@ -1,0 +1,14 @@
+{
+  "name": "yanbao",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "test:demo": "playwright test tests/demo_spacing.spec.js --project=chromium"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.40.0"
+  },
+  "dependencies": {
+    "playwright-core": "^1.59.1"
+  }
+}

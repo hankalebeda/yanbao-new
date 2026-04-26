@@ -1,0 +1,2190 @@
+{
+  "results": [
+    {
+      "fr": "FR-00",
+      "endpoint": "GET /api/v1/platform/config",
+      "desc": "Platform config SSOT",
+      "status": 200,
+      "ok": true,
+      "angles": [
+        1,
+        5
+      ],
+      "evidence": {
+        "success": true,
+        "message": "ok",
+        "data": {
+          "api_base": "/api/v1",
+          "capital_tiers": {
+            "10k": {
+              "label": "1 万档",
+              "amount": 10000
+            },
+            "100k": {
+              "label": "10 万档",
+              "amount": 100000
+            },
+            "500k": {
+              "label": "50 万档",
+              "amount": 500000
+            }
+          },
+          "default_capital_tier": "10k",
+          "labels": {
+            "recommendation": {
+              "BUY": "买入",
+              "SELL": "卖出",
+              "HOLD": "观望"
+            },
+            "market_state": {
+              "BULL": "积极",
+              "NEUTRAL": "谨慎",
+              "BEAR": "防御"
+            },
+            "ma_trend": {
+              "UP": "向上",
+              "DOWN": "向下",
+              "FLAT": "持平"
+            },
+            "position_status": {
+              "OPEN": "持有中",
+              "CLOSED_T1": "已止盈",
+              "CLOSED_T2": "已止盈",
+              "CLOSED_SL": "已止损",
+              "CLOSED_EXPIRED": "已过期"
+            }
+          }
+        },
+        "request_id": "62823a14-bcbb-409d-a137-deb3a2358a80",
+        "error": null
+      }
+    },
+    {
+      "fr": "FR-00",
+      "endpoint": "GET /api/v1/platform/summary",
+      "desc": "Platform summary coherence",
+      "status": 200,
+      "ok": true,
+      "angles": [
+        8,
+        29
+      ],
+      "evidence": {
+        "success": true,
+        "message": "ok",
+        "data": {
+          "win_rate": null,
+          "pnl_ratio": null,
+          "alpha": null,
+          "baseline_random": null,
+          "baseline_ma_cross": null,
+          "total_trades": 12,
+          "period_start": "2026-03-08",
+          "period_end": "2026-04-06",
+          "data_status": "COMPUTING",
+          "status_reason": "settlement_pipeline_not_completed",
+          "display_hint": "历史窗口覆盖不足",
+          "runtime_trade_date": "2026-04-06",
+          "snapshot_date": "2026-04-07",
+          "cold_start": true,
+          "cold_start_message": "历史窗口覆盖不足"
+        },
+        "request_id": "ca93037e-2b32-48f5-826b-982e263dd96f",
+        "error": null
+      }
+    },
+    {
+      "fr": "FR-00",
+      "endpoint": "GET /health",
+      "desc": "Health check",
+      "status": 200,
+      "ok": true,
+      "angles": [
+        29
+      ],
+      "evidence": {
+        "success": true,
+        "message": "ok",
+        "data": {
+          "status": "ok",
+          "database_status": "ok",
+          "scheduler_status": "disabled",
+          "llm_router_status": "ok",
+          "checked_at": "2026-04-13T10:52:54.789813+00:00"
+        },
+        "request_id": "4e3e550b-a811-4f72-a71c-8e9f56cff4e5",
+        "error": null
+      }
+    },
+    {
+      "fr": "FR-01",
+      "endpoint": "GET /api/v1/pool/stocks",
+      "desc": "Stock pool query",
+      "status": 200,
+      "ok": true,
+      "angles": [
+        1,
+        2
+      ],
+      "evidence": {
+        "success": true,
+        "message": "ok",
+        "data": {
+          "trade_date": "2026-04-06",
+          "total": 200,
+          "items": [
+            {
+              "stock_code": "601888.SH",
+              "stock_name": "中国中免"
+            },
+            {
+              "stock_code": "601988.SH",
+              "stock_name": "中国银行"
+            },
+            {
+              "stock_code": "600177.SH",
+              "stock_name": "雅戈尔"
+            },
+            {
+              "stock_code": "000425.SZ",
+              "stock_name": "徐工机械"
+            },
+            {
+              "stock_code": "600926.SH",
+              "stock_name": "杭州银行"
+            },
+            {
+              "stock_code": "601169.SH",
+              "stock_name": "北京银行"
+            },
+            {
+              "stock_code": "002032.SZ",
+              "stock_name": "苏 泊 尔"
+            },
+            {
+              "stock_code": "600547.SH",
+              "stock_name": "山东黄金"
+            },
+            {
+              "stock_code": "601838.SH",
+              "stock_name": "成都银行"
+            },
+            {
+              "stock_code": "000625.SZ",
+              "stock_name": "长安汽车"
+            },
+            {
+              "stock_code": "603993.SH",
+              "stock_name": "洛阳钼业"
+            },
+            {
+              "stock_code": "600918.SH",
+              "stock_name": "中泰证券"
+            },
+            {
+              "stock_code": "600256.SH",
+              "stock_name": "广汇能源"
+            },
+            {
+              "stock_code": "601857.SH",
+              "stock_name": "中国石油"
+            },
+            {
+              "stock_code": "600600.SH",
+              "stock_name": "青岛啤酒"
+            },
+            {
+              "stock_code": "600406.SH",
+              "stock_name": "国电南瑞"
+            },
+            {
+              "stock_code": "688981.SH",
+              "stock_name": "中芯国际"
+            },
+            {
+              "stock_code": "600276.SH",
+              "stock_name": "恒瑞医药"
+            },
+            {
+              "stock_code": "600519.SH",
+              "stock_name": "贵州茅台"
+            },
+            {
+              "stock_code": "601728.SH",
+              "stock_name": "中国电信"
+            },
+            {
+              "stock_code": "601898.SH",
+              "stock_name": "中煤能源"
+            },
+            {
+              "stock_code": "601939.SH",
+              "stock_name": "建设银行"
+            },
+            {
+              "stock_code": "002244.SZ",
+              "stock_name": "滨江集团"
+            },
+            {
+              "stock_code": "601088.SH",
+              "stock_name": "中国神华"
+            },
+            {
+              "stock_code": "000333.SZ",
+              "stock_name": "美的集团"
+            },
+            {
+              "stock_code": "002050.SZ",
+              "stock_name": "三花智控"
+            },
+            {
+              "stock_code": "300750.SZ",
+              "stock_name": "宁德时代"
+            },
+            {
+              "stock_code": "600104.SH",
+              "stock_name": "上汽集团"
+            },
+            {
+              "stock_code": "601328.SH",
+              "stock_name": "交通银行"
+            },
+            {
+              "stock_code": "600036.SH",
+              "stock_name": "招商银行"
+            },
+            {
+              "stock_code": "002594.SZ",
+              "stock_name": "比亚迪"
+            },
+            {
+              "stock_code": "601318.SH",
+              "stock_name": "中国平安"
+            },
+            {
+              "stock_code": "000001.SZ",
+              "stock_name": "平安银行"
+            },
+            {
+              "stock_code": "601166.SH",
+              "stock_name": "兴业银行"
+            },
+            {
+              "stock_code": "601628.SH",
+              "stock_name": "中国人寿"
+            },
+            {
+              "stock_code": "601288.SH",
+              "stock_name": "农业银行"
+            },
+            {
+              "stock_code": "000858.SZ",
+              "stock_name": "五 粮 液"
+            },
+            {
+              "stock_code": "000568.SZ",
+              "stock_name": "泸州老窖"
+            },
+            {
+              "stock_code": "601899.SH",
+              "stock_name": "紫金矿业"
+            },
+            {
+              "stock_code": "601009.SH",
+              "stock_name": "南京银行"
+            },
+            {
+              "stock_code": "600941.SH",
+              "stock_name": "中国移动"
+            },
+            {
+              "stock_code": "601398.SH",
+              "stock_name": "工商银行"
+            },
+            {
+              "stock_code": "002415.SZ",
+              "stock_name": "海康威视"
+            },
+            {
+              "stock_code": "601238.SH",
+              "stock_name": "广汽集团"
+            },
+            {
+              "stock_code": "002601.SZ",
+              "stock_name": "龙佰集团"
+            },
+            {
+              "stock_code": "002714.SZ",
+              "stock_name": "牧原股份"
+            },
+            {
+              "stock_code": "000709.SZ",
+              "stock_name": "河钢股份"
+            },
+            {
+              "stock_code": "300059.SZ",
+              "stock_name": "东方财富"
+            },
+            {
+              "stock_code": "600019.SH",
+              "stock_name": "宝钢股份"
+            },
+            {
+              "stock_code": "600028.SH",
+              "stock_name": "中国石化"
+            },
+            {
+              "stock_code": "601872.SH",
+              "stock_name": "招商轮船"
+            },
+            {
+              "stock_code": "601117.SH",
+              "stock_name": "中国化学"
+            },
+            {
+              "stock_code": "600015.SH",
+              "stock_name": "华夏银行"
+            },
+            {
+              "stock_code": "601225.SH",
+              "stock_name": "陕西煤业"
+            },
+            {
+              "stock_code": "600010.SH",
+              "stock_name": "包钢股份"
+            },
+            {
+              "stock_code": "600115.SH",
+              "stock_name": "中国东航"
+            },
+            {
+              "stock_code": "600309.SH",
+              "stock_name": "万华化学"
+            },
+            {
+              "stock_code": "601919.SH",
+              "stock_name": "中远海控"
+            },
+            {
+              "stock_code": "601016.SH",
+              "stock_name": "节能风电"
+            },
+            {
+              "stock_code": "600989.SH",
+              "stock_name": "宝丰能源"
+            },
+            {
+              "stock_code": "601633.SH",
+              "stock_name": "长城汽车"
+            },
+            {
+              "stock_code": "600570.SH",
+              "stock_name": "恒生电子"
+            },
+            {
+              "stock_code": "600219.SH",
+              "stock_name": "南山铝业"
+            },
+            {
+              "stock_code": "601601.SH",
+              "stock_name": "中国太保"
+            },
+            {
+              "stock_code": "600016.SH",
+              "stock_name": "民生银行"
+            },
+            {
+              "stock_code": "600900.SH",
+              "stock_name": "长江电力"
+            },
+            {
+              "stock_code": "601012.SH",
+              "stock_name": "隆基绿能"
+            },
+            {
+              "stock_code": "601138.SH",
+              "stock_name": "工业富联"
+            },
+            {
+              "stock_code": "601669.SH",
+              "stock_name": "中国电建"
+            },
+            {
+              "stock_code": "002142.SZ",
+              "stock_name": "宁波银行"
+            },
+            {
+              "stock_code": "600741.SH",
+              "stock_name": "华域汽车"
+            },
+            {
+              "stock_code": "000895.SZ",
+              "stock_name": "双汇发展"
+            },
+            {
+              "stock_code": "600887.SH",
+              "stock_name": "伊利股份"
+            },
+            {
+              "stock_code": "600183.SH",
+              "stock_name": "生益科技"
+            },
+            {
+              "stock_code": "603369.SH",
+              "stock_name": "今世缘"
+            },
+            {
+              "stock_code": "601668.SH",
+              "stock_name": "中国建筑"
+            },
+            {
+              "stock_code": "000708.SZ",
+              "stock_name": "中信特钢"
+            },
+            {
+              "stock_code": "688235.SH",
+              "stock_name": "百济神州"
+            },
+            {
+              "stock_code": "600030.SH",
+              "stock_name": "中信证券"
+            },
+            {
+              "stock_code": "600760.SH",
+              "stock_name": "中航沈飞"
+            },
+            {
+              "stock_code": "000301.SZ",
+              "stock_name": "东方盛虹"
+            },
+            {
+              "stock_code": "600606.SH",
+              "stock_name": "绿地控股"
+            },
+            {
+              "stock_code": "601985.SH",
+              "stock_name": "中国核电"
+            },
+            {
+              "stock_code": "601211.SH",
+              "stock_name": "国泰海通"
+            },
+            {
+              "stock_code": "600050.SH",
+              "stock_name": "中国联通"
+            },
+            {
+              "stock_code": "600048.SH",
+              "stock_name": "保利发展"
+            },
+            {
+              "stock_code": "601390.SH",
+              "stock_name": "中国中铁"
+            },
+            {
+              "stock_code": "688396.SH",
+              "stock_name": "华润微"
+            },
+            {
+              "stock_code": "300124.SZ",
+              "stock_name": "汇川技术"
+            },
+            {
+              "stock_code": "600188.SH",
+              "stock_name": "兖矿能源"
+            },
+            {
+              "stock_code": "601111.SH",
+              "stock_name": "中国国航"
+            },
+            {
+              "stock_code": "603259.SH",
+              "stock_name": "药明康德"
+            },
+            {
+              "stock_code": "000878.SZ",
+              "stock_name": "云南铜业"
+            },
+            {
+              "stock_code": "000776.SZ",
+              "stock_name": "广发证券"
+            },
+            {
+              "stock_code": "000728.SZ",
+              "stock_name": "国元证券"
+            },
+            {
+              "stock_code": "003816.SZ",
+              "stock_name": "中国广核"
+            },
+            {
+              "stock_code": "688111.SH",
+              "stock_name": "金山办公"
+            },
+            {
+              "stock_code": "600886.SH",
+              "stock_name": "国投电力"
+            },
+            {
+              "stock_code": "601155.SH",
+              "stock_name": "新城控股"
+            },
+            {
+              "stock_code": "600025.SH",
+              "stock_name": "华能水电"
+            },
+            {
+              "stock_code": "601336.SH",
+              "stock_name": "新华保险"
+            },
+            {
+              "stock_code": "601229.SH",
+              "stock_name": "上海银行"
+            },
+            {
+              "stock_code": "000157.SZ",
+              "stock_name": "中联重科"
+            },
+            {
+              "stock_code": "300015.SZ",
+              "stock_name": "爱尔眼科"
+            },
+            {
+              "stock_code": "688012.SH",
+              "stock_name": "中微公司"
+            },
+            {
+              "stock_code": "601006.SH",
+              "stock_name": "大秦铁路"
+            },
+            {
+              "stock_code": "600031.SH",
+              "stock_name": "三一重工"
+            },
+            {
+              "stock_code": "600690.SH",
+              "stock_name": "海尔智家"
+            },
+            {
+              "stock_code": "000538.SZ",
+              "stock_name": "云南白药"
+            },
+            {
+              "stock_code": "600660.SH",
+              "stock_name": "福耀玻璃"
+            },
+            {
+              "stock_code": "000651.SZ",
+              "stock_name": "格力电器"
+            },
+            {
+              "stock_code": "300274.SZ",
+              "stock_name": "阳光电源"
+            },
+            {
+              "stock_code": "600332.SH",
+              "stock_name": "白云山"
+            },
+            {
+              "stock_code": "601688.SH",
+              "stock_name": "华泰证券"
+            },
+            {
+              "stock_code": "000725.SZ",
+              "stock_name": "京东方Ａ"
+            },
+            {
+              "stock_code": "600837.SH",
+              "stock_name": "海通证券"
+            },
+            {
+              "stock_code": "000423.SZ",
+              "stock_name": "东阿阿胶"
+            },
+            {
+              "stock_code": "300014.SZ",
+              "stock_name": "亿纬锂能"
+            },
+            {
+              "stock_code": "000400.SZ",
+              "stock_name": "许继电气"
+            },
+            {
+              "stock_code": "600150.SH",
+              "stock_name": "中国船舶"
+            },
+            {
+              "stock_code": "002475.SZ",
+              "stock_name": "立讯精密"
+            },
+            {
+              "stock_code": "600703.SH",
+              "stock_name": "三安光电"
+            },
+            {
+              "stock_code": "600000.SH",
+              "stock_name": "浦发银行"
+            },
+            {
+              "stock_code": "600438.SH",
+              "stock_name": "通威股份"
+            },
+            {
+              "stock_code": "688036.SH",
+              "stock_name": "传音控股"
+            },
+            {
+              "stock_code": "300308.SZ",
+              "stock_name": "中际旭创"
+            },
+            {
+              "stock_code": "300760.SZ",
+              "stock_name": "迈瑞医疗"
+            },
+            {
+              "stock_code": "600585.SH",
+              "stock_name": "海螺水泥"
+            },
+            {
+              "stock_code": "601989.SH",
+              "stock_name": "中国重工"
+            },
+            {
+              "stock_code": "600029.SH",
+              "stock_name": "南方航空"
+            },
+            {
+              "stock_code": "603288.SH",
+              "stock_name": "海天味业"
+            },
+            {
+              "stock_code": "000596.SZ",
+              "stock_name": "古井贡酒"
+            },
+            {
+              "stock_code": "000963.SZ",
+              "stock_name": "华东医药"
+            },
+            {
+              "stock_code": "601800.SH",
+              "stock_name": "中国交建"
+            },
+            {
+              "stock_code": "000768.SZ",
+              "stock_name": "中航西飞"
+            },
+            {
+              "stock_code": "600893.SH",
+              "stock_name": "航发动力"
+            },
+            {
+              "stock_code": "000002.SZ",
+              "stock_name": "万  科Ａ"
+            },
+            {
+              "stock_code": "688303.SH",
+              "stock_name": "大全能源"
+            },
+            {
+              "stock_code": "002236.SZ",
+              "stock_name": "大华股份"
+            },
+            {
+              "stock_code": "603986.SH",
+              "stock_name": "兆易创新"
+            },
+            {
+              "stock_code": "600999.SH",
+              "stock_name": "招商证券"
+            },
+            {
+              "stock_code": "300661.SZ",
+              "stock_name": "圣邦股份"
+            },
+            {
+              "stock_code": "000661.SZ",
+              "stock_name": "长春高新"
+            },
+            {
+              "stock_code": "601186.SH",
+              "stock_name": "中国铁建"
+            },
+            {
+              "stock_code": "002241.SZ",
+              "stock_name": "歌尔股份"
+            },
+            {
+              "stock_code": "600584.SH",
+              "stock_name": "长电科技"
+            },
+            {
+              "stock_code": "603501.SH",
+              "stock_name": "豪威集团"
+            },
+            {
+              "stock_code": "601021.SH",
+              "stock_name": "春秋航空"
+            },
+            {
+              "stock_code": "002709.SZ",
+              "stock_name": "天赐材料"
+            },
+            {
+              "stock_code": "600588.SH",
+              "stock_name": "用友网络"
+            },
+            {
+              "stock_code": "002304.SZ",
+              "stock_name": "洋河股份"
+            },
+            {
+              "stock_code": "002230.SZ",
+              "stock_name": "科大讯飞"
+            },
+            {
+              "stock_code": "002460.SZ",
+              "stock_name": "赣锋锂业"
+            },
+            {
+              "stock_code": "600809.SH",
+              "stock_name": "山西汾酒"
+            },
+            {
+              "stock_code": "688008.SH",
+              "stock_name": "澜起科技"
+            },
+            {
+              "stock_code": "002371.SZ",
+              "stock_name": "北方华创"
+            },
+            {
+              "stock_code": "002129.SZ",
+              "stock_name": "TCL中环"
+            },
+            {
+              "stock_code": "000786.SZ",
+              "stock_name": "北新建材"
+            },
+            {
+              "stock_code": "000069.SZ",
+              "stock_name": "华侨城Ａ"
+            },
+            {
+              "stock_code": "000977.SZ",
+              "stock_name": "浪潮信息"
+            },
+            {
+              "stock_code": "001979.SZ",
+              "stock_name": "招商蛇口"
+            },
+            {
+              "stock_code": "603799.SH",
+              "stock_name": "华友钴业"
+            },
+            {
+              "stock_code": "601100.SH",
+              "stock_name": "恒立液压"
+            },
+            {
+              "stock_code": "300408.SZ",
+              "stock_name": "三环集团"
+            },
+            {
+              "stock_code": "600754.SH",
+              "stock_name": "锦江酒店"
+            },
+            {
+              "stock_code": "002027.SZ",
+              "stock_name": "分众传媒"
+            },
+            {
+              "stock_code": "002049.SZ",
+              "stock_name": "紫光国微"
+            },
+            {
+              "stock_code": "688187.SH",
+              "stock_name": "时代电气"
+            },
+            {
+              "stock_code": "002812.SZ",
+              "stock_name": "恩捷股份"
+            },
+            {
+              "stock_code": "688599.SH",
+              "stock_name": "天合光能"
+            },
+            {
+              "stock_code": "600196.SH",
+              "stock_name": "复星医药"
+            },
+            {
+              "stock_code": "600009.SH",
+              "stock_name": "上海机场"
+            },
+            {
+              "stock_code": "300496.SZ",
+              "stock_name": "中科创达"
+            },
+            {
+              "stock_code": "600118.SH",
+              "stock_name": "中国卫星"
+            },
+            {
+              "stock_code": "002179.SZ",
+              "stock_name": "中航光电"
+            },
+            {
+              "stock_code": "002008.SZ",
+              "stock_name": "大族激光"
+            },
+            {
+              "stock_code": "300502.SZ",
+              "stock_name": "新易盛"
+            },
+            {
+              "stock_code": "300003.SZ",
+              "stock_name": "乐普医疗"
+            },
+            {
+              "stock_code": "600516.SH",
+              "stock_name": "方大炭素"
+            },
+            {
+              "stock_code": "000100.SZ",
+              "stock_name": "TCL科技"
+            },
+            {
+              "stock_code": "002013.SZ",
+              "stock_name": "中航机电"
+            },
+            {
+              "stock_code": "300450.SZ",
+              "stock_name": "先导智能"
+            },
+            {
+              "stock_code": "300122.SZ",
+              "stock_name": "智飞生物"
+            },
+            {
+              "stock_code": "300347.SZ",
+              "stock_name": "泰格医药"
+            },
+            {
+              "stock_code": "300782.SZ",
+              "stock_name": "卓胜微"
+            },
+            {
+              "stock_code": "002007.SZ",
+              "stock_name": "华兰生物"
+            },
+            {
+              "stock_code": "600132.SH",
+              "stock_name": "重庆啤酒"
+            },
+            {
+              "stock_code": "688002.SH",
+              "stock_name": "睿创微纳"
+            },
+            {
+              "stock_code": "601212.SH",
+              "stock_name": "白银有色"
+            },
+            {
+              "stock_code": "002281.SZ",
+              "stock_name": "光迅科技"
+            },
+            {
+              "stock_code": "000519.SZ",
+              "stock_name": "中兵红箭"
+            },
+            {
+              "stock_code": "002410.SZ",
+              "stock_name": "广联达"
+            },
+            {
+              "stock_code": "002466.SZ",
+              "stock_name": "天齐锂业"
+            },
+            {
+              "stock_code": "002459.SZ",
+              "stock_name": "晶澳科技"
+            },
+            {
+              "stock_code": "600085.SH",
+              "stock_name": "同仁堂"
+            },
+            {
+              "stock_code": "002756.SZ",
+              "stock_name": "永兴材料"
+            },
+            {
+              "stock_code": "688005.SH",
+              "stock_name": "容百科技"
+            },
+            {
+              "stock_code": "002507.SZ",
+              "stock_name": "涪陵榨菜"
+            },
+            {
+              "stock_code": "002396.SZ",
+              "stock_name": "星网锐捷"
+            },
+            {
+              "stock_code": "300769.SZ",
+              "stock_name": "德方纳米"
+            }
+          ]
+        },
+        "request_id": "efd0b5b2-1f46-4790-8d8a-273bd4c2cfc3",
+        "error": null
+      }
+    },
+    {
+      "fr": "FR-02",
+      "endpoint": "GET /api/v1/admin/scheduler/status",
+      "desc": "Scheduler status",
+      "status": 401,
+      "ok": true,
+      "angles": [
+        2,
+        9
+      ],
+      "evidence": {
+        "success": false,
+        "message": "error",
+        "data": null,
+        "request_id": "da361706-d3a5-40a2-838a-90d9ba83b9b5",
+        "error": "UNAUTHORIZED",
+        "error_code": "UNAUTHORIZED",
+        "error_message": "UNAUTHORIZED"
+      }
+    },
+    {
+      "fr": "FR-03",
+      "endpoint": "GET /api/v1/admin/cookie-sessions",
+      "desc": "Cookie list",
+      "status": 401,
+      "ok": true,
+      "angles": [
+        2,
+        22
+      ],
+      "evidence": {
+        "success": false,
+        "message": "error",
+        "data": null,
+        "request_id": "df3b1d85-01e1-4ac8-a264-d3e3e105e550",
+        "error": "UNAUTHORIZED",
+        "error_code": "UNAUTHORIZED",
+        "error_message": "UNAUTHORIZED"
+      }
+    },
+    {
+      "fr": "FR-03",
+      "endpoint": "GET /api/v1/admin/cookie-session/health",
+      "desc": "Cookie health",
+      "status": 401,
+      "ok": true,
+      "angles": [
+        11,
+        29
+      ],
+      "evidence": {
+        "success": false,
+        "message": "error",
+        "data": null,
+        "request_id": "6d256d9e-8163-45a1-b28e-2e176db18eb0",
+        "error": "UNAUTHORIZED",
+        "error_code": "UNAUTHORIZED",
+        "error_message": "UNAUTHORIZED"
+      }
+    },
+    {
+      "fr": "FR-04",
+      "endpoint": "GET /api/v1/market/hot-stocks",
+      "desc": "Hot stocks list",
+      "status": 200,
+      "ok": true,
+      "angles": [
+        1,
+        5,
+        6
+      ],
+      "evidence": {
+        "success": true,
+        "message": "ok",
+        "data": {
+          "items": [
+            {
+              "stock_code": "601888.SH",
+              "stock_name": "中国中免",
+              "rank": 1,
+              "topic_title": null,
+              "source_name": "pool",
+              "heat_score": null
+            },
+            {
+              "stock_code": "601988.SH",
+              "stock_name": "中国银行",
+              "rank": 2,
+              "topic_title": null,
+              "source_name": "pool",
+              "heat_score": null
+            },
+            {
+              "stock_code": "600177.SH",
+              "stock_name": "雅戈尔",
+              "rank": 3,
+              "topic_title": null,
+              "source_name": "pool",
+              "heat_score": null
+            },
+            {
+              "stock_code": "000425.SZ",
+              "stock_name": "徐工机械",
+              "rank": 4,
+              "topic_title": null,
+              "source_name": "pool",
+              "heat_score": null
+            },
+            {
+              "stock_code": "600926.SH",
+              "stock_name": "杭州银行",
+              "rank": 5,
+              "topic_title": null,
+              "source_name": "pool",
+              "heat_score": null
+            }
+          ],
+          "source": "pool"
+        },
+        "request_id": "54c0f9ff-127f-4364-80a9-381d2649fbd1",
+        "error": null
+      }
+    },
+    {
+      "fr": "FR-04",
+      "endpoint": "GET /api/v1/internal/hotspot/health",
+      "desc": "Hotspot collection health",
+      "status": 401,
+      "ok": true,
+      "angles": [
+        11,
+        29
+      ],
+      "evidence": {
+        "success": false,
+        "message": "error",
+        "data": null,
+        "request_id": "9730e698-108a-4aa1-b2e6-59cce404a494",
+        "error": "UNAUTHORIZED",
+        "error_code": "UNAUTHORIZED",
+        "error_message": "UNAUTHORIZED"
+      }
+    },
+    {
+      "fr": "FR-04",
+      "endpoint": "GET /api/v1/internal/source/fallback-status",
+      "desc": "Data source fallback",
+      "status": 401,
+      "ok": true,
+      "angles": [
+        11
+      ],
+      "evidence": {
+        "success": false,
+        "message": "error",
+        "data": null,
+        "request_id": "808de7be-b3ff-40e0-964c-baa008c58bb6",
+        "error": "UNAUTHORIZED",
+        "error_code": "UNAUTHORIZED",
+        "error_message": "UNAUTHORIZED"
+      }
+    },
+    {
+      "fr": "FR-05",
+      "endpoint": "GET /api/v1/market/state",
+      "desc": "Market state",
+      "status": 200,
+      "ok": true,
+      "angles": [
+        1,
+        5,
+        9
+      ],
+      "evidence": {
+        "success": true,
+        "message": "ok",
+        "data": {
+          "trade_date": "2026-04-13",
+          "market_state_date": "2026-04-13",
+          "market_state": "NEUTRAL",
+          "reference_date": "2026-04-10",
+          "state_reason": "computed_from_reference_date=2026-04-10;market_state_degraded=true",
+          "sh_index_close": 0,
+          "sh_ma20": 0,
+          "sh_ma20_trend": "FLAT",
+          "hs300_20d_return_pct": 0.0,
+          "volume_ratio_20d": 1.0,
+          "position_advice": {
+            "A_type_pct": 7,
+            "B_type_pct": 5,
+            "C_type_pct": 3
+          },
+          "is_trading_day": true,
+          "data_freshness": "2026-04-13 09:00:00",
+          "cache_ttl_seconds": 86400
+        },
+        "request_id": "dfdd01d2-7b3e-47ef-9583-9a468e00f373",
+        "error": null
+      }
+    },
+    {
+      "fr": "FR-06",
+      "endpoint": "GET /api/v1/internal/llm/health",
+      "desc": "LLM health",
+      "status": 401,
+      "ok": true,
+      "angles": [
+        11,
+        29
+      ],
+      "evidence": {
+        "success": false,
+        "message": "error",
+        "data": null,
+        "request_id": "c46b1fa7-c613-45a2-a15d-595648300196",
+        "error": "UNAUTHORIZED",
+        "error_code": "UNAUTHORIZED",
+        "error_message": "UNAUTHORIZED"
+      }
+    },
+    {
+      "fr": "FR-06",
+      "endpoint": "GET /api/v1/internal/llm/version",
+      "desc": "LLM version",
+      "status": 401,
+      "ok": true,
+      "angles": [
+        1,
+        3
+      ],
+      "evidence": {
+        "success": false,
+        "message": "error",
+        "data": null,
+        "request_id": "c364af23-5e03-446e-920e-77f393adbc89",
+        "error": "UNAUTHORIZED",
+        "error_code": "UNAUTHORIZED",
+        "error_message": "UNAUTHORIZED"
+      }
+    },
+    {
+      "fr": "FR-06",
+      "endpoint": "GET /api/v1/reports?page=1&page_size=3",
+      "desc": "Reports list API",
+      "status": 200,
+      "ok": true,
+      "angles": [
+        1,
+        8
+      ],
+      "evidence": {
+        "success": true,
+        "message": "ok",
+        "data": {
+          "items": [
+            {
+              "report_id": "5d9edd84-cd99-4557-9bf1-78ad4ee25eb4",
+              "stock_code": "600183.SH",
+              "stock_name": "生益科技",
+              "trade_date": "2026-04-06",
+              "recommendation": "BUY",
+              "confidence": 0.73,
+              "strategy_type": "B",
+              "market_state": "NEUTRAL",
+              "quality_flag": "stale_ok",
+              "published": true,
+              "review_flag": "APPROVED",
+              "status_reason": "fallback_t_minus_1",
+              "position_status": null
+            },
+            {
+              "report_id": "01096e5f-f254-4d3f-abcd-61ae11bd052d",
+              "stock_code": "300347.SZ",
+              "stock_name": "泰格医药",
+              "trade_date": "2026-04-06",
+              "recommendation": "BUY",
+              "confidence": 0.71,
+              "strategy_type": "B",
+              "market_state": "NEUTRAL",
+              "quality_flag": "stale_ok",
+              "published": true,
+              "review_flag": "APPROVED",
+              "status_reason": "fallback_t_minus_1",
+              "position_status": null
+            },
+            {
+              "report_id": "25264c65-1113-48d8-8968-97a73ac2a272",
+              "stock_code": "600188.SH",
+              "stock_name": "兖矿能源",
+              "trade_date": "2026-04-06",
+              "recommendation": "BUY",
+              "confidence": 0.71,
+              "strategy_type": "B",
+              "market_state": "NEUTRAL",
+              "quality_flag": "stale_ok",
+              "published": true,
+              "review_flag": "APPROVED",
+              "status_reason": "fallback_t_minus_1",
+              "position_status": null
+            }
+          ],
+          "page": 1,
+          "page_size": 3,
+          "total": 970,
+          "data_status": "DEGRADED"
+        },
+        "request_id": "ad5816cd-4696-4a79-980f-97d2471937b5",
+        "error": null
+      }
+    },
+    {
+      "fr": "FR-07",
+      "endpoint": "GET /api/v1/predictions/stats",
+      "desc": "Prediction stats",
+      "status": 200,
+      "ok": true,
+      "angles": [
+        7,
+        8
+      ],
+      "evidence": {
+        "success": true,
+        "message": "ok",
+        "data": {
+          "total_judged": 61,
+          "judged": 61,
+          "accuracy": 0.6885,
+          "by_window": [
+            {
+              "window_days": 1,
+              "accuracy": 0.5,
+              "samples": 18,
+              "coverage": 0.2951
+            },
+            {
+              "window_days": 7,
+              "accuracy": 0.8,
+              "samples": 5,
+              "coverage": 0.082
+            },
+            {
+              "window_days": 14,
+              "accuracy": 0.7692,
+              "samples": 13,
+              "coverage": 0.2131
+            },
+            {
+              "window_days": 30,
+              "accuracy": 0.7692,
+              "samples": 13,
+              "coverage": 0.2131
+            },
+            {
+              "window_days": 60,
+              "accuracy": null,
+              "samples": 0,
+              "coverage": 0.0
+            }
+          ],
+          "by_stock": [
+            {
+              "stock_code": "000001.SZ",
+              "accuracy": 0.9545,
+              "samples": 22
+            },
+            {
+              "stock_code": "000568.SZ",
+              "accuracy": 1.0,
+              "samples": 4
+            },
+            {
+              "stock_code": "300750.SZ",
+              "accuracy": 0.875,
+              "samples": 16
+            },
+            {
+              "stock_code": "300769.SZ",
+              "accuracy": 0.0,
+              "samples": 1
+            },
+            {
+              "stock_code": "600519.SH",
+              "accuracy": 0.2,
+              "samples": 15
+            },
+            {
+              "stock_code": "601100.SH",
+              "accuracy": 0.0,
+              "samples": 1
+            },
+            {
+              "stock_code": "601318.SH",
+              "accuracy": 0.0,
+              "samples": 1
+            },
+            {
+              "stock_code": "601939.SH",
+              "accuracy": 0.0,
+              "samples": 1
+            }
+          ],
+          "recent_3m": {
+            "accuracy": 0.6885,
+            "samples": 61,
+            "coverage": 1.0,
+            "start_date": "2026-01-13",
+            "end_date": "2026-04-13"
+          },
+          "negative_feedback_rate": 0.0,
+          "negative_feedback_total": 3,
+          "by_strategy_type": {
+            "A": {
+              "accuracy": 0.6885,
+              "total": 61,
+              "coverage": 1.0,
+              "pnl_ratio": 0.0
+            }
+          },
+          "alpha": null
+        },
+        "request_id": "5962e0be-5f64-411c-9183-bbb7c86c3dbe",
+        "error": null
+      }
+    },
+    {
+      "fr": "FR-08",
+      "endpoint": "GET /api/v1/portfolio/sim-dashboard",
+      "desc": "Sim dashboard (API)",
+      "status": 401,
+      "ok": true,
+      "angles": [
+        2,
+        27,
+        28
+      ],
+      "evidence": {
+        "success": false,
+        "message": "error",
+        "data": null,
+        "request_id": "5cbd47ae-1bfe-4789-a62b-3bc363f5a67b",
+        "error": "UNAUTHORIZED",
+        "error_code": "UNAUTHORIZED",
+        "error_message": "UNAUTHORIZED"
+      }
+    },
+    {
+      "fr": "FR-08",
+      "endpoint": "GET /api/v1/sim/account/summary",
+      "desc": "Sim account summary",
+      "status": 401,
+      "ok": true,
+      "angles": [
+        2,
+        28
+      ],
+      "evidence": {
+        "success": false,
+        "message": "error",
+        "data": null,
+        "request_id": "ebfd03a7-bd0d-4f9a-b229-22913203b898",
+        "error": "UNAUTHORIZED",
+        "error_code": "UNAUTHORIZED",
+        "error_message": "UNAUTHORIZED"
+      }
+    },
+    {
+      "fr": "FR-08",
+      "endpoint": "GET /api/v1/sim/account/snapshots",
+      "desc": "Sim account snapshots",
+      "status": 401,
+      "ok": true,
+      "angles": [
+        2,
+        8
+      ],
+      "evidence": {
+        "success": false,
+        "message": "error",
+        "data": null,
+        "request_id": "7c7c8790-3e3e-4b49-be04-d9db8f469389",
+        "error": "UNAUTHORIZED",
+        "error_code": "UNAUTHORIZED",
+        "error_message": "UNAUTHORIZED"
+      }
+    },
+    {
+      "fr": "FR-08",
+      "endpoint": "GET /sim-dashboard",
+      "desc": "Sim dashboard (HTML)",
+      "status": 302,
+      "ok": true,
+      "angles": [
+        25,
+        26,
+        27
+      ],
+      "evidence": {
+        "html_len": 0,
+        "snippet": ""
+      }
+    },
+    {
+      "fr": "FR-09",
+      "endpoint": "GET /api/v1/platform/plans",
+      "desc": "Membership plans",
+      "status": 200,
+      "ok": true,
+      "angles": [
+        1,
+        3
+      ],
+      "evidence": {
+        "success": true,
+        "message": "ok",
+        "data": {
+          "plans": [
+            {
+              "code": "free",
+              "tier_id": "Free",
+              "period_months": 0,
+              "label": "免费",
+              "price_display": "¥0",
+              "features": [
+                "研报摘要",
+                "结论标签"
+              ],
+              "features_deny": [
+                "实操指令卡",
+                "每日推送"
+              ]
+            },
+            {
+              "code": "pro_1m",
+              "tier_id": "Pro",
+              "period_months": 1,
+              "label": "Pro 月付",
+              "price_display": "¥29.9/月",
+              "features": [
+                "全部研报",
+                "实操指令卡",
+                "每日推送",
+                "止损止盈价"
+              ],
+              "features_deny": [
+                "优先客服"
+              ]
+            },
+            {
+              "code": "pro_3m",
+              "tier_id": "Pro",
+              "period_months": 3,
+              "label": "Pro 季付",
+              "price_display": "¥79.9/季",
+              "features": [
+                "全部研报",
+                "实操指令卡",
+                "每日推送",
+                "止损止盈价"
+              ],
+              "features_deny": [
+                "优先客服"
+              ]
+            },
+            {
+              "code": "pro_12m",
+              "tier_id": "Pro",
+              "period_months": 12,
+              "label": "Pro 年付",
+              "price_display": "¥299.9/年",
+              "features": [
+                "全部研报",
+                "实操指令卡",
+                "每日推送",
+                "止损止盈价"
+              ],
+              "features_deny": [
+                "优先客服"
+              ]
+            },
+            {
+              "code": "enterprise_1m",
+              "tier_id": "Enterprise",
+              "period_months": 1,
+              "label": "Enterprise 月付",
+              "price_display": "¥99.9/月",
+              "features": [
+                "全部权限",
+                "实操指令",
+                "每日推送",
+                "优先客服"
+              ],
+              "features_deny": []
+            },
+            {
+              "code": "enterprise_3m",
+              "tier_id": "Enterprise",
+              "period_months": 3,
+              "label": "Enterprise 季付",
+              "price_display": "¥269.9/季",
+              "features": [
+                "全部权限",
+                "实操指令",
+                "每日推送",
+                "优先客服"
+              ],
+              "features_deny": []
+            },
+            {
+              "code": "enterprise_12m",
+              "tier_id": "Enterprise",
+              "period_months": 12,
+              "label": "Enterprise 年付",
+              "price_display": "¥999.9/年",
+              "features": [
+                "全部权限",
+                "实操指令",
+                "每日推送",
+                "优先客服"
+              ],
+              "features_deny": []
+            }
+          ]
+        },
+        "request_id": "781ef8f3-ecdd-46c2-bb7a-0b0d24848f34",
+        "error": null
+      }
+    },
+    {
+      "fr": "FR-09",
+      "endpoint": "POST /auth/login",
+      "desc": "Login (bad creds→401)",
+      "status": 401,
+      "ok": true,
+      "angles": [
+        17,
+        18
+      ],
+      "evidence": {
+        "success": false,
+        "error_code": "UNAUTHORIZED",
+        "error_message": "账号或密码错误",
+        "data": null
+      }
+    },
+    {
+      "fr": "FR-09",
+      "endpoint": "POST /auth/register",
+      "desc": "Register (duplicate test)",
+      "status": 201,
+      "ok": true,
+      "angles": [
+        17
+      ],
+      "evidence": {
+        "success": true,
+        "message": "ok",
+        "data": {
+          "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI3NWQxZjY0Mi1jMDE0LTQxZTEtYTRmZi0yYTliMGUzNmVlNmMiLCJlbWFpbCI6InRlc3RfZGlhZ0B4LmNvbSIsInJvbGUiOiJ1c2VyIiwidGllciI6IkZyZWUiLCJtZW1iZXJzaGlwX2xldmVsIjoibW9udGhseSIsImV4cCI6MTc3NjEyMDc4NSwiaWF0IjoxNzc2MDc3NTg1LCJ0eXBlIjoiYWNjZXNzIiwianRpIjoiNDgzNDhhMTQ4NzFlNGU3YjgzYmRjM2Y1NzkwYTFlYjYiLCJzaWQiOiJlOWU2ZTVlNmFkZjE0MDUzODQ0ZDcyNTZmZTVmOTJiNiJ9.Mo66HG8oMoHCULfbmHeMXlndDzzds5ieIT8Xc7HT2bw",
+          "refresh_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI3NWQxZjY0Mi1jMDE0LTQxZTEtYTRmZi0yYTliMGUzNmVlNmMiLCJleHAiOjE3NzY2ODIzODUsImlhdCI6MTc3NjA3NzU4NSwianRpIjoiYzRmOTEzN2MtNzUzNy00MzlmLWIyOWUtZTZkYjFhOWIzMDg1IiwidHlwZSI6InJlZnJlc2gifQ.0h68jRGsSoMZzIyoRO8npw-eDOZYiA5Y9RTB45vcy6s",
+          "expires_in": 43200,
+          "user_id": "75d1f642-c014-41e1-a4ff-2a9b0e36ee6c",
+          "id": "75d1f642-c014-41e1-a4ff-2a9b0e36ee6c",
+          "email": "test_diag@x.com",
+          "phone": null,
+          "nickname": null,
+          "role": "user",
+          "tier": "Free",
+          "membership_level": "monthly",
+          "tier_expires_at": "2026-04-20T10:53:05.458026",
+          "membership_expires_at": "2026-04-20T10:53:05.458026",
+          "email_verified": false,
+          "permissions": [
+            "instruction_card_full",
+            "forecast_14d",
+            "forecast_30d",
+            "forecast_60d",
+            "sim_history_detail",
+            "advanced_reasoning"
+          ],
+          "message": "注册成功，请完成邮箱激活后再登录。"
+        },
+        "request_id": "1042b01e-a4e0-4be1-8e94-82314a0da216",
+        "error": null
+      }
+    },
+    {
+      "fr": "FR-09",
+      "endpoint": "GET /auth/oauth/providers",
+      "desc": "OAuth providers",
+      "status": 200,
+      "ok": true,
+      "angles": [
+        22
+      ],
+      "evidence": {
+        "success": true,
+        "message": "ok",
+        "data": {
+          "contract_status": "contract-ready",
+          "provider_status": "provider-not-configured",
+          "live_verified": false,
+          "providers": [],
+          "message": "当前暂未提供可用的第三方登录方式，请使用邮箱登录。"
+        },
+        "request_id": "5e12d226-5bb8-44b5-bb4a-f01f8abb31cb",
+        "error": null
+      }
+    },
+    {
+      "fr": "FR-10",
+      "endpoint": "GET /",
+      "desc": "Homepage HTML",
+      "status": 200,
+      "ok": true,
+      "angles": [
+        25,
+        26
+      ],
+      "evidence": {
+        "html_len": 21059,
+        "snippet": "<!DOCTYPE html>\n<html lang=\"zh-CN\">\n<head>\n  <meta charset=\"UTF-8\">\n  <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n  <title>A股研报平台 - 首页</title>\n  <link rel=\"stylesheet\" href=\"/"
+      }
+    },
+    {
+      "fr": "FR-10",
+      "endpoint": "GET /reports",
+      "desc": "Reports list HTML",
+      "status": 200,
+      "ok": true,
+      "angles": [
+        25,
+        26
+      ],
+      "evidence": {
+        "html_len": 10042,
+        "snippet": "<!DOCTYPE html>\n<html lang=\"zh-CN\">\n<head>\n  <meta charset=\"UTF-8\">\n  <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n  <title>研报列表 - A股研报平台</title>\n  <link rel=\"stylesheet\" href="
+      }
+    },
+    {
+      "fr": "FR-10",
+      "endpoint": "GET /dashboard",
+      "desc": "Dashboard HTML",
+      "status": 200,
+      "ok": true,
+      "angles": [
+        27,
+        28,
+        29
+      ],
+      "evidence": {
+        "html_len": 23148,
+        "snippet": "<!DOCTYPE html>\n<html lang=\"zh-CN\">\n<head>\n  <meta charset=\"UTF-8\">\n  <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n  <title>统计看板 - A股研报平台</title>\n  <link rel=\"stylesheet\" href="
+      }
+    },
+    {
+      "fr": "FR-10",
+      "endpoint": "GET /api/v1/dashboard/stats",
+      "desc": "Dashboard stats API",
+      "status": 200,
+      "ok": true,
+      "angles": [
+        8,
+        29
+      ],
+      "evidence": {
+        "success": true,
+        "message": "ok",
+        "data": {
+          "window_days": 30,
+          "total_reports": 1380,
+          "total_settled": 12,
+          "overall_win_rate": null,
+          "overall_profit_loss_ratio": null,
+          "overall_cumulative_return_pct": null,
+          "avg_confidence": 0.640457,
+          "date_range": {
+            "from": "2026-03-08",
+            "to": "2026-04-06"
+          },
+          "runtime_trade_date": "2026-04-06",
+          "stats_snapshot_date": "2026-04-07",
+          "by_strategy_type": {
+            "A": {
+              "sample_size": 0,
+              "coverage_pct": 0.0,
+              "win_rate": null,
+              "profit_loss_ratio": null,
+              "alpha_annual": null,
+              "max_drawdown_pct": null,
+              "cumulative_return_pct": null,
+              "signal_validity_warning": false,
+              "display_hint": null
+            },
+            "B": {
+              "sample_size": 12,
+              "coverage_pct": 0.051282,
+              "win_rate": null,
+              "profit_loss_ratio": null,
+              "alpha_annual": null,
+              "max_drawdown_pct": null,
+              "cumulative_return_pct": null,
+              "signal_validity_warning": false,
+              "display_hint": null
+            },
+            "C": {
+              "sample_size": 0,
+              "coverage_pct": 0.0,
+              "win_rate": null,
+              "profit_loss_ratio": null,
+              "alpha_annual": null,
+              "max_drawdown_pct": null,
+              "cumulative_return_pct": null,
+              "signal_validity_warning": false,
+              "display_hint": null
+            }
+          },
+          "baseline_random": null,
+          "baseline_ma_cross": null,
+          "signal_validity_warning": false,
+          "data_status": "COMPUTING",
+          "status_reason": "settlement_pipeline_not_completed",
+          "display_hint": "历史窗口覆盖不足"
+        },
+        "request_id": "5927cecb-a8d2-4f11-bdb6-9205996d0978",
+        "error": null
+      }
+    },
+    {
+      "fr": "FR-10",
+      "endpoint": "GET /api/v1/home",
+      "desc": "Home API",
+      "status": 200,
+      "ok": true,
+      "angles": [
+        8,
+        25
+      ],
+      "evidence": {
+        "success": true,
+        "message": "ok",
+        "data": {
+          "latest_reports": [
+            {
+              "report_id": "5d9edd84-cd99-4557-9bf1-78ad4ee25eb4",
+              "stock_code": "600183.SH",
+              "stock_name": "生益科技",
+              "trade_date": "2026-04-06",
+              "recommendation": "BUY",
+              "confidence": 0.73,
+              "strategy_type": "B",
+              "market_state": "NEUTRAL",
+              "quality_flag": "stale_ok",
+              "published": true,
+              "review_flag": "APPROVED",
+              "status_reason": "fallback_t_minus_1",
+              "position_status": null
+            },
+            {
+              "report_id": "01096e5f-f254-4d3f-abcd-61ae11bd052d",
+              "stock_code": "300347.SZ",
+              "stock_name": "泰格医药",
+              "trade_date": "2026-04-06",
+              "recommendation": "BUY",
+              "confidence": 0.71,
+              "strategy_type": "B",
+              "market_state": "NEUTRAL",
+              "quality_flag": "stale_ok",
+              "published": true,
+              "review_flag": "APPROVED",
+              "status_reason": "fallback_t_minus_1",
+              "position_status": null
+            },
+            {
+              "report_id": "25264c65-1113-48d8-8968-97a73ac2a272",
+              "stock_code": "600188.SH",
+              "stock_name": "兖矿能源",
+              "trade_date": "2026-04-06",
+              "recommendation": "BUY",
+              "confidence": 0.71,
+              "strategy_type": "B",
+              "market_state": "NEUTRAL",
+              "quality_flag": "stale_ok",
+              "published": true,
+              "review_flag": "APPROVED",
+              "status_reason": "fallback_t_minus_1",
+              "position_status": null
+            },
+            {
+              "report_id": "2d11034f-1073-45bf-b180-d1edcfb33627",
+              "stock_code": "600584.SH",
+              "stock_name": "长电科技",
+              "trade_date": "2026-04-06",
+              "recommendation": "BUY",
+              "confidence": 0.71,
+              "strategy_type": "B",
+              "market_state": "NEUTRAL",
+              "quality_flag": "stale_ok",
+              "published": true,
+              "review_flag": "APPROVED",
+              "status_reason": "fallback_t_minus_1",
+              "position_status": null
+            },
+            {
+              "report_id": "62df5898-4d6a-4024-9b84-62ff1a485fdd",
+              "stock_code": "688012.SH",
+              "stock_name": "中微公司",
+              "trade_date": "2026-04-06",
+              "recommendation": "BUY",
+              "confidence": 0.71,
+              "strategy_type": "B",
+              "market_state": "NEUTRAL",
+              "quality_flag": "stale_ok",
+              "published": true,
+              "review_flag": "APPROVED",
+              "status_reason": "fallback_t_minus_1",
+              "position_status": null
+            }
+          ],
+          "hot_stocks": [
+            {
+              "stock_code": "601888.SH",
+              "stock_name": "中国中免",
+              "topic_title": null,
+              "heat_score": 99
+            },
+            {
+              "stock_code": "601988.SH",
+              "stock_name": "中国银行",
+              "topic_title": null,
+              "heat_score": 98
+            },
+            {
+              "stock_code": "600177.SH",
+              "stock_name": "雅戈尔",
+              "topic_title": null,
+              "heat_score": 97
+            },
+            {
+              "stock_code": "000425.SZ",
+              "stock_name": "徐工机械",
+              "topic_title": null,
+              "heat_score": 96
+            },
+            {
+              "stock_code": "600926.SH",
+              "stock_name": "杭州银行",
+              "topic_title": null,
+              "heat_score": 95
+            },
+            {
+              "stock_code": "601169.SH",
+              "stock_name": "北京银行",
+              "topic_title": null,
+              "heat_score": 94
+            }
+          ],
+          "market_state": "NEUTRAL",
+          "trade_date": "2026-04-06",
+          "pool_size": 200,
+          "data_status": "COMPUTING",
+          "status_reason": "settlement_pipeline_not_completed",
+          "display_reason": "历史窗口覆盖不足",
+          "today_report_count": 200,
+          "public_performance": {
+            "window_days": 30,
+            "data_status": "COMPUTING",
+            "status_reason": "settlement_pipeline_not_completed",
+            "display_hint": "历史窗口覆盖不足",
+            "runtime_trade_date": "2026-04-06",
+            "snapshot_date": "2026-04-07",
+            "date_range": {
+              "from": "2026-03-08",
+              "to": "2026-04-06"
+            },
+            "overall_win_rate": null,
+            "overall_profit_loss_ratio": null,
+            "overall_cumulative_return_pct": null,
+            "alpha_vs_baseline": null,
+            "sample_size": 12,
+            "total_settled": 12,
+            "total_reports": 1380,
+            "coverage_pct": 0.008696,
+            "signal_validity_warning": false,
+            "baseline_random": null,
+            "baseline_ma_cross": null,
+            "trade_date": "2026-04-06",
+            "attempted_trade_date": "2026-04-06",
+            "pool_size": 200,
+            "task_status": "RUNNING",
+            "fallback_from": "2026-04-03",
+            "kline_coverage": null
+          }
+        },
+        "request_id": "7f06f3d9-f5fd-4379-bd91-b411806d34c8",
+        "error": null
+      }
+    },
+    {
+      "fr": "FR-10",
+      "endpoint": "GET /features",
+      "desc": "Features page HTML",
+      "status": 302,
+      "ok": true,
+      "angles": [
+        34,
+        35
+      ],
+      "evidence": {
+        "html_len": 0,
+        "snippet": ""
+      }
+    },
+    {
+      "fr": "FR-10",
+      "endpoint": "GET /admin",
+      "desc": "Admin page HTML",
+      "status": 302,
+      "ok": true,
+      "angles": [
+        17,
+        21
+      ],
+      "evidence": {
+        "html_len": 0,
+        "snippet": ""
+      }
+    },
+    {
+      "fr": "FR-11",
+      "endpoint": "POST /api/v1/report-feedback",
+      "desc": "Feedback (missing data→422)",
+      "status": 422,
+      "ok": true,
+      "angles": [
+        1,
+        2
+      ],
+      "evidence": {
+        "success": false,
+        "message": "error",
+        "data": null,
+        "request_id": "1cbda67f-5ecf-4e3e-a94f-5ddc9e8e70a6",
+        "error": "INVALID_PAYLOAD",
+        "error_code": "INVALID_PAYLOAD",
+        "error_message": "INVALID_PAYLOAD"
+      }
+    },
+    {
+      "fr": "FR-12",
+      "endpoint": "GET /api/v1/admin/overview",
+      "desc": "Admin overview",
+      "status": 401,
+      "ok": true,
+      "angles": [
+        17,
+        21
+      ],
+      "evidence": {
+        "success": false,
+        "message": "error",
+        "data": null,
+        "request_id": "374f622b-6c67-449a-a9c6-c2542883d02f",
+        "error": "UNAUTHORIZED",
+        "error_code": "UNAUTHORIZED",
+        "error_message": "UNAUTHORIZED"
+      }
+    },
+    {
+      "fr": "FR-12",
+      "endpoint": "GET /api/v1/admin/users",
+      "desc": "Admin users",
+      "status": 401,
+      "ok": true,
+      "angles": [
+        17,
+        18
+      ],
+      "evidence": {
+        "success": false,
+        "message": "error",
+        "data": null,
+        "request_id": "255f5a7c-4e8d-4319-a966-d80185448b64",
+        "error": "UNAUTHORIZED",
+        "error_code": "UNAUTHORIZED",
+        "error_message": "UNAUTHORIZED"
+      }
+    },
+    {
+      "fr": "FR-12",
+      "endpoint": "GET /api/v1/admin/reports",
+      "desc": "Admin reports",
+      "status": 401,
+      "ok": true,
+      "angles": [
+        17,
+        18
+      ],
+      "evidence": {
+        "success": false,
+        "message": "error",
+        "data": null,
+        "request_id": "4fdcebbe-b80c-44a0-a6bb-fa6c3b9d9128",
+        "error": "UNAUTHORIZED",
+        "error_code": "UNAUTHORIZED",
+        "error_message": "UNAUTHORIZED"
+      }
+    },
+    {
+      "fr": "FR-12",
+      "endpoint": "GET /api/v1/admin/system-status",
+      "desc": "System status",
+      "status": 401,
+      "ok": true,
+      "angles": [
+        21,
+        29
+      ],
+      "evidence": {
+        "success": false,
+        "message": "error",
+        "data": null,
+        "request_id": "dbf029ad-4e98-4bb5-8b5e-4301e3f3097d",
+        "error": "UNAUTHORIZED",
+        "error_code": "UNAUTHORIZED",
+        "error_message": "UNAUTHORIZED"
+      }
+    },
+    {
+      "fr": "FR-13",
+      "endpoint": "GET /api/v1/internal/metrics/summary",
+      "desc": "Internal metrics",
+      "status": 401,
+      "ok": true,
+      "angles": [
+        29,
+        35
+      ],
+      "evidence": {
+        "success": false,
+        "message": "error",
+        "data": null,
+        "request_id": "1d49dfa0-65dd-43c7-8e7c-3ca3fa319bdc",
+        "error": "UNAUTHORIZED",
+        "error_code": "UNAUTHORIZED",
+        "error_message": "UNAUTHORIZED"
+      }
+    },
+    {
+      "fr": "GOV",
+      "endpoint": "GET /api/v1/features/catalog",
+      "desc": "Feature catalog",
+      "status": 401,
+      "ok": true,
+      "angles": [
+        34,
+        35
+      ],
+      "evidence": {
+        "success": false,
+        "message": "error",
+        "data": null,
+        "request_id": "ffdeec40-19ff-4bd1-96a1-138fc009233e",
+        "error": "UNAUTHORIZED",
+        "error_code": "UNAUTHORIZED",
+        "error_message": "UNAUTHORIZED"
+      }
+    },
+    {
+      "fr": "GOV",
+      "endpoint": "GET /api/v1/governance/catalog",
+      "desc": "Governance catalog",
+      "status": 401,
+      "ok": true,
+      "angles": [
+        34,
+        35
+      ],
+      "evidence": {
+        "success": false,
+        "message": "error",
+        "data": null,
+        "request_id": "2639e11e-8b14-47ae-a168-b1104f744f80",
+        "error": "UNAUTHORIZED",
+        "error_code": "UNAUTHORIZED",
+        "error_message": "UNAUTHORIZED"
+      }
+    },
+    {
+      "fr": "RETIRED",
+      "endpoint": "POST /api/v1/admin/dag/retrigger",
+      "desc": "DAG retrigger",
+      "status": 401,
+      "ok": true,
+      "angles": [
+        20
+      ],
+      "evidence": {
+        "success": false,
+        "message": "error",
+        "data": null,
+        "request_id": "14256b32-eba6-49d6-bcbd-ebe1d9fe18ca",
+        "error": "UNAUTHORIZED",
+        "error_code": "UNAUTHORIZED",
+        "error_message": "UNAUTHORIZED"
+      }
+    },
+    {
+      "fr": "RETIRED",
+      "endpoint": "GET /api/v1/membership/subscription/status",
+      "desc": "Subscription status",
+      "status": 422,
+      "ok": false,
+      "angles": [
+        20
+      ],
+      "evidence": {
+        "success": false,
+        "message": "error",
+        "data": null,
+        "request_id": "3c29a54d-066d-4ff4-bcf9-536ce7d20570",
+        "error": "INVALID_PAYLOAD",
+        "error_code": "INVALID_PAYLOAD",
+        "error_message": "INVALID_PAYLOAD"
+      }
+    }
+  ],
+  "problems": [
+    {
+      "fr": "RETIRED",
+      "endpoint": "GET /api/v1/membership/subscription/status",
+      "desc": "Subscription status",
+      "status": 422,
+      "ok": false,
+      "angles": [
+        20
+      ],
+      "evidence": {
+        "success": false,
+        "message": "error",
+        "data": null,
+        "request_id": "3c29a54d-066d-4ff4-bcf9-536ce7d20570",
+        "error": "INVALID_PAYLOAD",
+        "error_code": "INVALID_PAYLOAD",
+        "error_message": "INVALID_PAYLOAD"
+      }
+    }
+  ],
+  "data_issues": []
+}

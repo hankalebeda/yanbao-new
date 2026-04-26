@@ -1,0 +1,23 @@
+task_id_prefix: issue-mining-22
+goal: "22_v7 deep analysis and issue writeback"
+task_kind: write
+
+prompt_source:
+  builder: mining
+
+read_scope:
+  - docs/core
+  - app
+  - tests
+  - scripts
+
+# write_scope is set dynamically to the target doc path
+write_scope: []
+
+timeout_minutes: 30
+allow_native_subagents: true
+allow_native_subagents_at_external_limit: true
+inner_agent_max_depth: 1
+inner_agent_max_threads: 4
+ensure_runtime: false
+lock: false

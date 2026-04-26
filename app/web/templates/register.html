@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>注册 - A股研报平台</title>
+  <link rel="stylesheet" href="/static/demo.css">
+</head>
+<body>
+  <nav class="site-nav">
+    <a href="/" class="nav-brand">A股研报平台</a>
+    <button class="nav-toggle" aria-label="菜单" onclick="document.querySelector('.nav-links').classList.toggle('open')">☰</button>
+    <div class="nav-links">
+      {% include "_nav_links.html" %}
+    </div>
+  </nav>
+
+  <main class="auth-wrap">
+    <div class="auth-card">
+      <div class="auth-card-header">
+        <h2>注册</h2>
+      </div>
+      <form id="register-form">
+        <div class="auth-field">
+          <input type="email" name="email" placeholder="邮箱" required autocomplete="username">
+          <small class="muted">请使用常用邮箱注册；若站点启用邮箱验证，注册后需完成激活。</small>
+        </div>
+        <div class="auth-field">
+          <input type="password" name="password" placeholder="密码（≥8位，含字母和数字）" required minlength="8" autocomplete="new-password">
+        </div>
+        <div class="auth-field">
+          <input type="password" name="password_confirm" placeholder="确认密码" required minlength="8" autocomplete="new-password">
+        </div>
+        <div class="auth-agreement">
+          <label>
+            <input type="checkbox" required>
+            我已阅读并同意 <a href="/terms" class="auth-link">用户协议</a> 和 <a href="/privacy" class="auth-link">隐私政策</a>
+          </label>
+        </div>
+        <button id="btn-submit" type="submit" class="auth-btn-primary">立即注册</button>
+      </form>
+      <div id="register-success-msg" class="auth-banner auth-banner-success" style="display:none;">注册成功</div>
+      <div class="auth-card-footer">
+        <p>已有账号？<a href="/login" class="auth-link-primary">去登录</a></p>
+        <p><a href="/forgot-password" class="auth-link-secondary">忘记密码？</a></p>
+      </div>
+    </div>
+  </main>
+
+  {% include "_app_config.html" %}
+  <script src="/static/api-bridge.js?v=3"></script>
+  <script>
+    document.getElementById('register-form').addEventListener('submit', async function(e) {
+      e.preventDefault();
+      var fd = new FormData(this);
+      if (fd.get('password') !== fd.get('password_confirm')) {
+        alert('两次密码不一致');
+        return;
+      }
+      var email = (fd.get('email') || '').toString().trim();
+      var password = (fd.get('password') || '').toString();
+      if (!email || email.indexOf('@') < 0) {
+        alert('请输入有效邮箱');
+        return;
+      }
+      if (password.length < 8 || !/[A-Za-z]/.test(password) || !/\d/.test(password)) {
+        alert('密码需≥8位且同时含字母和数字');
+        return;
+      }
+      var body = { email: email, password: password };
+      var res = await postRegister(body);
+      if (res && res.success) {
+        var msgEl = document.getElementById('register-success-msg');
+        var nextUrl = (res.data && res.data.access_token) ? '/' : '/login';
+        var successMessage = (res.data && res.data.message) ? res.data.message : '注册成功';
+        if (msgEl) { msgEl.textContent = successMessage; msgEl.style.display = ''; }
+        setTimeout(function(){ location.href = nextUrl; }, 2000);
+      } else if (res && (res.error_code === 'IDEMPOTENCY_CONFLICT' || res.error_code === 'CONCURRENT_CONFLICT')) {
+        alert('该邮箱已注册，请直接登录或找回密码');
+        location.href = '/login';
+      } else {
+        alert(res && res.message ? res.message : '注册失败');
+      }
+    });
+  </script>
+</body>
+</html>

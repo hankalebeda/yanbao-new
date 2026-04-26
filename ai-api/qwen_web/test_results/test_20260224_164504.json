@@ -1,0 +1,15 @@
+{
+  "passed": 0,
+  "total": 3,
+  "results": {
+    "single": {
+      "error": "Qwen requires login for chat. Log in first and retry."
+    },
+    "batch": {
+      "error": "Kweichow Moutai failed: Qwen requires login for chat. Log in first and retry."
+    },
+    "reconnect": {
+      "error": "Qwen returned invalid output: prompt echo"
+    }
+  }
+}

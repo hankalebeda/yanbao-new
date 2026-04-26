@@ -1,0 +1,15 @@
+{
+  "passed": 0,
+  "total": 3,
+  "results": {
+    "single": {
+      "error": "Failed to copy Chrome profile 'Profile 1'. Close all Chrome windows using this profile and retry."
+    },
+    "batch": {
+      "error": "Failed to copy Chrome profile 'Profile 1'. Close all Chrome windows using this profile and retry."
+    },
+    "reconnect": {
+      "error": "Failed to copy Chrome profile 'Profile 1'. Close all Chrome windows using this profile and retry."
+    }
+  }
+}

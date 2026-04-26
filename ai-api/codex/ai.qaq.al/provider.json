@@ -1,0 +1,9 @@
+{
+  "name": "ai.qaq.al",
+  "endpoint": "https://ai.qaq.al/v1",
+  "model": "gpt-5.4",
+  "homepage": "https://ai.qaq.al",
+  "enabled": true,
+  "resource": "provider",
+  "app": "codex"
+}

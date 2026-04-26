@@ -1,0 +1,122 @@
+{
+  "started_at": "2026-02-25T10:18:26.115062",
+  "mode": "real_smoke_low_concurrency",
+  "constraints": {
+    "sequential": true,
+    "providers": [
+      "chatgpt",
+      "deepseek",
+      "gemini",
+      "qwen"
+    ],
+    "calls_per_provider": 1,
+    "inter_call_sleep_s": 6.0,
+    "timeout_s": 120,
+    "retry": 1
+  },
+  "providers": {
+    "chatgpt": {
+      "pass_count": 1,
+      "total": 1,
+      "results": [
+        {
+          "attempt": 2,
+          "status_code": 200,
+          "code": 0,
+          "elapsed_wall_s": 24.36,
+          "expected": "CASE-REAL_CHATGPT_1771985906|OK|OK",
+          "response_preview": "CASE-REAL_CHATGPT_1771985906|OK|OK",
+          "match_expected": true,
+          "error": "",
+          "raw": null,
+          "pass": true
+        }
+      ]
+    },
+    "deepseek": {
+      "pass_count": 0,
+      "total": 1,
+      "results": [
+        {
+          "attempt": 2,
+          "status_code": 503,
+          "code": 503,
+          "elapsed_wall_s": 18.06,
+          "expected": "CASE-REAL_DEEPSEEK_1771985978|OK|OK",
+          "response_preview": "",
+          "match_expected": false,
+          "error": "DeepSeek session is not logged in. Please log in at https://chat.deepseek.com/ and retry.",
+          "raw": {
+            "code": 503,
+            "message": "error",
+            "data": {
+              "error_code": 3001
+            },
+            "request_id": "9dddaaaf-83fd-473d-98e4-a85fa5641816",
+            "error": "DeepSeek session is not logged in. Please log in at https://chat.deepseek.com/ and retry."
+          },
+          "pass": false
+        }
+      ]
+    },
+    "gemini": {
+      "pass_count": 1,
+      "total": 1,
+      "results": [
+        {
+          "attempt": 1,
+          "status_code": 200,
+          "code": 0,
+          "elapsed_wall_s": 16.41,
+          "expected": "CASE-REAL_GEMINI_1771986031|OK|OK",
+          "response_preview": "CASE-REAL_GEMINI_1771986031|OK|OK",
+          "match_expected": true,
+          "error": "",
+          "raw": null,
+          "pass": true
+        }
+      ]
+    },
+    "qwen": {
+      "pass_count": 1,
+      "total": 1,
+      "results": [
+        {
+          "attempt": 1,
+          "status_code": 200,
+          "code": 0,
+          "elapsed_wall_s": 30.4,
+          "expected": "CASE-REAL_QWEN_1771986053|OK|OK",
+          "response_preview": "CASE-REAL_QWEN_1771986053|OK|OK",
+          "match_expected": true,
+          "error": "",
+          "raw": null,
+          "pass": true
+        }
+      ]
+    }
+  },
+  "close_all": {
+    "status_code": 200,
+    "body": {
+      "code": 0,
+      "message": "ok",
+      "data": {
+        "closed": true,
+        "providers": [
+          "chatgpt",
+          "deepseek",
+          "gemini",
+          "qwen"
+        ]
+      },
+      "request_id": "1d6fd36f-96a0-4c44-bc98-0a7aaf593e4c",
+      "error": null
+    }
+  },
+  "finished_at": "2026-02-25T10:21:32.378333",
+  "summary": {
+    "total": 4,
+    "passed": 3
+  }
+}

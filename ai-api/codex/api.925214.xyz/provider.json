@@ -1,0 +1,9 @@
+{
+  "name": "api.925214.xyz",
+  "endpoint": "https://api.925214.xyz/v1",
+  "model": "gpt-5.4",
+  "homepage": "https://api.925214.xyz",
+  "enabled": true,
+  "resource": "provider",
+  "app": "codex"
+}

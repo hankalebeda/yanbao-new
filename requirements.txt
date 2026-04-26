@@ -1,0 +1,26 @@
+fastapi==0.116.1
+uvicorn[standard]==0.35.0
+sqlalchemy==2.0.43
+pydantic==2.11.7
+pydantic-settings==2.10.1
+httpx==0.25.2
+jinja2==3.1.6
+python-multipart==0.0.20
+apscheduler==3.10.4
+pytest==8.4.1
+mootdx==0.11.7
+playwright==1.55.0
+# SOCKS5 代理支持（可选，使用 socks5:// 代理时需要）
+# httpx[socks]==0.25.2
+# ---- 数据处理与分析（技术指标 MA/RSI/ATR 计算依赖）----
+numpy>=1.26.0
+pandas>=2.1.0
+# ---- Gemini 官方 API SDK ----
+google-generativeai>=0.8.0
+# ---- 北向资金个股数据 + 基本面降级（akshare，东方财富数据源）----
+akshare>=1.12.0  # 北向逐股、ETF 等；未安装时相应功能显示「暂无」
+# ---- HTTP 请求库（mootdx 等可能依赖；同步请求场景）----
+requests>=2.31.0
+# ---- 用户系统 E6 ----
+bcrypt>=4.0.0
+PyJWT>=2.8.0
