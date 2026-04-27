@@ -60,7 +60,23 @@ test_run.log
 .vscode/
 .idea/
 .cursor/
-.claude/
+.claude/*
+!.claude/ralph/
+.claude/ralph/*
+!.claude/ralph/config.json
+!.claude/ralph/run-ralph.ps1
+!.claude/ralph/bin/
+.claude/ralph/bin/*
+!.claude/ralph/bin/claude
+!.claude/ralph/loop/
+.claude/ralph/loop/*
+!.claude/ralph/loop/CLAUDE.md
+!.claude/ralph/loop/prd.json
+!.claude/ralph/loop/progress.txt
+!.claude/ralph/loop/ralph.sh
+!.claude/ralph/prd/
+.claude/ralph/prd/*
+!.claude/ralph/prd/yanbao-platform-enhancement.json
 
 # ===== HTML previews =====
 report_preview_*.html

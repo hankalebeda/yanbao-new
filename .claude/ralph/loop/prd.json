@@ -1,0 +1,1682 @@
+{
+  "project": "A股研报平台整体验收与增强",
+  "branchName": "ralph/ashare-research-platform",
+  "description": "A股研报平台整体验收与增强 108 条 Ralph 原子故事（v6，2026-04-27）。前 100 条故事保留代码、契约与测试闭环结果，新增 US-101–US-108 运行态闭环故事，专门消除 `python .\\check_state.py` 仍为 `Total published: 0` 的假绿状态。docs/core/28/29 的规则已内联到 runtime prd.json；Step 2 只能把本文件作为直接任务入口。每条 story 都显式写明入口、权限、HTTP 状态码、error_code、幂等键、枚举值、阈值、降级语义、示例断言与 focused pytest 映射；其中运行态 story 还必须追加 check_state、sqlite、endpoint 或 browser 证据。 docs/core/08_AI接入策略.md is currently missing and must stay explicitly marked missing.",
+  "userStories": [
+    {
+      "id": "US-001",
+      "title": "冻结共享枚举与资金挡位契约",
+      "description": "作为平台维护者，我希望在 app/core/enums.py 冻结共享枚举，并通过 GET /api/v1/features 暴露资金挡位契约，以便模型、API 校验和页面渲染使用同一值域。",
+      "acceptanceCriteria": [
+        "app/core/enums.py 导出 Recommendation(BUY|SELL|HOLD)、QualityFlag(ok|stale_ok|missing|degraded)、MarketState(BULL|BEAR|NEUTRAL)、UserRole(user|admin|super_admin)、UserTier(Free|Pro|Enterprise)、PositionStatus(OPEN|TAKE_PROFIT|STOP_LOSS|TIMEOUT|CLOSED|DELISTED_LIQUIDATED|SKIPPED)、TaskStatus(PENDING|PROCESSING|COMPLETED|FAILED|SUSPENDED|EXPIRED)、NotificationStatus(sent|failed|skipped|pending)、CapitalTier(10k|100k|500k)，共 9 个枚举，不多不少。",
+        "build_enum_registry 对同名枚举重复注册 fail-close 并抛 EnumContractConflict；CapitalTier 被 Pydantic 模型引用时，非法值（如 10w）触发 ValidationError。",
+        "GET /api/v1/features 返回 HTTP 200，data.capital_tiers 包含且仅包含 ['10k','100k','500k']（顺序固定），data.default_capital_tier='100k'。",
+        "python -m pytest tests/test_ralph_us001_contract.py -q --tb=short",
+        "Typecheck passes"
+      ],
+      "priority": 1,
+      "passes": true,
+      "notes": "{\"group\":\"G0\",\"dependsOn\":[],\"endpoints\":[\"GET /api/v1/features\"],\"models\":[\"app.core.enums\",\"enum_contract\"],\"permissions\":[\"public_read\"],\"errorCodes\":[\"EnumContractConflict\",\"ValidationError\"],\"idempotency\":\"enum class name unique in build_enum_registry\",\"enums\":[\"10k\",\"100k\",\"500k\",\"BUY\",\"SELL\",\"HOLD\",\"ok\",\"stale_ok\",\"missing\",\"degraded\"],\"thresholds\":\"capitalTierCount=3,sharedEnumCount=9\",\"degradation\":\"duplicate enum registration fails closed before runtime use\",\"exampleAssert\":\"assert body.data.capital_tiers==['10k','100k','500k']\",\"pytest\":\"python -m pytest tests/test_ralph_us001_contract.py -q --tb=short\"}"
+    },
+    {
+      "id": "US-002",
+      "title": "实现统一 JSON 响应与错误封装",
+      "description": "作为 API 调用方，我希望所有 JSON 接口走统一 envelope，以便前端和测试稳定消费。",
+      "acceptanceCriteria": [
+        "所有 JSON 端点响应体包含 success(bool)、message(str)、data(any|null)、request_id(UUID v4, 36字符, 格式 xxxxxxxx-xxxx-4xxx-xxxx-xxxxxxxxxxxx)；HTTP 200/201/202 时 success=true，HTTP 4xx/5xx 时 success=false。",
+        "错误响应额外包含 error_code(SCREAMING_SNAKE_CASE 非空字符串) 和 error_message(中文可读字符串)；error_code 只允许已注册值，不允许裸 HTTP reason 字符串。",
+        "响应头 X-Request-ID 的值与响应体 request_id 完全相同；客户端未传 X-Request-ID 时服务端自动生成。",
+        "降级响应额外包含 degraded=true 和非空 degraded_reason；降级时 success 仍为 true，HTTP 状态码仍为 200。",
+        "python -m pytest tests/test_api_bridge_contract.py -q --tb=short",
+        "Typecheck passes"
+      ],
+      "priority": 2,
+      "passes": true,
+      "notes": "{\"group\":\"G0\",\"dependsOn\":[\"US-001\"],\"endpoints\":[\"/health\",\"/api/v1/health\",\"/api/v1/auth/login\",\"/api/v1/admin/runtime-gates\"],\"models\":[\"response_envelope\"],\"permissions\":[\"public_read\",\"route_preserve\"],\"errorCodes\":[\"VALIDATION_ERROR\",\"UNAUTHORIZED\",\"FORBIDDEN\",\"CONFLICT\",\"RATE_LIMITED\",\"INTERNAL_ERROR\"],\"idempotency\":\"one request_id per response (UUID v4)\",\"enums\":[\"success\",\"degraded\"],\"thresholds\":\"requestIdLen=36,allowedStatusCodes=200|201|202|400|401|403|404|409|422|429|500|503\",\"degradation\":\"degraded=true only when upstream dependency unavailable\",\"exampleAssert\":\"assert len(body['request_id'])==36 and body['request_id']==resp.headers['X-Request-ID']\",\"pytest\":\"python -m pytest tests/test_api_bridge_contract.py -q --tb=short\"}"
+    },
+    {
+      "id": "US-003",
+      "title": "实现 request_id 中间件与日志传播",
+      "description": "作为运维人员，我希望请求链统一传播 request_id，以便排障时串起日志、响应和审计。",
+      "acceptanceCriteria": [
+        "FastAPI middleware stack 在最外层读取请求头 X-Request-ID；若缺失则生成 UUID v4 并注入 request context；全请求生命周期内 context 内 request_id 唯一不变。",
+        "HTTP 404（路由不存在）、422（参数校验失败）、500（未处理异常）的响应体均包含与响应头一致的 request_id；服务层和后台任务不得调用第二次 uuid 生成替换链路 ID。",
+        "结构化日志每行包含 request_id 字段；审计日志 audit_log.request_id 与当次 HTTP 请求的 request_id 值完全相同。",
+        "python -m pytest tests/test_api_bridge_contract.py tests/test_runtime_anchor_consistency.py -q --tb=short",
+        "Typecheck passes"
+      ],
+      "priority": 3,
+      "passes": true,
+      "notes": "{\"group\":\"G0\",\"dependsOn\":[\"US-002\"],\"endpoints\":[\"/health\",\"/api/v1/health\",\"/api/v1/auth/login\",\"/api/v1/admin/runtime-gates\"],\"models\":[\"request_context\",\"audit_context\"],\"permissions\":[\"all_routes_read\"],\"errorCodes\":[\"VALIDATION_ERROR\"],\"idempotency\":\"one request_id per request chain (UUID v4)\",\"enums\":[\"uuid_v4\"],\"thresholds\":\"requestIdLength=36,propagateToAllErrorPaths=true\",\"degradation\":\"error_paths_always_keep_request_id\",\"exampleAssert\":\"assert resp.status_code==422 and resp.json()['request_id']==resp.headers['X-Request-ID']\",\"pytest\":\"python -m pytest tests/test_api_bridge_contract.py tests/test_runtime_anchor_consistency.py -q --tb=short\"}"
+    },
+    {
+      "id": "US-004",
+      "title": "实现健康检查与就绪状态聚合",
+      "description": "作为运维人员，我希望健康检查聚合数据库、调度器、研报链和外部依赖状态，以便区分正常、降级和失败。",
+      "acceptanceCriteria": [
+        "GET /health 和 GET /api/v1/health 在任何情况下（包括数据库降级、调度器停止）都返回 HTTP 200；data.status 只允许 ok 或 degraded，不得返回 HTTP 5xx。",
+        "降级触发逻辑：database_status!=ok 时 data.status 强制为 degraded；kline_coverage_pct<10 时 kline_status=degraded；scheduler_status 只允许 ok|degraded|disabled；llm_router_status=unconfigured 不影响整体 status。",
+        "GET /api/v1/admin/runtime-gates 需要 admin 权限（无 token 返回 HTTP 401，普通用户返回 HTTP 403）；gate.status 只允许 ready|computing|degraded|blocked|disabled；非 ready 状态必须包含非空 status_reason 字段。",
+        "健康检查端点不执行任何写操作（无数据库写入、无缓存写入）；并发 N 次探测结果幂等。",
+        "python -m pytest tests/test_gate_startup.py tests/test_internal_runtime_gates.py tests/test_runtime_anchor_consistency.py -q --tb=short",
+        "Typecheck passes"
+      ],
+      "priority": 4,
+      "passes": true,
+      "notes": "{\"group\":\"G0\",\"dependsOn\":[\"US-002\",\"US-003\"],\"endpoints\":[\"/health\",\"/api/v1/health\",\"/api/v1/admin/runtime-gates\"],\"models\":[\"health_snapshot\",\"runtime_gate\"],\"permissions\":[\"public_health_read\",\"admin_gate_read\"],\"errorCodes\":[\"UNAUTHORIZED\",\"FORBIDDEN\",\"VALIDATION_ERROR\"],\"idempotency\":\"health_probe_is_read_only\",\"enums\":[\"ok\",\"degraded\",\"fail\",\"ready\",\"computing\",\"blocked\",\"disabled\"],\"thresholds\":\"hotspotWindowHours=24,klineDegradedBelow=10pct\",\"degradation\":\"database_status_not_ok_or_kline_below_10pct_triggers_degraded\",\"exampleAssert\":\"assert resp.status_code==200 and resp.json()['data']['status'] in ['ok','degraded']\",\"pytest\":\"python -m pytest tests/test_gate_startup.py tests/test_internal_runtime_gates.py tests/test_runtime_anchor_consistency.py -q --tb=short\"}"
+    },
+    {
+      "id": "US-005",
+      "title": "建立审计日志写入基础服务",
+      "description": "作为平台维护者，我希望高风险写操作统一写审计日志，以便保留 actor、before、after 和 request_id。",
+      "acceptanceCriteria": [
+        "audit_log 表包含字段 audit_id(UUID)、actor_user_id(UUID|null)、action_type(SCREAMING_SNAKE_CASE)、target_type(str)、target_id(str)、before_json(JSON|null)、after_json(JSON|null)、request_id(UUID)、created_at(UTC)；action_type+target_type+target_id+request_id 联合唯一。",
+        "管理员写操作（/api/v1/admin/* PUT/POST/DELETE）、支付补单、强制重建、发布审批和权限变更在业务逻辑执行前必须创建 audit_log 草稿行；audit_log 写入失败时业务操作以 HTTP 503 AUDIT_WRITE_FAILED 中断，不允许继续。",
+        "before_json 和 after_json 中自动脱敏 password、access_token、refresh_token、cookie、secret、signature 六类字段（替换为 ***REDACTED***）；脱敏规则不依赖字段命名大小写。",
+        "python -m pytest tests/test_api_bridge_contract.py tests/test_admin_dashboard_frontend_contract.py -q --tb=short",
+        "Typecheck passes"
+      ],
+      "priority": 5,
+      "passes": true,
+      "notes": "{\"group\":\"G0\",\"dependsOn\":[\"US-003\"],\"endpoints\":[\"/api/v1/admin/*\",\"/api/v1/auth/*\"],\"models\":[\"audit_log\"],\"permissions\":[\"admin_write\",\"internal_write\"],\"errorCodes\":[\"UNAUTHORIZED\",\"FORBIDDEN\",\"AUDIT_WRITE_FAILED\"],\"idempotency\":\"action_type+target_type+target_id+request_id unique constraint\",\"enums\":[\"fail_close\"],\"thresholds\":\"sensitiveFields=password|access_token|refresh_token|cookie|secret|signature\",\"degradation\":\"audit_failure_blocks_high_risk_write_with_503\",\"exampleAssert\":\"assert audit_row['request_id']==resp.json()['request_id'] and '***REDACTED***' not in str(audit_row['before_json'])\",\"pytest\":\"python -m pytest tests/test_api_bridge_contract.py tests/test_admin_dashboard_frontend_contract.py -q --tb=short\"}"
+    },
+    {
+      "id": "US-006",
+      "title": "实现运行时门禁与功能开关基座",
+      "description": "作为平台维护者，我希望系统使用统一 runtime gate 和 feature flag 语义，以便阻塞、降级和禁用行为一致。",
+      "acceptanceCriteria": [
+        "启动时读取环境变量 MOCK_LLM(bool)、ENABLE_SCHEDULER(bool)、SETTLEMENT_INLINE_EXECUTION(bool)，并注册 llm_provider、kline_provider、hotspot_provider、settlement_engine 等 gate；gate_name 在注册表中唯一，重复注册抛 CONFLICT。",
+        "gate.status 只允许 ready|computing|degraded|blocked|disabled；任意 gate.status != ready 时必须设置非空 gate.status_reason（字符串，不允许空串或 null）；外部依赖不可用时 gate.status = blocked 或 degraded，不允许使用 ready 掩盖阻塞。",
+        "GET /api/v1/admin/runtime-gates 需要 admin 权限（HTTP 401/403）；GET /health 只暴露 gates 摘要（计数）不暴露单个 gate 的 status_reason；GET /api/v1/features 无需鉴权，只暴露功能开关聚合。",
+        "python -m pytest tests/test_gate_startup.py tests/test_internal_runtime_gates.py tests/test_features_page.py -q --tb=short",
+        "Typecheck passes"
+      ],
+      "priority": 6,
+      "passes": true,
+      "notes": "{\"group\":\"G0\",\"dependsOn\":[\"US-002\",\"US-005\"],\"endpoints\":[\"/api/v1/admin/runtime-gates\",\"/health\",\"/api/v1/features\"],\"models\":[\"runtime_gate\",\"feature_flag\"],\"permissions\":[\"public_summary_read\",\"admin_detail_read\",\"internal_gate_write\"],\"errorCodes\":[\"UNAUTHORIZED\",\"FORBIDDEN\",\"GATE_BLOCKED\",\"DEPENDENCY_NOT_READY\",\"CONFLICT\"],\"idempotency\":\"gate_name unique in registry\",\"enums\":[\"ready\",\"computing\",\"degraded\",\"blocked\",\"disabled\"],\"thresholds\":\"nonReadyRequiresStatusReason=true,gateStatusReasonMaxLen=500\",\"degradation\":\"provider_absent_returns_blocked_or_degraded_never_ready\",\"exampleAssert\":\"assert all(g['status_reason'] for g in gates if g['status']!='ready')\",\"pytest\":\"python -m pytest tests/test_gate_startup.py tests/test_internal_runtime_gates.py tests/test_features_page.py -q --tb=short\"}"
+    },
+    {
+      "id": "US-007",
+      "title": "建立 stock_master 证券主数据模型",
+      "description": "作为数据工程师，我希望冻结 A 股证券主数据模型，以便股票池、搜索和详情页共享同一主键域。",
+      "acceptanceCriteria": [
+        "stock_master 表包含字段 stock_code(VARCHAR(12), PK)、stock_name(VARCHAR(64))、exchange(SH|SZ|BJ)、industry(VARCHAR(64)|null)、list_date(DATE|null)、circulating_shares(BIGINT|null)、is_st(BOOL 默认 false)、is_suspended(BOOL 默认 false)、is_delisted(BOOL 默认 false)、updated_at(DATETIME UTC)；stock_code 总共 12 个字段。",
+        "stock_code 格式为 \"^\\d{6}\\.(SH|SZ|BJ)$\"（如 600519.SH、0000001.SZ）；stock_code UNIQUE，重复赋值返回 HTTP 409 CONFLICT；缺失 industry 或 list_date 时字段为 null，不得使用占位字符串。",
+        "更新 stock_master 时 updated_at 自动刷新为 UTC 当前时间；GET /api/v1/stocks/{stock_code}/snapshot 的 stock_code 不符合格式时返回 HTTP 422 VALIDATION_ERROR。",
+        "python -m pytest tests/test_fr01_pool_refresh.py tests/test_runtime_anchor_consistency.py -q --tb=short",
+        "Typecheck passes"
+      ],
+      "priority": 7,
+      "passes": true,
+      "notes": "{\"group\":\"G1\",\"dependsOn\":[\"US-001\"],\"endpoints\":[\"/api/v1/internal/stocks/{stock_code}/non-report-data/collect\",\"/api/v1/stocks/{stock_code}/snapshot\"],\"models\":[\"stock_master\"],\"permissions\":[\"public_read\",\"admin_write\",\"internal_write\"],\"errorCodes\":[\"VALIDATION_ERROR\",\"CONFLICT\",\"FORBIDDEN\"],\"idempotency\":\"stock_code UNIQUE (upsert on stock_code)\",\"enums\":[\"SH\",\"SZ\",\"BJ\"],\"thresholds\":\"stockCodeRegex=^\\\\d{6}\\\\.(SH|SZ|BJ)$,fieldCount=12\",\"degradation\":\"missing_metadata_null_not_placeholder\",\"exampleAssert\":\"assert re.match(r'^\\\\d{6}\\\\.(SH|SZ|BJ)$', row.stock_code)\",\"pytest\":\"python -m pytest tests/test_fr01_pool_refresh.py tests/test_runtime_anchor_consistency.py -q --tb=short\"}"
+    },
+    {
+      "id": "US-008",
+      "title": "建立 kline_daily 日线行情模型",
+      "description": "作为数据工程师，我希望冻结日线行情模型，以便技术分析、市场状态、结算和模拟使用同一 OHLCV 事实。",
+      "acceptanceCriteria": [
+        "kline_daily 表包含字段 id(BIGINT PK auto)、stock_code(VARCHAR(12) FK stock_master)、trade_date(DATE)、open/high/low/close(DECIMAL(12,4))、volume(BIGINT)、amount(DECIMAL(20,4))、turnover_rate(DECIMAL(8,6)|null)、adjust_type(VARCHAR(20) 默认 front_adjusted)、is_suspended(BOOL)、source_batch_id(UUID FK data_batch)、created_at(DATETIME UTC)，共 12 个字段。",
+        "逻辑唯一键固定为 stock_code+trade_date+adjust_type 三元组；adjust_type 必须为 'front_adjusted'，不允许 raw 或空字符串；此三元组重复写入返回 HTTP 409 CONFLICT。",
+        "volume=0 且 is_suspended=true 时不得拒绝写入（停牌日行情是合法数据）；open/high/low/close 不得为负数或 NaN；trade_date 格式为 YYYY-MM-DD。",
+        "python -m pytest tests/test_fr01_pool_refresh.py tests/test_runtime_anchor_consistency.py -q --tb=short",
+        "Typecheck passes"
+      ],
+      "priority": 8,
+      "passes": true,
+      "notes": "{\"group\":\"G1\",\"dependsOn\":[\"US-001\",\"US-007\"],\"endpoints\":[\"/api/v1/internal/stocks/{stock_code}/non-report-data/collect\",\"/api/v1/internal/reports/generate-batch\"],\"models\":[\"kline_daily\"],\"permissions\":[\"public_read\",\"admin_write\",\"internal_write\"],\"errorCodes\":[\"VALIDATION_ERROR\",\"CONFLICT\",\"DEPENDENCY_NOT_READY\"],\"idempotency\":\"stock_code+trade_date+adjust_type UNIQUE (upsert safe)\",\"enums\":[\"front_adjusted\"],\"thresholds\":\"staleFallbackTradeDays<=5,adjustTypeEnum=front_adjusted_only\",\"degradation\":\"source_unavailable_writes_missing_or_stale_ok_to_usage\",\"exampleAssert\":\"assert row.adjust_type=='front_adjusted' and row.close>0\",\"pytest\":\"python -m pytest tests/test_fr01_pool_refresh.py tests/test_runtime_anchor_consistency.py -q --tb=short\"}"
+    },
+    {
+      "id": "US-009",
+      "title": "建立 data_batch 与错误血缘模型",
+      "description": "作为数据工程师，我希望每次采集都有批次、错误和 lineage 事实，以便回溯来源、时间和失败原因。",
+      "acceptanceCriteria": [
+        "data_batch 表包含字段 batch_id(UUID PK)、source_name(VARCHAR(64))、trade_date(DATE)、status(RUNNING|COMPLETED|PARTIAL|FAILED)、started_at(DATETIME)、completed_at(DATETIME|null)、success_count(INT)、failed_count(INT)、skipped_count(INT)；data_batch_error 表包含 stock_code、error_code、error_message、batch_id(FK)。",
+        "单股采集失败时写 data_batch_error 明细行，batch.status 标为 PARTIAL（不得标 COMPLETED）；一个 batch_id 内所有试图的 data_batch_error 记录必须包含非空 error_message；batch.status 不得回退。",
+        "report_data_usage.batch_id 可关联到具体 data_batch.batch_id（外键关系）；batch_id 双写返回 HTTP 409 CONFLICT；batch.status 内容以外的字符串返回 HTTP 422 VALIDATION_ERROR。",
+        "python -m pytest tests/test_fr01_pool_refresh.py tests/test_runtime_anchor_consistency.py -q --tb=short",
+        "Typecheck passes"
+      ],
+      "priority": 9,
+      "passes": true,
+      "notes": "{\"group\":\"G1\",\"dependsOn\":[\"US-002\",\"US-003\"],\"endpoints\":[\"/api/v1/internal/stocks/{stock_code}/non-report-data/collect\",\"/api/v1/internal/reports/generate-batch\"],\"models\":[\"data_batch\",\"data_batch_error\",\"data_batch_lineage\"],\"permissions\":[\"admin_write\",\"internal_write\"],\"errorCodes\":[\"VALIDATION_ERROR\",\"CONFLICT\",\"FORBIDDEN\"],\"idempotency\":\"batch_id UUID unique\",\"enums\":[\"RUNNING\",\"COMPLETED\",\"PARTIAL\",\"FAILED\"],\"thresholds\":\"singleStockFailureMustNotMaskBatch=true\",\"degradation\":\"partial_batch_keeps_error_details_never_fakes_completed\",\"exampleAssert\":\"assert batch['status'] in ['RUNNING','COMPLETED','PARTIAL','FAILED'] and batch['failed_count']>=0\",\"pytest\":\"python -m pytest tests/test_fr01_pool_refresh.py tests/test_runtime_anchor_consistency.py -q --tb=short\"}"
+    },
+    {
+      "id": "US-010",
+      "title": "建立 report_data_usage 真值模型",
+      "description": "作为研报链维护者，我希望 report_data_usage 成为高级区所用数据的事实来源，以便展示层不再拼接伪文案。",
+      "acceptanceCriteria": [
+        "report_data_usage 表包含字段 usage_id(UUID PK)、stock_code(VARCHAR(12))、trade_date(DATE)、dataset_name(VARCHAR(64))、source_name(VARCHAR(64))、batch_id(UUID FK data_batch|null)、fetch_time(DATETIME UTC|null)、status(ok|stale_ok|missing|degraded)、status_reason(VARCHAR(500)|null)、payload_ref(TEXT|null)、created_at(DATETIME UTC)。",
+        "status != 'ok' 时 status_reason 字段必须为非空字符串（不允许 null 或空字符串）；status 内容以外的字符串返回 HTTP 422 VALIDATION_ERROR；逻辑唯一键为 trade_date+stock_code+dataset_name+source_name+batch_id，重复写入幂等更新并复用 usage_id。",
+        "展示层读取 usage 时优先选择最新可用状态（ok > stale_ok > proxy_ok > realtime_only > missing）；不得把 status=missing 的行排在 ok 行之前。",
+        "python -m pytest tests/test_runtime_anchor_consistency.py tests/test_fr10_site_dashboard.py -q --tb=short",
+        "Typecheck passes"
+      ],
+      "priority": 10,
+      "passes": true,
+      "notes": "{\"group\":\"G1\",\"dependsOn\":[\"US-009\"],\"endpoints\":[\"/api/v1/internal/stocks/{stock_code}/non-report-data/collect\",\"/api/v1/stocks/{stock_code}/snapshot\"],\"models\":[\"report_data_usage\"],\"permissions\":[\"public_read\",\"admin_write\",\"internal_write\"],\"errorCodes\":[\"VALIDATION_ERROR\",\"CONFLICT\",\"FORBIDDEN\"],\"idempotency\":\"trade_date+stock_code+dataset_name+source_name+batch_id unique (upsert reuses usage_id)\",\"enums\":[\"ok\",\"stale_ok\",\"missing\",\"degraded\",\"proxy_ok\",\"realtime_only\"],\"thresholds\":\"statusReasonRequiredWhenNotOk=true,preferLatestUsableStatus=ok>stale_ok>proxy_ok>realtime_only>missing\",\"degradation\":\"ui_reads_usage_truth_only_never_fabricates\",\"exampleAssert\":\"assert usage['status'] in ['ok','stale_ok','missing','degraded'] and (usage['status']=='ok' or usage['status_reason'])\",\"pytest\":\"python -m pytest tests/test_runtime_anchor_consistency.py tests/test_fr10_site_dashboard.py -q --tb=short\"}"
+    },
+    {
+      "id": "US-011",
+      "title": "建立股票池快照与刷新任务模型",
+      "description": "作为平台维护者，我希望股票池快照和刷新任务有稳定模型，以便每日 Top200、候补池和回退行为可落库。",
+      "acceptanceCriteria": [
+        "stock_pool_snapshot 表包含字段 pool_date(DATE)、pool_version(INT 自增)、stock_code(VARCHAR(12))、rank_no(INT)、is_core(BOOL)、score(DECIMAL(5,2))、fallback_from(DATE|null)、created_at(DATETIME)；pool_date+pool_version+stock_code 三元组 UNIQUE、重复写入返回 HTTP 409。",
+        "核心池 is_core=true 的条目不超过 200 条；候补池 is_core=false 的条目不超过 50 条；同一 pool_date 内同一 pool_version 重复刷新时 pool_version 自增 +1。",
+        "stock_pool_refresh_task 表包含 lock_key(UNIQUE)、status、started_at、completed_at；同一 lock_key 内同时最多一个活跃刷新，其余请求返回 HTTP 409 CONFLICT。",
+        "python -m pytest tests/test_fr01_pool_refresh.py -q --tb=short",
+        "Typecheck passes"
+      ],
+      "priority": 11,
+      "passes": true,
+      "notes": "{\"group\":\"G1\",\"dependsOn\":[\"US-007\",\"US-009\"],\"endpoints\":[\"/api/v1/admin/dashboard\",\"/api/v1/internal/reports/generate-batch\"],\"models\":[\"stock_pool_snapshot\",\"stock_score\",\"stock_pool_refresh_task\"],\"permissions\":[\"public_read\",\"admin_write\",\"internal_write\"],\"errorCodes\":[\"VALIDATION_ERROR\",\"CONFLICT\",\"FORBIDDEN\"],\"idempotency\":\"pool_date+pool_version+stock_code UNIQUE; refresh lock_key UNIQUE\",\"enums\":[\"core\",\"standby\"],\"thresholds\":\"corePoolMax=200,standbyPoolMax=50,poolVersionAutoIncrement=true\",\"degradation\":\"coverage_shortfall_recorded_not_silenced\",\"exampleAssert\":\"assert len([r for r in snapshot if r['is_core']])<=200\",\"pytest\":\"python -m pytest tests/test_fr01_pool_refresh.py -q --tb=short\"}"
+    },
+    {
+      "id": "US-012",
+      "title": "建立 market_state_cache 模型",
+      "description": "作为研报链维护者，我希望市场状态被持久化为可解释缓存，以便首页、Dashboard 和 FR-06 使用同一状态。",
+      "acceptanceCriteria": [
+        "market_state_cache 表包含字段 trade_date(DATE PK)、reference_date(DATE 最近有效交易日)、market_state(BULL|BEAR|NEUTRAL)、state_reason(VARCHAR(500) 非空)、market_state_degraded(BOOL 默认 false)、cache_status(ok|computing|degraded|stale_ok)、created_at(DATETIME UTC)。",
+        "market_state 只允许 BULL|BEAR|NEUTRAL 三个字符串，趋势判断基于 reference_date 的沪深 300 日线；幽灵时段（00:00-08:59:59 交易日）回退 reference_date 为上一有效交易日并设置 state_reason。",
+        "market_state=NEUTRAL 不得作为降级占位；数据不足时必须设置 market_state_degraded=true 和非空 state_reason（不得静默输出 NEUTRAL）。",
+        "python -m pytest tests/test_runtime_anchor_consistency.py tests/test_fr05_market_state.py -q --tb=short",
+        "Typecheck passes"
+      ],
+      "priority": 12,
+      "passes": true,
+      "notes": "{\"group\":\"G1\",\"dependsOn\":[\"US-008\"],\"endpoints\":[\"/health\",\"/api/v1/admin/runtime-gates\",\"/api/v1/admin/dashboard\",\"/api/v1/market/state\"],\"models\":[\"market_state_cache\"],\"permissions\":[\"public_read\",\"admin_write\",\"internal_write\"],\"errorCodes\":[\"VALIDATION_ERROR\",\"CONFLICT\",\"FORBIDDEN\"],\"idempotency\":\"trade_date PK (upsert on conflict)\",\"enums\":[\"BULL\",\"BEAR\",\"NEUTRAL\",\"ok\",\"computing\",\"degraded\",\"stale_ok\"],\"thresholds\":\"ghostWindow=00:00-08:59:59,ghostWindowFallsBackToPrevValidDate=true\",\"degradation\":\"insufficient_data_sets_degraded=true_with_explicit_reason\",\"exampleAssert\":\"assert cache['market_state'] in ['BULL','BEAR','NEUTRAL'] and cache['state_reason']\",\"pytest\":\"python -m pytest tests/test_runtime_anchor_consistency.py tests/test_fr05_market_state.py -q --tb=short\"}"
+    },
+    {
+      "id": "US-013",
+      "title": "建立 report 研报主模型",
+      "description": "作为研报链维护者，我希望 report 主表表达生成结果、发布状态和质量门，以便公开查询不依赖临时 JSON。",
+      "acceptanceCriteria": [
+        "report 表包含字段 report_id(UUID PK)、idempotency_key(VARCHAR(128) UNIQUE，格式固定为 'daily:{stock_code}:{trade_date}:{strategy_type}'，例如 'daily:600519.SH:2026-04-22:A')、stock_code、trade_date、recommendation(BUY|SELL|HOLD)、confidence(DECIMAL(4,3) 0.000-1.000)、strategy_type(A|B|C)、quality_flag(ok|stale_ok|missing|degraded)、published(BOOL 默认 false)、review_flag(VARCHAR(32))、status_reason(TEXT|null)、llm_fallback_level(VARCHAR(32))、risk_audit_status(VARCHAR(32))、created_at、updated_at，共 15 个字段。",
+        "同一 stock_code+trade_date+strategy_type 只能存在一份有效公开结果（published=true 的记录不得被直接覆盖，尝试覆盖返回 HTTP 403 FORBIDDEN）；idempotency_key 必须以 'daily:' 开头，否则返回 HTTP 422 VALIDATION_ERROR；confidence 必须在 [0.0, 1.0] 范围内。",
+        "发布后 (published=true) 的正文、citation、推理链、结论和 instruction_card 字段默认只读；不允许普通写操作修改已发布内容（HTTP 403）；仅 super_admin 可触发强制重建（force_regenerate）。",
+        "python -m pytest tests/test_fr10_site_dashboard.py tests/test_api_bridge_contract.py -q --tb=short",
+        "Typecheck passes"
+      ],
+      "priority": 13,
+      "passes": true,
+      "notes": "{\"group\":\"G1\",\"dependsOn\":[\"US-010\"],\"endpoints\":[\"/api/v1/internal/reports/generate-batch\",\"/api/v1/stocks/{stock_code}/snapshot\"],\"models\":[\"report\"],\"permissions\":[\"public_read_published_only\",\"admin_write\",\"internal_write\"],\"errorCodes\":[\"VALIDATION_ERROR\",\"CONFLICT\",\"FORBIDDEN\"],\"idempotency\":\"idempotency_key=daily:{stock_code}:{trade_date}:{strategy_type} UNIQUE\",\"enums\":[\"BUY\",\"SELL\",\"HOLD\",\"A\",\"B\",\"C\",\"ok\",\"stale_ok\",\"missing\",\"degraded\"],\"thresholds\":\"publishedRecordImmutable=true,confidenceRange=0.0-1.0,idempotencyKeyPrefix=daily:\",\"degradation\":\"llm_failure_keeps_published_false\",\"exampleAssert\":\"assert report['idempotency_key'].startswith('daily:') and 0<=report['confidence']<=1.0\",\"pytest\":\"python -m pytest tests/test_fr10_site_dashboard.py tests/test_api_bridge_contract.py -q --tb=short\"}"
+    },
+    {
+      "id": "US-014",
+      "title": "建立 citation 与 usage link 模型",
+      "description": "作为研报审计方，我希望研报引用和 usage link 独立落库，以便每条公开证据都能追溯到真实来源和批次。",
+      "acceptanceCriteria": [
+        "report_citation 表包含字段 citation_id(UUID PK)、report_id(UUID FK report)、source_name(VARCHAR(64) 非空)、source_url(VARCHAR(1024) 必须以 http:// 或 https:// 开头)、fetch_time(DATETIME UTC 非空)、excerpt(TEXT|null)；report_data_usage_link 表包含 report_id+usage_id UNIQUE。",
+        "citation 三要素 source_name、source_url、fetch_time 三者缺一时此 citation 行不得写入，尝试写入返回 HTTP 422 VALIDATION_ERROR；source_url 不以 http 开头时同样返回 HTTP 422。",
+        "已发布研报少于 1 条 citation 记录时不得生成公开 payload（阶段门要求）；citation 引用了 source_url 不是 HTTP URL 时不得写入公开 citation 表。",
+        "python -m pytest tests/test_fr10_site_dashboard.py tests/test_runtime_anchor_consistency.py -q --tb=short",
+        "Typecheck passes"
+      ],
+      "priority": 14,
+      "passes": true,
+      "notes": "{\"group\":\"G1\",\"dependsOn\":[\"US-010\",\"US-013\"],\"endpoints\":[\"/api/v1/internal/reports/generate-batch\",\"/api/v1/stocks/{stock_code}/snapshot\"],\"models\":[\"report_citation\",\"report_data_usage_link\"],\"permissions\":[\"public_read_published_only\",\"admin_write\",\"internal_write\"],\"errorCodes\":[\"QUALITY_GATE_FAILED\",\"VALIDATION_ERROR\",\"FORBIDDEN\"],\"idempotency\":\"report_id+usage_id UNIQUE\",\"enums\":[\"citation_required\"],\"thresholds\":\"citationTriple=source_name(required)+source_url(http://|https://)+fetch_time(required),minCitationForPublish=1\",\"degradation\":\"missing_citation_triad_blocks_publish\",\"exampleAssert\":\"assert citation['source_url'].startswith(('http://','https://'))\",\"pytest\":\"python -m pytest tests/test_fr10_site_dashboard.py tests/test_runtime_anchor_consistency.py -q --tb=short\"}"
+    },
+    {
+      "id": "US-015",
+      "title": "建立 report_generation_task 模型",
+      "description": "作为平台维护者，我希望研报生成任务具备可恢复状态，以便批量生成、断点恢复和失败排查有统一载体。",
+      "acceptanceCriteria": [
+        "report_generation_task 表包含字段 task_id(UUID PK)、stock_code、trade_date、strategy_type(A|B|C)、status(PENDING|PROCESSING|COMPLETED|FAILED|SUSPENDED|EXPIRED)、retry_count(INT 默认 0)、error_message(TEXT|null)、status_reason(VARCHAR(500)|null)、resume_token(UUID|null)、created_at、updated_at、expires_at(DATETIME，等于 created_at+72h)。",
+        "同一 stock_code+trade_date+strategy_type 同时只允许一个活跃任务（status IN PENDING|PROCESSING）；重复创建返回现有 task_id，不报出 HTTP 409；task.status 内容以外的字符串返回 HTTP 422 VALIDATION_ERROR。",
+        "合法状态转换路径为 PENDING→PROCESSING→COMPLETED/FAILED/SUSPENDED；恢复窗口固定为 72 小时，超窗口的 resume_token 返回 HTTP 410 TASK_EXPIRED；任务达到 EXPIRED 状态后不可继续恢复。",
+        "python -m pytest tests/test_runtime_anchor_consistency.py tests/test_api_bridge_contract.py -q --tb=short",
+        "Typecheck passes"
+      ],
+      "priority": 15,
+      "passes": true,
+      "notes": "{\"group\":\"G1\",\"dependsOn\":[\"US-013\"],\"endpoints\":[\"/api/v1/internal/reports/generate-batch\"],\"models\":[\"report_generation_task\"],\"permissions\":[\"admin_write\",\"internal_write\"],\"errorCodes\":[\"DUPLICATE_REQUEST\",\"INVALID_STATE_TRANSITION\",\"TASK_EXPIRED\",\"FORBIDDEN\"],\"idempotency\":\"stock_code+trade_date+strategy_type active task unique (return existing task_id)\",\"enums\":[\"PENDING\",\"PROCESSING\",\"COMPLETED\",\"FAILED\",\"SUSPENDED\",\"EXPIRED\"],\"thresholds\":\"resumeWindowHours=72,expiresAt=created_at+72h\",\"degradation\":\"expired_token_returns_410_cannot_resume\",\"exampleAssert\":\"assert task['status'] in ['PENDING','PROCESSING','COMPLETED','FAILED','SUSPENDED','EXPIRED'] and task['expires_at']\",\"pytest\":\"python -m pytest tests/test_runtime_anchor_consistency.py tests/test_api_bridge_contract.py -q --tb=short\"}"
+    },
+    {
+      "id": "US-016",
+      "title": "建立结算与基线统计模型",
+      "description": "作为策略评估者，我希望 FR-07 结算、基线和 KPI 快照模型先冻结，以便统计口径不混用。",
+      "acceptanceCriteria": [
+        "settlement_result 表包含字段 report_id(FK)、strategy_type(A|B|C)、window_days(1|7|14|30|60)、entry_price、exit_price、shares(INT 固定为 100)、gross_return_pct、net_return_pct、settlement_status(pending|settled|skipped|degraded)、is_misclassified(BOOL)、exit_reason(VARCHAR(64))；UNIQUE 键为 report_id+strategy_type+window_days。",
+        "FR-07 口径中 shares 固定为 100，不得修改分母；基线表 baseline_random 和 baseline_ma_cross 不得与 settlement_result 混用同一 run_id；每个基线有独立 sample_type、run_id、version 字段。",
+        "结算与基线都有 sample_size(INT) 和 coverage_pct(DECIMAL(5,2)) 字段；所有展示研报集累收益的接口必须同时返回 sample_size 和 coverage_pct；sample_size<30 时 KPI 字段返回 null 并附显示提示。",
+        "python -m pytest tests/test_admin_dashboard_frontend_contract.py tests/test_fr07_settlement_run.py -q --tb=short",
+        "Typecheck passes"
+      ],
+      "priority": 16,
+      "passes": true,
+      "notes": "{\"group\":\"G1\",\"dependsOn\":[\"US-008\",\"US-013\"],\"endpoints\":[\"/api/v1/admin/dashboard\",\"/api/v1/dashboard/stats\"],\"models\":[\"settlement_result\",\"settlement_task\",\"strategy_metric_snapshot\",\"baseline_random\",\"baseline_ma_cross\"],\"permissions\":[\"public_read_aggregate_only\",\"admin_write\",\"internal_write\"],\"errorCodes\":[\"VALIDATION_ERROR\",\"CONFLICT\",\"FORBIDDEN\"],\"idempotency\":\"report_id+strategy_type+window_days UNIQUE\",\"enums\":[\"1\",\"7\",\"14\",\"30\",\"60\",\"pending\",\"settled\",\"skipped\",\"degraded\"],\"thresholds\":\"shares=100,windows=[1,7,14,30,60],minSampleSizeForKPI=30\",\"degradation\":\"low_sample_returns_null_kpis_with_hint\",\"exampleAssert\":\"assert result['shares']==100 and result['window_days'] in [1,7,14,30,60]\",\"pytest\":\"python -m pytest tests/test_admin_dashboard_frontend_contract.py tests/test_fr07_settlement_run.py -q --tb=short\"}"
+    },
+    {
+      "id": "US-017",
+      "title": "建立模拟仓位与账户快照模型",
+      "description": "作为模拟盘使用者，我希望 FR-08 的仓位、成交和账户快照模型独立于 FR-07，以便三挡资金仿真不污染标准结算。",
+      "acceptanceCriteria": [
+        "sim_position 表包含字段 position_id(UUID PK)、report_id(FK)、capital_tier(10k|100k|500k)、position_status(OPEN|TAKE_PROFIT|STOP_LOSS|TIMEOUT|CLOSED|DELISTED_LIQUIDATED|SKIPPED)、sim_qty(INT 必须是 100 的整数倍)、sim_open_price、sim_close_price(|null)、entry_date、exit_date(|null)、net_return_pct(|null)；report_id+capital_tier UNIQUE。",
+        "sim_account_snapshot 表包含 capital_tier、snapshot_date、nav、cash_available、market_value、realized_pnl、unrealized_pnl、peak_total_asset、drawdown_pct、drawdown_state(NORMAL|REDUCE|HALT)；capital_tier+snapshot_date UNIQUE。",
+        "capital_tier 只允许 10k|100k|500k，不得使用其他字符串；sim_qty 必须是 100 的整数倍（floor(raw/100)*100）；FR-08 相关表不得与 settlement_result 混用 shares 字段。",
+        "python -m pytest tests/test_admin_dashboard_frontend_contract.py tests/test_fr08_sim_positioning.py -q --tb=short",
+        "Typecheck passes"
+      ],
+      "priority": 17,
+      "passes": true,
+      "notes": "{\"group\":\"G1\",\"dependsOn\":[\"US-013\",\"US-016\"],\"endpoints\":[\"/api/v1/admin/dashboard\",\"/api/v1/stocks/{stock_code}/snapshot\"],\"models\":[\"sim_position\",\"sim_account_snapshot\",\"sim_trade_batch_queue_item\",\"sim_equity_curve_point\"],\"permissions\":[\"public_read_aggregate_only\",\"admin_write\",\"internal_write\"],\"errorCodes\":[\"VALIDATION_ERROR\",\"CONFLICT\",\"FORBIDDEN\"],\"idempotency\":\"report_id+capital_tier UNIQUE\",\"enums\":[\"10k\",\"100k\",\"500k\",\"OPEN\",\"TAKE_PROFIT\",\"STOP_LOSS\",\"TIMEOUT\",\"CLOSED\",\"DELISTED_LIQUIDATED\",\"SKIPPED\",\"NORMAL\",\"REDUCE\",\"HALT\"],\"thresholds\":\"capitalTierCount=3,simQtyMustBe100Multiple=floor(raw/100)*100\",\"degradation\":\"missing_market_data_marks_snapshot_degraded\",\"exampleAssert\":\"assert position['capital_tier'] in ['10k','100k','500k'] and position['sim_qty']%100==0\",\"pytest\":\"python -m pytest tests/test_admin_dashboard_frontend_contract.py tests/test_fr08_sim_positioning.py -q --tb=short\"}"
+    },
+    {
+      "id": "US-018",
+      "title": "建立用户与刷新令牌模型",
+      "description": "作为平台维护者，我希望用户、角色、tier 和 refresh token 模型先冻结，以便认证与权限安全落地。",
+      "acceptanceCriteria": [
+        "user 表包含字段 user_id(UUID PK)、email(VARCHAR(254) UNIQUE)、password_hash(VARCHAR(256)，必须使用 bcrypt 或 argon2，cost_factor≥12，禁止明文)、role(user|admin|super_admin)、tier(Free|Pro|Enterprise)、is_active(BOOL)、created_at、updated_at；refresh_token 表包含 jti(UUID PK)、user_id(FK)、token_hash(VARCHAR(256) 只存 hash 不存明文)、expires_at、revoked_at(|null)、created_at。",
+        "password_hash 必须通过 bcrypt(cost≥12) 或 argon2 生成，禁止明文或 MD5/SHA1；refresh_token 只存 token_hash（SHA-256 of raw token），不存原始明文；jti UUID 在全表唯一。",
+        "role 只允许 user|admin|super_admin，tier 只允许 Free|Pro|Enterprise；超出枚举值的输入返回 HTTP 422 VALIDATION_ERROR；refresh_token 一次性使用（使用后立即 revoke），重放返回 HTTP 401 TOKEN_REUSE_DETECTED。",
+        "python -m pytest tests/test_fr09_auth.py tests/test_fr09_auth_supplemental.py tests/test_fr09b_cleanup.py -q --tb=short",
+        "Typecheck passes"
+      ],
+      "priority": 18,
+      "passes": true,
+      "notes": "{\"group\":\"G1\",\"dependsOn\":[\"US-002\"],\"endpoints\":[\"/api/v1/auth/register\",\"/api/v1/auth/login\",\"/api/v1/auth/refresh\",\"/api/v1/auth/logout\"],\"models\":[\"user\",\"refresh_token\"],\"permissions\":[\"anonymous_register\",\"anonymous_login\",\"user_refresh_self\",\"admin_cleanup\"],\"errorCodes\":[\"EMAIL_EXISTS\",\"UNAUTHORIZED\",\"TOKEN_REUSE_DETECTED\",\"FORBIDDEN\",\"VALIDATION_ERROR\"],\"idempotency\":\"email unique; jti UUID unique; single-use refresh\",\"enums\":[\"user\",\"admin\",\"super_admin\",\"Free\",\"Pro\",\"Enterprise\"],\"thresholds\":\"bcryptCostMin=12,passwordMinLen=8,tokenHashAlgo=SHA256\",\"degradation\":\"revoked_or_expired_token_immediately_invalid\",\"exampleAssert\":\"assert resp.status_code==201 and 'password' not in resp.json()['data']\",\"pytest\":\"python -m pytest tests/test_fr09_auth.py tests/test_fr09_auth_supplemental.py tests/test_fr09b_cleanup.py -q --tb=short\"}"
+    },
+    {
+      "id": "US-019",
+      "title": "建立订单与会员权益模型",
+      "description": "作为付费链路维护者，我希望订单、支付事件和权益事实有稳定模型，以便回调和权限判断使用同一事实来源。",
+      "acceptanceCriteria": [
+        "billing_order 表包含字段 order_id(UUID PK)、user_id(FK)、tier(Free|Pro|Enterprise)、amount_cents(INT)、currency(VARCHAR(8))、status(PENDING|PAID|EXPIRED|FAILED|REFUNDED)、created_at；payment_webhook_event 表包含 event_id(VARCHAR(128) UNIQUE)、order_id(FK)、raw_payload(JSON)、processed_at；membership_entitlement 表包含 user_id(FK)、tier(Free|Pro|Enterprise)、valid_from(DATE)、valid_to(DATE|null)。",
+        "event_id 保持全局唯一，相同 event_id 重复回调幂等忽略（返回 HTTP 200 IDEMPOTENT_SKIP）；回调需验证 HMAC 签名，签名失败返回 HTTP 401 INVALID_SIGNATURE。",
+        "低级套餐的延迟回调（如 Free）不得覆盖当前仍有效的更高级权益（如 Pro）；覆盖判断依据 valid_to 是否仍在有效期内。",
+        "python -m pytest tests/test_fr09_auth_supplemental.py tests/test_fr09b_cleanup.py -q --tb=short",
+        "Typecheck passes"
+      ],
+      "priority": 19,
+      "passes": true,
+      "notes": "{\"group\":\"G1\",\"dependsOn\":[\"US-018\"],\"endpoints\":[\"/api/v1/features\",\"/api/v1/auth/refresh\",\"/api/v1/webhooks/payment\"],\"models\":[\"billing_order\",\"payment_webhook_event\",\"membership_entitlement\"],\"permissions\":[\"user_read_self\",\"admin_write\",\"webhook_write\"],\"errorCodes\":[\"UNAUTHORIZED\",\"INVALID_SIGNATURE\",\"VALIDATION_ERROR\",\"CONFLICT\",\"FORBIDDEN\",\"IDEMPOTENT_SKIP\"],\"idempotency\":\"event_id UNIQUE; order_id UNIQUE\",\"enums\":[\"PENDING\",\"PAID\",\"EXPIRED\",\"FAILED\",\"REFUNDED\",\"Free\",\"Pro\",\"Enterprise\"],\"thresholds\":\"lower_tier_cannot_override_active_higher_tier=valid_to_check\",\"degradation\":\"delayed_lower_tier_event_keeps_current_entitlement\",\"exampleAssert\":\"assert entitlement['tier'] in ['Free','Pro','Enterprise']\",\"pytest\":\"python -m pytest tests/test_fr09_auth_supplemental.py tests/test_fr09b_cleanup.py -q --tb=short\"}"
+    },
+    {
+      "id": "US-020",
+      "title": "建立通知 Outbox 与 Cookie 会话模型",
+      "description": "作为平台维护者，我希望通知 outbox 和采集 cookie 会话先有模型，以便事件派发和登录态维护都可追踪。",
+      "acceptanceCriteria": [
+        "notification_outbox 表包含字段 outbox_id(UUID PK)、dedupe_key(VARCHAR(128) UNIQUE)、event_type(VARCHAR(64))、payload(JSON)、status(pending|sent|failed|skipped)、created_at、dispatched_at(|null)、retry_count(INT 默认 0)；cookie_session 表包含 session_id(UUID PK)、provider(VARCHAR(64))、cookie_hash(VARCHAR(256) 只存 SHA-256 hash)、is_active(BOOL)、created_at、expires_at。",
+        "outbox 在业务事务提交后才允许派发（transactional outbox 模式）；同一 dedupe_key 重复写入幂等返回现有 outbox_id；cookie 明文（raw cookie string）不得出现在日志行、API 响应或任何页面。",
+        "cookie_session 只存 cookie_hash 不存明文；is_active=true 的会话中同一 provider 最多保留 1 个活跃会话（重新登录自动 revoke 旧会话）；cookie 失效时 status 标记为 skipped 或 degraded，不得静默抛弃。",
+        "python -m pytest tests/test_fr03_cookie_routes.py tests/test_fr03_cookie_session.py -q --tb=short",
+        "Typecheck passes"
+      ],
+      "priority": 20,
+      "passes": true,
+      "notes": "{\"group\":\"G1\",\"dependsOn\":[\"US-005\",\"US-018\"],\"endpoints\":[\"/api/v1/admin/cookie-session\",\"/api/v1/auth/logout\"],\"models\":[\"notification_outbox\",\"cookie_session\"],\"permissions\":[\"admin_write_cookie\",\"internal_write_outbox\",\"public_no_write\"],\"errorCodes\":[\"UNAUTHORIZED\",\"FORBIDDEN\",\"VALIDATION_ERROR\",\"CONFLICT\"],\"idempotency\":\"dedupe_key UNIQUE; one active session per provider\",\"enums\":[\"pending\",\"sent\",\"failed\",\"skipped\"],\"thresholds\":\"cookiePlaintextForbiddenInLog=true,cookiePlaintextForbiddenInAPI=true,activeSessionPerProvider=1\",\"degradation\":\"invalid_cookie_returns_skipped_or_degraded_not_silent\",\"exampleAssert\":\"assert outbox['status'] in ['pending','sent','failed','skipped'] and 'cookie' not in str(outbox['payload']).lower()\",\"pytest\":\"python -m pytest tests/test_fr03_cookie_routes.py tests/test_fr03_cookie_session.py -q --tb=short\"}"
+    },
+    {
+      "id": "US-021",
+      "title": "实现证券主数据采集标准化",
+      "description": "作为数据工程师，我希望证券主数据采集器把外部字段标准化为 stock_master，以便股票池和搜索使用真实主数据。",
+      "acceptanceCriteria": [
+        "采集器将外部数据规范化后写入或 UPSERT stock_master 的字段：stock_code、stock_name、exchange(SH|SZ|BJ)、industry(null 允许)、list_date(null 允许)、is_st(BOOL)、is_suspended(BOOL)、is_delisted(BOOL)、updated_at(UTC)；每次运行产生一条 data_batch 记录。",
+        "字段缺失时保持 null（不使用占位字符串如 '未知'）；采集结果为空 universe（0 行）时 batch.status 必须为 FAILED，不得标为 COMPLETED；单股采集失败写 data_batch_error（含 stock_code、error_code、error_message）。",
+        "POST /api/v1/internal/stocks/{stock_code}/non-report-data/collect 触发采集；stock_code 格式不符合 \\\"^\\\\d{6}\\\\.(SH|SZ|BJ)$\\\" 时返回 HTTP 422 VALIDATION_ERROR；采集完成时写 report_data_usage（dataset_name='stock_master'，status=ok|missing）。",
+        "python -m pytest tests/test_fr01_pool_refresh.py tests/test_runtime_anchor_consistency.py -q --tb=short",
+        "Typecheck passes"
+      ],
+      "priority": 21,
+      "passes": true,
+      "notes": "{\"group\":\"FR04\",\"dependsOn\":[\"US-007\",\"US-009\"],\"endpoints\":[\"/api/v1/internal/stocks/{stock_code}/non-report-data/collect\",\"/api/v1/stocks/{stock_code}/snapshot\"],\"models\":[\"stock_master\",\"data_batch\",\"data_batch_error\",\"report_data_usage\"],\"permissions\":[\"public_read\",\"admin_write\",\"internal_write\"],\"errorCodes\":[\"VALIDATION_ERROR\",\"CONFLICT\",\"FORBIDDEN\"],\"idempotency\":\"stock_code UNIQUE (upsert)\",\"enums\":[\"SH\",\"SZ\",\"BJ\",\"PARTIAL\",\"FAILED\"],\"thresholds\":\"emptyUniverseMustBeFailed=true,stockCodeRegex=^\\\\d{6}\\\\.(SH|SZ|BJ)$\",\"degradation\":\"source_outage_returns_partial_or_failed_never_empty_completed\",\"exampleAssert\":\"assert master['exchange'] in ['SH','SZ','BJ']\",\"pytest\":\"python -m pytest tests/test_fr01_pool_refresh.py tests/test_runtime_anchor_consistency.py -q --tb=short\"}"
+    },
+    {
+      "id": "US-022",
+      "title": "实现日线行情采集与 stale 回退",
+      "description": "作为数据工程师，我希望日线采集器按交易日写入真实行情，并在 exact 数据不可用时显式返回 stale 或 missing。",
+      "acceptanceCriteria": [
+        "按 stock_code+trade_date+adjust_type='front_adjusted' 三元组写入前复权日线数据，同时记录 source_batch_id 至 kline_daily；每个 stock_code+trade_date 组合对应的 report_data_usage（dataset_name='kline_daily'）状态置为 ok。",
+        "exact 数据缺失时允许最多回退 5 个（自然）交易日；回退成功时 usage.status=stale_ok 并设置 status_reason 说明 reference_date；回退也失败时 usage.status=missing 且不得静默；不存在的 trade_date 对应 usage 不得伪造为 ok。",
+        "核心池（is_core=true）exact 行情覆盖率 < 80% 时整批 data_batch.status 标为 PARTIAL；采集器不可用时 batch.status=FAILED；所有行情 close 不得为负数或 NaN。",
+        "python -m pytest tests/test_fr01_pool_refresh.py tests/test_runtime_anchor_consistency.py tests/test_fr10_site_dashboard.py -q --tb=short",
+        "Typecheck passes"
+      ],
+      "priority": 22,
+      "passes": true,
+      "notes": "{\"group\":\"FR04\",\"dependsOn\":[\"US-008\",\"US-009\",\"US-021\"],\"endpoints\":[\"/api/v1/internal/stocks/{stock_code}/non-report-data/collect\",\"/api/v1/internal/reports/generate-batch\"],\"models\":[\"kline_daily\",\"report_data_usage\",\"data_batch_error\"],\"permissions\":[\"public_read\",\"admin_write\",\"internal_write\"],\"errorCodes\":[\"VALIDATION_ERROR\",\"CONFLICT\",\"DEPENDENCY_NOT_READY\"],\"idempotency\":\"stock_code+trade_date+adjust_type UNIQUE\",\"enums\":[\"front_adjusted\",\"ok\",\"stale_ok\",\"missing\",\"degraded\"],\"thresholds\":\"staleFallbackTradeDays<=5,corePoolCoverageMinForPartial=0.80\",\"degradation\":\"stale_fallback_max_5td_else_missing_never_silent\",\"exampleAssert\":\"assert usage['status'] in ['ok','stale_ok','missing'] and usage['dataset_name']=='kline_daily'\",\"pytest\":\"python -m pytest tests/test_fr01_pool_refresh.py tests/test_runtime_anchor_consistency.py tests/test_fr10_site_dashboard.py -q --tb=short\"}"
+    },
+    {
+      "id": "US-023",
+      "title": "实现 eastmoney 热点采集适配器",
+      "description": "作为数据工程师，我希望接入 eastmoney 热点适配器，以便策略 A 和首页热点拥有可追溯的一类外部证据。",
+      "acceptanceCriteria": [
+        "入口固定为 POST /api/v1/internal/hotspot/collect 或个股 truth-layer 补采链；标准化结果必须包含 topic_title、source_name='eastmoney'、source_url(http/https)、fetch_time(ISO-8601 UTC)、rank(INT, 1-50) 和 raw_payload_hash。",
+        "空列表、HTTP 超时、429/5xx、解析失败四类结果必须写成可区分的 status_reason；成功写 status=ok，失败写 status=missing 或 degraded，不得把空列表写成 ok。",
+        "source_url 为空、非 http(s) 或 fetch_time 缺失的条目不得进入公开 citation；这类条目只能保留在原始 payload 或 data_batch_error 中。",
+        "同一 source_name+topic_title+fetch_time_bucket 的重复采集必须幂等去重；合并后的 rank 必须唯一且连续。",
+        "python -m pytest tests/test_fr04_hotspot_bridge.py tests/test_fr10_site_dashboard.py tests/test_api_bridge_contract.py -q --tb=short",
+        "Typecheck passes"
+      ],
+      "priority": 23,
+      "passes": true,
+      "notes": "{\"group\":\"FR04\",\"dependsOn\":[\"US-009\",\"US-010\"],\"endpoints\":[\"/api/v1/internal/hotspot/collect\",\"/api/v1/internal/stocks/{stock_code}/non-report-data/collect\"],\"models\":[\"hotspot_fact\",\"report_data_usage\",\"report_citation\"],\"permissions\":[\"internal_write\",\"system\",\"public_read\"],\"errorCodes\":[\"DATA_SOURCE_UNAVAILABLE\",\"DEPENDENCY_NOT_READY\",\"VALIDATION_FAILED\",\"FORBIDDEN\"],\"idempotency\":\"source_name+topic_title+fetch_time_bucket unique\",\"enums\":[\"eastmoney\",\"ok\",\"missing\",\"degraded\"],\"thresholds\":\"rankRange=1-50,sourceUrlMustBeHttp=true\",\"degradation\":\"empty_or_failed_fetch_never_reports_success\",\"exampleAssert\":\"assert item['source_name']=='eastmoney' and item['source_url'].startswith(('http://','https://'))\",\"pytest\":\"python -m pytest tests/test_fr04_hotspot_bridge.py tests/test_fr10_site_dashboard.py tests/test_api_bridge_contract.py -q --tb=short\"}"
+    },
+    {
+      "id": "US-024",
+      "title": "实现微博与抖音热点适配器",
+      "description": "作为数据工程师，我希望微博和抖音热点源按同一标准输出，以便多源热点合并时不需要特殊分支。",
+      "acceptanceCriteria": [
+        "weibo 和 douyin 适配器必须输出与 eastmoney 相同的标准字段，并分别固定 source_name='weibo' 或 'douyin'。",
+        "依赖 Cookie 的请求在 cookie 缺失、过期、探活互斥失败时只能返回 skipped、missing 或 degraded，且 status_reason 非空；不得把登录态故障写成 ok。",
+        "日志、审计记录、错误响应和页面渲染都不得包含明文 cookie_string；只允许返回 provider、状态和脱敏摘要。",
+        "单源失败不得回滚其他来源已成功的热点结果；合并层必须按 source_name 保留来源可追溯性。",
+        "python -m pytest tests/test_fr03_cookie_session.py tests/test_fr09_auth_supplemental.py tests/test_fr10_site_dashboard.py -q --tb=short",
+        "Typecheck passes"
+      ],
+      "priority": 24,
+      "passes": true,
+      "notes": "{\"group\":\"FR04\",\"dependsOn\":[\"US-020\",\"US-023\"],\"endpoints\":[\"/api/v1/admin/cookie-session\",\"/api/v1/internal/hotspot/collect\",\"/api/v1/internal/stocks/{stock_code}/non-report-data/collect\"],\"models\":[\"cookie_session\",\"hotspot_fact\",\"report_data_usage\"],\"permissions\":[\"admin_write_cookie\",\"internal_write\",\"public_read\"],\"errorCodes\":[\"COOKIE_SESSION_INVALID\",\"DEPENDENCY_NOT_READY\",\"VALIDATION_FAILED\",\"FORBIDDEN\"],\"idempotency\":\"source_name+topic_title+fetch_time_bucket unique\",\"enums\":[\"weibo\",\"douyin\",\"skipped\",\"missing\",\"degraded\"],\"thresholds\":\"perSourceFailureDoesNotRollbackOthers=true\",\"degradation\":\"bad_cookie_returns_skipped_or_degraded\",\"exampleAssert\":\"assert item['source_name'] in ['weibo','douyin'] and 'cookie' not in str(item).lower()\",\"pytest\":\"python -m pytest tests/test_fr03_cookie_session.py tests/test_fr09_auth_supplemental.py tests/test_fr10_site_dashboard.py -q --tb=short\"}"
+    },
+    {
+      "id": "US-025",
+      "title": "实现热点合并与股票关联",
+      "description": "作为研报链维护者，我希望多源热点能去重、排序并关联股票，以便策略 A 判断和 citation 引用使用同一热点事实。",
+      "acceptanceCriteria": [
+        "合并层必须按归一化标题、source_name 和时间桶去重，生成 1-50 连续且唯一的 merged_rank；不得出现重复 rank 或跳号。",
+        "成功关联股票时输出 hotspot_stock_link；无法关联 stock_code 的主题必须保留 citation 三要素，并显式写 no_hotspot_link 或等效 status_reason。",
+        "合并后的 Top50 既要保留原始 source_name，又要保留 merged_rank，不得为了排序丢失来源可追溯性。",
+        "热点合并不得篡改已验证的 source_url、fetch_time 和 raw_payload_hash；公开 citation 仍必须满足 http(s) 约束。",
+        "python -m pytest tests/test_fr04_hotspot_bridge.py tests/test_fr10_site_dashboard.py tests/test_admin_dashboard_frontend_contract.py -q --tb=short",
+        "Typecheck passes"
+      ],
+      "priority": 25,
+      "passes": true,
+      "notes": "{\"group\":\"FR04\",\"dependsOn\":[\"US-010\",\"US-021\",\"US-023\",\"US-024\"],\"endpoints\":[\"/api/v1/admin/dashboard\",\"/api/v1/stocks/{stock_code}/snapshot\"],\"models\":[\"merged_hotspot\",\"hotspot_stock_link\",\"report_citation\"],\"permissions\":[\"public_read\",\"admin_write\",\"internal_write\"],\"errorCodes\":[\"VALIDATION_FAILED\",\"CONCURRENT_CONFLICT\",\"FORBIDDEN\"],\"idempotency\":\"merge_batch_id+merged_rank unique\",\"enums\":[\"no_hotspot_link\"],\"thresholds\":\"topN=50,mergedRankContinuous=true\",\"degradation\":\"unmatched_topic_keeps_citation_triad_with_reason\",\"exampleAssert\":\"assert merged[0]['merged_rank']==1 and len({item['merged_rank'] for item in merged})==len(merged)\",\"pytest\":\"python -m pytest tests/test_fr04_hotspot_bridge.py tests/test_fr10_site_dashboard.py tests/test_admin_dashboard_frontend_contract.py -q --tb=short\"}"
+    },
+    {
+      "id": "US-026",
+      "title": "实现公司画像与资金面补采",
+      "description": "作为研报生成链，我希望在生成前补采公司画像、估值和资金面数据，以便详情页和高级区不依赖旧缓存。",
+      "acceptanceCriteria": [
+        "个股 truth-layer 补采入口固定为 POST /api/v1/internal/stocks/{stock_code}/non-report-data/collect；本故事至少覆盖 stock_profile、main_force_flow、dragon_tiger_list、margin_financing 四类数据集。",
+        "每个数据集都必须写 report_data_usage，并保留 batch_id、dataset_name、status、status_reason、fetch_time；status 只允许 ok、stale_ok、missing、degraded、proxy_ok。",
+        "单个可选数据集失败不得回滚其他已成功数据集，但必须把失败原因写入 usage 与 batch 错误明细；不得把 optional failure 伪装成全集 ok。",
+        "该补采链只补 truth-layer 与 lineage，不生成 report、不生成 settlement、不写公开 payload。",
+        "python -m pytest tests/test_usage_lineage.py tests/test_fr06_quality_pipeline.py tests/test_runtime_anchor_consistency.py -q --tb=short",
+        "Typecheck passes"
+      ],
+      "priority": 26,
+      "passes": true,
+      "notes": "{\"group\":\"FR04_FR06\",\"dependsOn\":[\"US-010\",\"US-021\",\"US-022\"],\"endpoints\":[\"/api/v1/internal/stocks/{stock_code}/non-report-data/collect\"],\"models\":[\"report_data_usage\",\"data_batch\",\"stock_profile\",\"main_force_flow\"],\"permissions\":[\"system\",\"admin\",\"internal\"],\"errorCodes\":[\"DEPENDENCY_NOT_READY\",\"DATA_SOURCE_UNAVAILABLE\",\"VALIDATION_FAILED\"],\"idempotency\":\"stock_code+trade_date+dataset_name+source_name+batch_id upsert\",\"enums\":[\"ok\",\"stale_ok\",\"missing\",\"degraded\",\"proxy_ok\"],\"thresholds\":\"requiredDatasets=stock_profile|main_force_flow|dragon_tiger_list|margin_financing\",\"degradation\":\"optional_dataset_failure_does_not_fake_success\",\"exampleAssert\":\"assert usage['batch_id'] is not None and usage['dataset_name'] in ['stock_profile','main_force_flow','dragon_tiger_list','margin_financing']\",\"pytest\":\"python -m pytest tests/test_usage_lineage.py tests/test_fr06_quality_pipeline.py tests/test_runtime_anchor_consistency.py -q --tb=short\"}"
+    },
+    {
+      "id": "US-027",
+      "title": "实现北向与 ETF 流向补采",
+      "description": "作为研报生成链，我希望北向和 ETF 流向数据可被补采或诚实标记缺失，以便外部阻塞时不伪装完整。",
+      "acceptanceCriteria": [
+        "truth-layer 补采必须覆盖 northbound_summary 和 etf_flow_summary，并为每个数据集输出 batch_id、status、reason；status 只允许 ok、missing、degraded。",
+        "外部不可用、入口未配置、空结果和超时必须分别写成可区分的 status_reason，不得把 missing 渲染成 0、空对象或正常值。",
+        "详情页和高级区只能依据 usage/status 展示这些数据的可用性；当 status!=ok 时必须显示缺口或降级说明。",
+        "外部阻塞属于真实阻塞，不允许通过兜底常量或历史缓存把当日缺口伪装成已恢复。",
+        "python -m pytest tests/test_usage_lineage.py tests/test_fr06_quality_pipeline.py tests/test_fr10_site_dashboard.py -q --tb=short",
+        "Typecheck passes"
+      ],
+      "priority": 27,
+      "passes": true,
+      "notes": "{\"group\":\"FR04_FR06\",\"dependsOn\":[\"US-010\",\"US-026\"],\"endpoints\":[\"/api/v1/internal/stocks/{stock_code}/non-report-data/collect\"],\"models\":[\"report_data_usage\",\"data_batch\"],\"permissions\":[\"system\",\"admin\",\"internal\"],\"errorCodes\":[\"DATA_SOURCE_UNAVAILABLE\",\"SOURCE_NOT_CONFIGURED\",\"DEPENDENCY_NOT_READY\"],\"idempotency\":\"stock_code+trade_date+dataset_name+source_name+batch_id upsert\",\"enums\":[\"northbound_summary\",\"etf_flow_summary\",\"ok\",\"missing\",\"degraded\"],\"thresholds\":\"datasets=northbound_summary|etf_flow_summary\",\"degradation\":\"external_blocker_stays_visible_and_never_maps_to_zero\",\"exampleAssert\":\"assert usage['dataset_name'] in ['northbound_summary','etf_flow_summary'] and usage['status'] in ['ok','missing','degraded']\",\"pytest\":\"python -m pytest tests/test_usage_lineage.py tests/test_fr06_quality_pipeline.py tests/test_fr10_site_dashboard.py -q --tb=short\"}"
+    },
+    {
+      "id": "US-028",
+      "title": "实现采集批次 Partial Commit",
+      "description": "作为数据工程师，我希望采集批次支持部分成功和错误明细，以便少数股票失败不会抹掉整批结果。",
+      "acceptanceCriteria": [
+        "批次结束时 data_batch 必须持久化 success_count(INT≥0)、failed_count(INT≥0)、skipped_count(INT≥0) 三个计数；当 failed_count>0 且 success_count>0 时 batch.status 必须为 PARTIAL，不得为 COMPLETED。",
+        "单股采集失败不触发整批回滚；每条失败的 data_batch_error 记录必须包含 stock_code、error_code(SCREAMING_SNAKE_CASE)、error_message(非空字符串)；batch 层面的 PARTIAL 状态向下游 usage 传播（usage.status=degraded 或 stale_ok，不得为 ok）。",
+        "POST /api/v1/internal/stocks/{stock_code}/non-report-data/collect 调用批次接口时返回 success_count、failed_count、skipped_count；数值之和等于 total_stocks；所有计数必须 ≥ 0。",
+        "python -m pytest tests/test_fr04_multisource_ingest.py tests/test_fr04_partial_commit_gate.py -q --tb=short",
+        "Typecheck passes"
+      ],
+      "priority": 28,
+      "passes": true,
+      "notes": "{\"group\":\"FR04\",\"dependsOn\":[\"US-009\",\"US-010\",\"US-022\"],\"endpoints\":[\"/api/v1/internal/stocks/{stock_code}/non-report-data/collect\"],\"models\":[\"data_batch\",\"data_batch_error\",\"report_data_usage\"],\"permissions\":[\"system\",\"admin\"],\"errorCodes\":[\"PARTIAL_COMMIT\",\"BATCH_FAILED\",\"DEPENDENCY_NOT_READY\"],\"idempotency\":\"batch_id scoped rerun merges by stock_code+dataset_name\",\"enums\":[\"COMPLETED\",\"PARTIAL\",\"FAILED\"],\"thresholds\":\"partialWhenFailedCountGt0AndSuccessCountGt0=true,countersSumToTotalStocks=true\",\"degradation\":\"partial_batch_propagates_downstream_as_degraded_or_stale\",\"exampleAssert\":\"assert batch['success_count']+batch['failed_count']+batch['skipped_count']==batch['total_stocks']\",\"pytest\":\"python -m pytest tests/test_fr04_multisource_ingest.py tests/test_fr04_partial_commit_gate.py -q --tb=short\"}"
+    },
+    {
+      "id": "US-029",
+      "title": "实现 report_data_usage 写入器",
+      "description": "作为研报链维护者，我希望 usage 写入器提供统一 API，以便补采和正式研报链按同一真值口径落库。",
+      "acceptanceCriteria": [
+        "写入器接收 stock_code、trade_date、dataset_name、source_name、batch_id、status、status_reason、fetch_time 和 payload_ref。",
+        "重复逻辑键幂等更新并复用 usage_id，拒绝 status 非 ok 且缺少 status_reason 的调用。",
+        "pytest: python -m pytest tests/test_usage_lineage.py tests/test_fr06_quality_pipeline.py -q --tb=short",
+        "Typecheck passes"
+      ],
+      "priority": 29,
+      "passes": true,
+      "notes": "{\"group\":\"FR04_FR06\",\"dependsOn\":[\"US-009\",\"US-010\"],\"endpoints\":[],\"models\":[\"report_data_usage\",\"data_usage_fact\",\"report_data_usage_link\"],\"permissions\":[\"system\"],\"errorCodes\":[\"VALIDATION_ERROR\",\"USAGE_WRITE_CONFLICT\",\"USAGE_REASON_REQUIRED\"],\"idempotency\":\"reuse usage_id on logical-key match\",\"enums\":[\"ok\",\"stale_ok\",\"missing\",\"degraded\"],\"thresholds\":\"statusReasonRequiredWhenNotOk=true\",\"degradation\":\"invalid_non_ok_write_is_rejected\",\"exampleAssert\":\"assert result['usage_id']==existing_id\",\"pytest\":\"python -m pytest tests/test_usage_lineage.py tests/test_fr06_quality_pipeline.py -q --tb=short\"}"
+    },
+    {
+      "id": "US-030",
+      "title": "实现 usage lineage 修复与去重",
+      "description": "作为平台维护者，我希望历史 usage 可被安全修复和去重，以便高级区不会因为重复逻辑行显示错误状态。",
+      "acceptanceCriteria": [
+        "按逻辑键合并重复 usage，并优先保留最新可用状态而不是 missing。",
+        "支持 dry-run，输出 affected_rows、duplicate_groups、merged_usage_ids 和 skipped_reasons。",
+        "pytest: python -m pytest tests/test_usage_lineage.py tests/test_runtime_anchor_consistency.py -q --tb=short",
+        "Typecheck passes"
+      ],
+      "priority": 30,
+      "passes": true,
+      "notes": "{\"group\":\"FR04_FR06\",\"dependsOn\":[\"US-029\"],\"endpoints\":[],\"models\":[\"report_data_usage\",\"data_usage_fact\",\"report_data_usage_link\"],\"permissions\":[\"admin\",\"system\"],\"errorCodes\":[\"USAGE_LINEAGE_DUPLICATE\",\"USAGE_LINK_MISSING\",\"VALIDATION_ERROR\"],\"idempotency\":\"repair_once_per_logical_key\",\"enums\":[\"ok\",\"proxy_ok\",\"realtime_only\",\"stale_ok\"],\"thresholds\":\"prefer_latest_usable_status=true\",\"degradation\":\"missing_cannot_override_usable_status\",\"exampleAssert\":\"assert repaired['preferred_status']!='missing'\",\"pytest\":\"python -m pytest tests/test_usage_lineage.py tests/test_runtime_anchor_consistency.py -q --tb=short\"}"
+    },
+    {
+      "id": "US-031",
+      "title": "实现数据源熔断与 half-open 探测",
+      "description": "作为平台维护者，我希望每个外部源有独立熔断，以便源异常时系统降级而不是无限重试。",
+      "acceptanceCriteria": [
+        "同一 source_name 连续失败 3 次后熔断器进入 open 状态；open 状态下 300 秒冷却期内对该源的调用直接返回 degraded 或 skipped，不发出真实请求；300 秒到期后进入 half_open 状态。",
+        "half_open 状态下只允许 1 次探测请求；探测成功则熔断器回 closed，失败则重新回 open 并重置 300 秒；half_open 期间其他并发请求返回 HTTP 429 CIRCUIT_HALF_OPEN_BUSY。",
+        "每个 source_name 的熔断状态独立；GET /api/v1/admin/runtime-gates 中对应 gate 的 status=blocked 并 status_reason 包含 'circuit_open' 字样；熔断期间 report_data_usage.status 写 degraded 且 status_reason 包含 'circuit_open'。",
+        "python -m pytest tests/test_fr04_multisource_ingest.py tests/test_internal_runtime_gates.py -q --tb=short",
+        "Typecheck passes"
+      ],
+      "priority": 31,
+      "passes": true,
+      "notes": "{\"group\":\"FR04\",\"dependsOn\":[\"US-028\"],\"endpoints\":[\"/api/v1/admin/runtime-gates\"],\"models\":[\"data_batch\",\"report_data_usage\",\"runtime_gate\"],\"permissions\":[\"system\"],\"errorCodes\":[\"CIRCUIT_OPEN\",\"CIRCUIT_HALF_OPEN_BUSY\",\"EXTERNAL_SOURCE_BLOCKED\"],\"idempotency\":\"one_breaker_state_per_source_name\",\"enums\":[\"open\",\"half_open\",\"closed\"],\"thresholds\":\"openAfterConsecutiveFailures=3,cooldownSeconds=300,halfOpenProbeCount=1\",\"degradation\":\"open_circuit_skips_provider_calls_and_writes_degraded_usage\",\"exampleAssert\":\"assert breaker_state=='open' and usage['status']=='degraded' and 'circuit_open' in usage['status_reason']\",\"pytest\":\"python -m pytest tests/test_fr04_multisource_ingest.py tests/test_internal_runtime_gates.py -q --tb=short\"}"
+    },
+    {
+      "id": "US-032",
+      "title": "实现 Cookie 会话保存与脱敏展示",
+      "description": "作为管理员，我希望能保存采集源 Cookie，并在任何返回和日志中只看到脱敏状态，以便维护登录态同时不泄露凭据。",
+      "acceptanceCriteria": [
+        "写入口固定为 POST /api/v1/admin/cookie-session；仅 admin|super_admin 可调用，匿名返回 401，普通用户返回 403，成功返回 201。",
+        "请求体只能接收 provider、login_source、cookie_string、expires_at；provider 必须在配置白名单中，非法 provider 返回 422 VALIDATION_FAILED。",
+        "响应、日志、审计和页面都只能返回 provider、expires_at、status、status_reason 与脱敏摘要；明文 cookie_string 不得出现。",
+        "同一 provider 同时最多保留一个 active 会话；新写入成功后旧 active 会话必须被 revoke 或 replace，不得并存。",
+        "python -m pytest tests/test_fr03_cookie_routes.py tests/test_fr03_cookie_session.py tests/test_nfr16_security.py -q --tb=short",
+        "Typecheck passes"
+      ],
+      "priority": 32,
+      "passes": true,
+      "notes": "{\"group\":\"FR03\",\"dependsOn\":[\"US-020\",\"US-005\"],\"endpoints\":[\"/api/v1/admin/cookie-session\"],\"models\":[\"cookie_session\",\"audit_log\"],\"permissions\":[\"admin\",\"super_admin\"],\"errorCodes\":[\"UNAUTHORIZED\",\"FORBIDDEN\",\"VALIDATION_FAILED\"],\"idempotency\":\"one_active_cookie_session_per_provider\",\"enums\":[\"ACTIVE\",\"EXPIRING\",\"EXPIRED\",\"REFRESH_FAILED\",\"SKIPPED\"],\"thresholds\":\"httpCreated=201,activeSessionsPerProvider=1\",\"degradation\":\"save_path_fail_closed_without_cookie_echo\",\"exampleAssert\":\"assert response.status_code==201 and 'cookie_string' not in str(response.json())\",\"pytest\":\"python -m pytest tests/test_fr03_cookie_routes.py tests/test_fr03_cookie_session.py tests/test_nfr16_security.py -q --tb=short\"}"
+    },
+    {
+      "id": "US-033",
+      "title": "实现 Cookie 健康探测与互斥",
+      "description": "作为数据工程维护者，我希望 cookie 探活有并发互斥和明确状态，以便多实例不会同时探测触发外部风控。",
+      "acceptanceCriteria": [
+        "查询入口固定为 GET /api/v1/admin/cookie-session/health；成功响应只允许 status=ok|fail|skipped，并返回 last_probe_at、last_refresh_at、expires_at、status_reason。",
+        "同一 provider 的探活在同一时刻只允许一个执行者；抢锁失败的请求必须直接返回 skipped，而不是发出第二次外部探活。",
+        "会话不存在返回 404 COOKIE_SESSION_MISSING；探活超时、熔断开启、会话失效三种情形必须区分 status_reason。",
+        "探活结果必须可被启动门禁和热点采集链复用；missing cookie 只能让相关数据源 degraded，不得让健康检查返回 500。",
+        "python -m pytest tests/test_fr03_cookie_session.py tests/test_fr03_probe_startup_gate.py tests/test_internal_runtime_gates.py -q --tb=short",
+        "Typecheck passes"
+      ],
+      "priority": 33,
+      "passes": true,
+      "notes": "{\"group\":\"FR03\",\"dependsOn\":[\"US-020\",\"US-032\",\"US-006\"],\"endpoints\":[\"/api/v1/admin/cookie-session/health\"],\"models\":[\"cookie_session\",\"runtime_gate\"],\"permissions\":[\"admin\",\"system\"],\"errorCodes\":[\"COOKIE_PROBE_SKIPPED\",\"COOKIE_SESSION_MISSING\",\"CIRCUIT_BREAKER_OPEN\"],\"idempotency\":\"one_active_probe_per_provider\",\"enums\":[\"ok\",\"fail\",\"skipped\"],\"thresholds\":\"singleProbePerProvider=1\",\"degradation\":\"missing_cookie_returns_skipped_or_degraded_without_500\",\"exampleAssert\":\"assert payload['status'] in ['ok','fail','skipped'] and ('status_reason' in payload or payload['status']=='ok')\",\"pytest\":\"python -m pytest tests/test_fr03_cookie_session.py tests/test_fr03_probe_startup_gate.py tests/test_internal_runtime_gates.py -q --tb=short\"}"
+    },
+    {
+      "id": "US-034",
+      "title": "实现股票池准入过滤规则",
+      "description": "作为数据工程师，我希望核心池候选先经过可解释过滤，以便 ST、退市、长停牌和流动性不足股票不会进入正式研报链。",
+      "acceptanceCriteria": [
+        "过滤器读取 stock_master 和最近 20 个交易日的 kline_daily，不从硬编码列表读取 universe；每条被排除的股票生成明确 exclude_reason（不允许 'unknown'）。",
+        "过滤规则精确阈值：is_delisted=true 排除；is_st=true 排除；上市天数 < 366 排除（新股）；自由流通市值 < 5e9 元排除；近 20 日日均成交额 < 3e7 元排除；连续跌停≥3 日排除；连续停牌≥5 日排除。",
+        "因子缺失时用 0.5（中性分）代入得分而不是排除，并写 usage.status=missing_neutral；返回的过滤结果包含 exclude_reason、candidate_count 和 excluded_count。",
+        "python -m pytest tests/test_fr01_pool_refresh.py -q --tb=short",
+        "Typecheck passes"
+      ],
+      "priority": 34,
+      "passes": true,
+      "notes": "{\"group\":\"FR01\",\"dependsOn\":[\"US-007\",\"US-008\"],\"endpoints\":[],\"models\":[\"stock_master\",\"kline_daily\",\"stock_score\"],\"permissions\":[\"system\",\"admin\"],\"errorCodes\":[\"NOT_IN_UNIVERSE\",\"DATA_GAP_NEUTRALIZED\",\"VALIDATION_ERROR\"],\"idempotency\":\"same_inputs_same_exclusion_set\",\"enums\":[\"delisted\",\"st\",\"new_listing\",\"low_market_cap\",\"low_liquidity\",\"consecutive_limit_down\",\"long_suspension\"],\"thresholds\":\"listingDaysMin=366,minFreeFloatMarketCap=5000000000,minAvgAmount20d=30000000,consecutiveLimitDown=3,longSuspensionDays=5\",\"degradation\":\"missing_factor_neutralized_to_0.5_never_excluded\",\"exampleAssert\":\"assert all(e['exclude_reason']!='unknown' for e in excluded_list)\",\"pytest\":\"python -m pytest tests/test_fr01_pool_refresh.py -q --tb=short\"}"
+    },
+    {
+      "id": "US-035",
+      "title": "实现股票池打分排序",
+      "description": "作为平台维护者，我希望候选股票按稳定评分排序，以便 Top200 核心池来自可解释的统一规则。",
+      "acceptanceCriteria": [
+        "评分器必须同时计算价格动量、市值适中度、成交额分位、MA20 斜率、业绩预期、换手率、RSI 和 52 周回撤八个因子，并按 01 文档冻结权重合成 score。",
+        "所有因子必须先做 normalize_rank；最终 score 取值范围固定为 0-100，且输出可追溯的 factor_breakdown。",
+        "业绩预期缺失时只能回退到 0.5 中性分并显式写 missing_neutral 或等效原因，不得因缺失直接剔除或给满分。",
+        "同一输入快照必须产生稳定排序；相同 score 的股票必须有确定的次级排序规则，避免刷新抖动。",
+        "python -m pytest tests/test_fr01_pool_refresh.py tests/test_fr04_hot_stocks.py -q --tb=short",
+        "Typecheck passes"
+      ],
+      "priority": 35,
+      "passes": true,
+      "notes": "{\"group\":\"FR01\",\"dependsOn\":[\"US-034\"],\"endpoints\":[],\"models\":[\"stock_score\",\"stock_pool_snapshot\"],\"permissions\":[\"system\",\"admin\"],\"errorCodes\":[\"SCORE_INPUT_MISSING\",\"NORMALIZE_RANK_FAILED\",\"VALIDATION_FAILED\"],\"idempotency\":\"same_inputs_same_rank_order\",\"enums\":[\"score_factor\"],\"thresholds\":\"scoreMin=0,scoreMax=100,corePoolSize=200\",\"degradation\":\"missing_earnings_expectation_uses_0.5\",\"exampleAssert\":\"assert 0 <= score <= 100\",\"pytest\":\"python -m pytest tests/test_fr01_pool_refresh.py tests/test_fr04_hot_stocks.py -q --tb=short\"}"
+    },
+    {
+      "id": "US-036",
+      "title": "实现核心池与候补池快照落库",
+      "description": "作为平台维护者，我希望每日输出精确 200 只核心池和 50 只候补池，以便采集、研报和首页共享同一口径。",
+      "acceptanceCriteria": [
+        "同一 trade_date 的成功快照必须落库 200 条 is_core=true 和 50 条 is_core=false 记录，并同步生成 pool 汇总视图。",
+        "同一 trade_date 的重复刷新只能通过新的 pool_version 表示，不得覆盖旧版本快照；pool 汇总计数与 snapshot 明细计数必须严格一致。",
+        "冷启动失败时必须阻断并返回 COLD_START_ERROR，不允许为了满足 200/50 数量而输出伪池子。",
+        "快照记录必须保留 score、rank_no、fallback_from、evicted_stocks 和 created_at，供公开页与管理页复用。",
+        "python -m pytest tests/test_fr01_pool_refresh.py -q --tb=short",
+        "Typecheck passes"
+      ],
+      "priority": 36,
+      "passes": true,
+      "notes": "{\"group\":\"FR01\",\"dependsOn\":[\"US-011\",\"US-035\"],\"endpoints\":[],\"models\":[\"stock_pool\",\"stock_pool_snapshot\",\"stock_score\",\"stock_pool_refresh_task\"],\"permissions\":[\"system\",\"admin\"],\"errorCodes\":[\"COLD_START_ERROR\",\"CONCURRENT_CONFLICT\",\"VALIDATION_FAILED\"],\"idempotency\":\"pool_date+pool_version unique\",\"enums\":[\"core\",\"standby\"],\"thresholds\":\"corePoolSize=200,standbyPoolSize=50\",\"degradation\":\"cold_start_blocks_instead_of_emitting_fake_pool\",\"exampleAssert\":\"assert summary['core_pool_size']==200 and summary['standby_pool_size']==50\",\"pytest\":\"python -m pytest tests/test_fr01_pool_refresh.py -q --tb=short\"}"
+    },
+    {
+      "id": "US-037",
+      "title": "实现股票池回退、淘汰与并发锁",
+      "description": "作为平台维护者，我希望池子刷新失败或并发时有确定行为，以便不会出现空池、双写或无来源回退。",
+      "acceptanceCriteria": [
+        "刷新失败时必须优先回退上一有效交易日池，并把 fallback_from 记录为 YYYY-MM-DD 日期字符串；无历史池时直接返回 COLD_START_ERROR。",
+        "同一 trade_date 的并发刷新只能有一个成功执行者；其余请求必须返回 409 CONCURRENT_CONFLICT 或 429 RATE_LIMITED，且不能写入第二份结果。",
+        "刷新锁必须带 TTL、续约和 fencing token；旧持锁实例在锁失效后恢复时不得继续提交数据。",
+        "淘汰列表必须稳定记录为 evicted_stocks，不得把被替换股票误写到 fallback_from。",
+        "python -m pytest tests/test_fr01_pool_refresh.py tests/test_fr02_dag_lock.py -q --tb=short",
+        "Typecheck passes"
+      ],
+      "priority": 37,
+      "passes": true,
+      "notes": "{\"group\":\"FR01_FR02\",\"dependsOn\":[\"US-011\",\"US-036\"],\"endpoints\":[],\"models\":[\"stock_pool_snapshot\",\"stock_pool_refresh_task\"],\"permissions\":[\"system\",\"admin\"],\"errorCodes\":[\"COLD_START_ERROR\",\"CONCURRENT_CONFLICT\",\"RATE_LIMITED\"],\"idempotency\":\"one_successful_refresh_per_trade_date\",\"enums\":[\"PENDING\",\"PROCESSING\",\"COMPLETED\"],\"thresholds\":\"conflictStatusCodes=409|429\",\"degradation\":\"fallback_to_last_valid_pool_or_fail_close\",\"exampleAssert\":\"assert response.status_code in [409,429]\",\"pytest\":\"python -m pytest tests/test_fr01_pool_refresh.py tests/test_fr02_dag_lock.py -q --tb=short\"}"
+    },
+    {
+      "id": "US-038",
+      "title": "实现股票池管理与公开查询接口",
+      "description": "作为管理员和普通用户，我希望股票池刷新和查询接口返回同一快照事实，以便后台和前台不会出现池子口径差异。",
+      "acceptanceCriteria": [
+        "写入口固定为 POST /api/v1/admin/pool/refresh，读入口固定为 GET /api/v1/pool/stocks；两者必须读取同一 snapshot 事实，而不是一个读缓存、一个读临时内存。",
+        "POST 仅允许 admin|super_admin；GET 对匿名用户开放，只返回公开字段 core|standby、trade_date、pool_version、items、分页信息。",
+        "刷新、force_rebuild、失败回退和冷启动阻断都必须留下审计日志与 request_id；普通用户不得触发任何刷新行为。",
+        "GET /api/v1/pool/stocks 在无最新快照时必须返回真实空态或错误码，不能伪造默认股票列表。",
+        "python -m pytest tests/test_fr01_pool_refresh.py tests/test_fr12_admin.py tests/test_api_bridge_contract.py -q --tb=short",
+        "Typecheck passes"
+      ],
+      "priority": 38,
+      "passes": true,
+      "notes": "{\"group\":\"FR01\",\"dependsOn\":[\"US-036\",\"US-037\",\"US-005\"],\"endpoints\":[\"/api/v1/admin/pool/refresh\",\"/api/v1/pool/stocks\"],\"models\":[\"stock_pool\",\"stock_pool_snapshot\",\"audit_log\"],\"permissions\":[\"admin\",\"super_admin\",\"public_read\"],\"errorCodes\":[\"UNAUTHORIZED\",\"FORBIDDEN\",\"CONCURRENT_CONFLICT\",\"COLD_START_ERROR\"],\"idempotency\":\"request_id+trade_date avoids double refresh\",\"enums\":[\"core\",\"standby\"],\"thresholds\":\"corePoolSize=200,standbyPoolSize=50\",\"degradation\":\"public_read_never_invents_fallback_list\",\"exampleAssert\":\"assert payload['data']['trade_date'] is not None and payload['data']['pool_version'] >= 1\",\"pytest\":\"python -m pytest tests/test_fr01_pool_refresh.py tests/test_fr12_admin.py tests/test_api_bridge_contract.py -q --tb=short\"}"
+    },
+    {
+      "id": "US-039",
+      "title": "实现市场状态计算器",
+      "description": "作为研报引擎，我希望基于行情和热点计算 BULL、BEAR、NEUTRAL，以便策略和风险规则有统一市场背景。",
+      "acceptanceCriteria": [
+        "以沪深 300 最近 20 个交易日 close 为基准计算收益率：20 日回报 > 3% → BULL；< -5% → BEAR；否则 NEUTRAL；计算基于 reference_date 的 kline_daily，market_state 写入 market_state_cache。",
+        "数据不足（有效行情行数 < 5）时设置 market_state_degraded=true 并写 status_reason='insufficient_kline_data'，不得静默输出 NEUTRAL 作为默认值。",
+        "计算结果必须附 state_reason（非空字符串描述判断依据）；NEUTRAL 不得仅作为默认占位；每次重算同一 trade_date 时执行 UPSERT 而非重复插入。",
+        "python -m pytest tests/test_fr05_market_state.py tests/test_state_machine.py -q --tb=short",
+        "Typecheck passes"
+      ],
+      "priority": 39,
+      "passes": true,
+      "notes": "{\"group\":\"FR05\",\"dependsOn\":[\"US-008\",\"US-012\",\"US-025\"],\"endpoints\":[],\"models\":[\"kline_daily\",\"market_state_cache\",\"report_data_usage\"],\"permissions\":[\"system\",\"user\"],\"errorCodes\":[\"INSUFFICIENT_KLINE_DATA\",\"MARKET_STATE_DEGRADED\",\"VALIDATION_ERROR\"],\"idempotency\":\"trade_date UPSERT in market_state_cache\",\"enums\":[\"BULL\",\"BEAR\",\"NEUTRAL\"],\"thresholds\":\"bull20dReturn=0.03,bear20dReturn=-0.05,minKlineRows=5\",\"degradation\":\"insufficient_data_sets_degraded=true_with_reason_never_silent_neutral\",\"exampleAssert\":\"assert result['market_state'] in ['BULL','BEAR','NEUTRAL'] and result['state_reason']\",\"pytest\":\"python -m pytest tests/test_fr05_market_state.py tests/test_state_machine.py -q --tb=short\"}"
+    },
+    {
+      "id": "US-040",
+      "title": "实现市场状态缓存与查询接口",
+      "description": "作为页面和研报链调用方，我希望市场状态可被缓存和查询，以便首页、Dashboard 和生成链共享同一结果。",
+      "acceptanceCriteria": [
+        "唯一公开入口是 GET /api/v1/market/state；该接口在正常、幽灵时段、降级和绝对冷启动场景下都必须返回 200，不允许返回 500。",
+        "响应至少包含 market_state、trade_date、reference_date、state_reason、data_status；market_state 只允许 BULL|NEUTRAL|BEAR，data_status 只允许 READY|COMPUTING|DEGRADED。",
+        "幽灵时段必须回退上一有效交易日缓存；绝对冷启动必须返回 NEUTRAL + state_reason='COLD_START_FALLBACK'，不得返回空对象。",
+        "查询接口只读，不得在请求链上偷偷重算市场状态或写入新快照；同一 trade_date 的重算只能通过 cache upsert 完成。",
+        "python -m pytest tests/test_fr05_market_state.py tests/test_api_bridge_contract.py tests/test_runtime_anchor_consistency.py -q --tb=short",
+        "Typecheck passes"
+      ],
+      "priority": 40,
+      "passes": true,
+      "notes": "{\"group\":\"FR05\",\"dependsOn\":[\"US-012\",\"US-039\"],\"endpoints\":[\"/api/v1/market/state\"],\"models\":[\"market_state_cache\"],\"permissions\":[\"public_read\",\"system\"],\"errorCodes\":[\"COLD_START_ERROR\",\"STATE_COMPUTING\",\"STATE_MISSING\"],\"idempotency\":\"trade_date cache upsert\",\"enums\":[\"BULL\",\"BEAR\",\"NEUTRAL\",\"READY\",\"COMPUTING\",\"DEGRADED\"],\"thresholds\":\"ghostWindow=00:00-08:59:59\",\"degradation\":\"ghost_window_falls_back_to_last_valid_trade_date_and_cold_start_returns_explicit_fallback\",\"exampleAssert\":\"assert payload['data']['market_state'] in ['BULL','BEAR','NEUTRAL'] and payload['data']['data_status'] in ['READY','COMPUTING','DEGRADED']\",\"pytest\":\"python -m pytest tests/test_fr05_market_state.py tests/test_api_bridge_contract.py tests/test_runtime_anchor_consistency.py -q --tb=short\"}"
+    },
+    {
+      "id": "US-041",
+      "title": "实现 BEAR 与 degraded 策略门控",
+      "description": "作为研报链维护者，我希望市场状态约束策略和置信度，以便 BEAR 或 degraded 场景不会输出过度乐观结论。",
+      "acceptanceCriteria": [
+        "FR-06 生成链读取 market_state_cache 前检查：market_state_degraded=true 时所有策略不允许 published=true，report.quality_flag 强制为 degraded；market_state=BEAR 时 B 型和 C 型策略直接短路（published=false，quality_flag=degraded）。",
+        "A 型在 BEAR 市场最大 confidence 上限 = 0.60（超出截断）；C 型在任意市场最大 confidence 上限 = 0.70；截断后在 report.status_reason 中记录 'confidence_capped_by_market_state'。",
+        "confidence 截断规则：写入前检查 strategy_type 和 market_state，超出上限时截断而不是拒绝写入；截断后 report.confidence 必须 ≤ 上限；mock 分支同样受此约束。",
+        "python -m pytest tests/test_fr05_market_state.py tests/test_fr06_report_generate.py -q --tb=short",
+        "Typecheck passes"
+      ],
+      "priority": 41,
+      "passes": true,
+      "notes": "{\"group\":\"FR05_FR06\",\"dependsOn\":[\"US-039\",\"US-040\"],\"endpoints\":[],\"models\":[\"market_state_cache\",\"report\",\"report_generation_task\"],\"permissions\":[\"system\"],\"errorCodes\":[\"BEAR_MARKET_FILTERED\",\"MARKET_STATE_DEGRADED\",\"DEPENDENCY_NOT_READY\"],\"idempotency\":\"one_gate_result_per_report_and_trade_date\",\"enums\":[\"BULL\",\"BEAR\",\"NEUTRAL\",\"degraded\"],\"thresholds\":\"aTypeBearMaxConfidence=0.60,cTypeMaxConfidence=0.70,degradedBlocksPublish=true\",\"degradation\":\"bear_or_degraded_caps_confidence_or_blocks_publish\",\"exampleAssert\":\"assert (report['confidence']<=0.60 if market_state=='BEAR' and strategy_type=='A' else report['confidence']<=0.70 if strategy_type=='C' else True)\",\"pytest\":\"python -m pytest tests/test_fr05_market_state.py tests/test_fr06_report_generate.py -q --tb=short\"}"
+    },
+    {
+      "id": "US-042",
+      "title": "实现调度任务注册与状态查询",
+      "description": "作为运维人员，我希望日批链路的每个节点都有任务注册和状态查询，以便知道当前卡在哪一步。",
+      "acceptanceCriteria": [
+        "调度注册表必须显式注册 FR-01、FR-04、FR-05、FR-06、FR-07、FR-08、FR-09-b、FR-13 八类节点，并为每个节点声明 task_name、trade_date 粒度、上游依赖和允许的终态。",
+        "GET /api/v1/admin/scheduler/status 仅允许 admin|super_admin；匿名返回 401，普通用户返回 403；成功返回 items、total、page、page_size，默认 page_size=20，最大 100。",
+        "每条状态记录至少包含 task_name、trade_date、status、status_reason、retry_count、triggered_at、started_at、finished_at、error_message、request_id；status 必须区分 NOT_RUN、RUNNING、SUCCESS、FAILED、SKIPPED、SUSPENDED、EXPIRED。",
+        "状态查询必须按 triggered_at 倒序返回最近 7 天记录，并保持 NOT_RUN 与 COMPUTING/RUNNING 语义分离，不得把未运行伪装为进行中。",
+        "python -m pytest tests/test_fr02_scheduler_ops.py tests/test_fr12_admin.py tests/test_runtime_anchor_consistency.py -q --tb=short",
+        "Typecheck passes"
+      ],
+      "priority": 42,
+      "passes": true,
+      "notes": "{\"group\":\"FR02\",\"dependsOn\":[\"US-006\",\"US-015\"],\"endpoints\":[\"/api/v1/admin/scheduler/status\"],\"models\":[\"scheduler_task\",\"report_generation_task\",\"stock_pool_refresh_task\"],\"permissions\":[\"admin\",\"super_admin\",\"system\"],\"errorCodes\":[\"UNAUTHORIZED\",\"FORBIDDEN\",\"TASK_NOT_FOUND\"],\"idempotency\":\"task_name+trade_date+run_id unique\",\"enums\":[\"NOT_RUN\",\"RUNNING\",\"SUCCESS\",\"FAILED\",\"SKIPPED\",\"SUSPENDED\",\"EXPIRED\"],\"thresholds\":\"defaultPageSize=20,maxPageSize=100,lookbackDays=7\",\"degradation\":\"not_run_and_running_remain_distinct\",\"exampleAssert\":\"assert row['status'] in ['NOT_RUN','RUNNING','SUCCESS','FAILED','SKIPPED','SUSPENDED','EXPIRED'] and row['request_id']\",\"pytest\":\"python -m pytest tests/test_fr02_scheduler_ops.py tests/test_fr12_admin.py tests/test_runtime_anchor_consistency.py -q --tb=short\"}"
+    },
+    {
+      "id": "US-043",
+      "title": "实现 DAG 依赖与完成事件推进",
+      "description": "作为平台维护者，我希望调度器按上游完成事件推进，而不是靠固定时间硬触发，以便下游不会抢跑。",
+      "acceptanceCriteria": [
+        "依赖边必须显式固定：FR-06 等待 FR-04 完成事件，FR-07 与 FR-08 等待 FR-06 完成事件，FR-13 等待 FR-08 产生 outbox 事件；不得用固定时点替代上游完成信号。",
+        "子任务在未收到全部必需上游 SUCCESS 事件前必须保持 WAITING_UPSTREAM 或 SUSPENDED，不得进入 RUNNING。",
+        "上游 FAILED、SKIPPED 或跨日兜底超时时，当前节点及下游节点必须写 status=FAILED 或 SUSPENDED，并保留 upstream_task、upstream_run_id 与 status_reason；不得静默吞掉阻塞原因。",
+        "同一 completed_event 只能消费一次；重复消费不得重复推进子任务，也不得生成第二条任务实例。",
+        "python -m pytest tests/test_fr02_dag_lock.py tests/test_fr02_scheduler_ops.py tests/test_internal_runtime_gates.py -q --tb=short",
+        "Typecheck passes"
+      ],
+      "priority": 43,
+      "passes": true,
+      "notes": "{\"group\":\"FR02\",\"dependsOn\":[\"US-042\"],\"endpoints\":[],\"models\":[\"scheduler_task\"],\"permissions\":[\"system\"],\"errorCodes\":[\"UPSTREAM_BLOCKED\",\"TASK_ALREADY_COMPLETED\",\"DEPENDENCY_NOT_READY\"],\"idempotency\":\"completed_event_handled_once\",\"enums\":[\"WAITING_UPSTREAM\",\"RUNNING\",\"SUCCESS\",\"FAILED\",\"SKIPPED\",\"SUSPENDED\"],\"thresholds\":\"eventOnce=true\",\"degradation\":\"upstream_failure_or_timeout_propagates_reason_without_hidden_retry\",\"exampleAssert\":\"assert child['upstream_task'] is not None and child['status'] in ['WAITING_UPSTREAM','SUSPENDED','FAILED','RUNNING','SUCCESS']\",\"pytest\":\"python -m pytest tests/test_fr02_dag_lock.py tests/test_fr02_scheduler_ops.py tests/test_internal_runtime_gates.py -q --tb=short\"}"
+    },
+    {
+      "id": "US-044",
+      "title": "实现调度分布式锁与 fencing token",
+      "description": "作为运维人员，我希望多实例下同一任务同一交易日只有一个执行者，以便避免重复写入和交错提交。",
+      "acceptanceCriteria": [
+        "调度锁记录必须包含 lock_key、task_name、trade_date、owner_id、ttl_seconds、heartbeat_at、expires_at 和 fencing_token；lock_key 由 task_name+trade_date 组成。",
+        "默认 TTL 必须为 300 秒，并支持续约心跳；TTL 到期后新执行者可接管且 fencing_token 单调递增。",
+        "任何任务状态写入、结果落库或审计提交都必须比较 fencing_token；旧执行者在失去锁后恢复运行时不得继续写入。",
+        "同一 lock_key+trade_date 任一时刻只能存在一个 leased owner；冲突获取必须返回 LOCK_CONFLICT，而不是允许双写。",
+        "python -m pytest tests/test_fr02_dag_lock.py tests/test_fr02_scheduler_ops.py -q --tb=short",
+        "Typecheck passes"
+      ],
+      "priority": 44,
+      "passes": true,
+      "notes": "{\"group\":\"FR02\",\"dependsOn\":[\"US-042\",\"US-043\"],\"endpoints\":[],\"models\":[\"scheduler_task_lock\"],\"permissions\":[\"system\"],\"errorCodes\":[\"LOCK_CONFLICT\",\"FENCING_TOKEN_EXPIRED\",\"LOCK_HEARTBEAT_FAILED\"],\"idempotency\":\"lock_key+trade_date singleton\",\"enums\":[\"open\",\"leased\",\"expired\"],\"thresholds\":\"lockTtlSeconds=300\",\"degradation\":\"stale_owner_loses_write_permission\",\"exampleAssert\":\"assert newer['fencing_token']>older['fencing_token']\",\"pytest\":\"python -m pytest tests/test_fr02_dag_lock.py tests/test_fr02_scheduler_ops.py -q --tb=short\"}"
+    },
+    {
+      "id": "US-045",
+      "title": "实现跨日超时与任务恢复",
+      "description": "作为运维人员，我希望跨日未完成任务能在次日开盘前自解挂起，并在服务重启后恢复可恢复任务。",
+      "acceptanceCriteria": [
+        "若节点在次日开盘前兜底死线前仍未获得上游放行信号，当前节点及所有受影响下游节点必须统一写 status=FAILED、status_reason='upstream_timeout_next_open'，并终止本交易日链路。",
+        "服务重启后只允许恢复 RUNNING、WAITING_UPSTREAM、SUSPENDED 且仍处于 72 小时恢复窗口内的任务；超窗僵尸任务必须转 EXPIRED，不得继续执行。",
+        "已经 SUCCESS、FAILED(非可恢复) 或 EXPIRED 的任务在重启后不得被自动重跑；恢复逻辑必须对同一 task instance 幂等。",
+        "恢复和超时终止都必须留下 request_id、recovered_from_restart 标记或等效审计字段，便于区分首次执行与恢复执行。",
+        "python -m pytest tests/test_fr02_scheduler_ops.py tests/test_runtime_anchor_consistency.py tests/test_internal_runtime_gates.py -q --tb=short",
+        "Typecheck passes"
+      ],
+      "priority": 45,
+      "passes": true,
+      "notes": "{\"group\":\"FR02\",\"dependsOn\":[\"US-042\",\"US-044\"],\"endpoints\":[],\"models\":[\"scheduler_task\"],\"permissions\":[\"system\"],\"errorCodes\":[\"UPSTREAM_TIMEOUT_NEXT_OPEN\",\"TASK_EXPIRED\",\"DEPENDENCY_NOT_READY\"],\"idempotency\":\"recovery_runs_once_per_task_instance\",\"enums\":[\"RUNNING\",\"WAITING_UPSTREAM\",\"SUSPENDED\",\"FAILED\",\"EXPIRED\"],\"thresholds\":\"recoveryWindowHours=72\",\"degradation\":\"expired_tasks_stop_instead_of_leaking_across_trade_dates\",\"exampleAssert\":\"assert task['status_reason']=='upstream_timeout_next_open' if task['status']=='FAILED' else True\",\"pytest\":\"python -m pytest tests/test_fr02_scheduler_ops.py tests/test_runtime_anchor_consistency.py tests/test_internal_runtime_gates.py -q --tb=short\"}"
+    },
+    {
+      "id": "US-046",
+      "title": "实现调度管理操作与审计",
+      "description": "作为管理员，我希望能安全触发、跳过或重试调度节点，以便人工干预时仍保留完整审计链。",
+      "acceptanceCriteria": [
+        "管理入口固定为 POST /api/v1/admin/scheduler/trigger、POST /api/v1/admin/scheduler/retry、POST /api/v1/admin/scheduler/skip，统一返回 NFR-14 envelope。",
+        "所有入口仅允许 admin|super_admin；匿名返回 401，普通用户返回 403；成功提交异步操作返回 202 和 task_id，非法状态迁移返回 409 INVALID_STATE_TRANSITION。",
+        "每次操作必须记录 actor、task_name、trade_date、action、before_status、after_status、reason、request_id、timestamp；skip/retry 缺少 reason 返回 422。",
+        "人工 trigger、retry、skip 只能改变调度状态，不得伪造上游完成事实或直接把下游链改写为 SUCCESS。",
+        "python -m pytest tests/test_fr02_scheduler_ops.py tests/test_fr12_admin.py tests/test_request_id_webhook_backlink.py -q --tb=short",
+        "Typecheck passes"
+      ],
+      "priority": 46,
+      "passes": true,
+      "notes": "{\"group\":\"FR02\",\"dependsOn\":[\"US-042\",\"US-044\",\"US-005\"],\"endpoints\":[\"/api/v1/admin/scheduler/trigger\",\"/api/v1/admin/scheduler/retry\",\"/api/v1/admin/scheduler/skip\"],\"models\":[\"scheduler_task\",\"audit_log\"],\"permissions\":[\"admin\",\"super_admin\"],\"errorCodes\":[\"UNAUTHORIZED\",\"FORBIDDEN\",\"INVALID_STATE_TRANSITION\",\"CONCURRENT_CONFLICT\"],\"idempotency\":\"request_id+task_name+trade_date+action unique\",\"enums\":[\"trigger\",\"retry\",\"skip\"],\"thresholds\":\"httpAccepted=202,reasonRequiredForSkipOrRetry=true\",\"degradation\":\"manual_ops_cannot_fabricate_upstream_truth\",\"exampleAssert\":\"assert audit['action'] in ['trigger','retry','skip'] and audit['request_id'] is not None\",\"pytest\":\"python -m pytest tests/test_fr02_scheduler_ops.py tests/test_fr12_admin.py tests/test_request_id_webhook_backlink.py -q --tb=short\"}"
+    },
+    {
+      "id": "US-047",
+      "title": "实现研报生成请求校验与幂等键",
+      "description": "作为调用方，我希望单股研报生成接口校验输入并使用稳定幂等键，以便单股单日不会重复生成多份正式研报。",
+      "acceptanceCriteria": [
+        "POST /api/v1/reports/generate 必须校验字段：stock_code（格式 \\\"^\\\\d{6}\\\\.(SH|SZ|BJ)$\\\"）、trade_date（格式 YYYY-MM-DD）、strategy_type(A|B|C)、skip_pool_check(bool)、forced_strategy_type(A|B|C|null)；任一字段不合法返回 HTTP 422 VALIDATION_ERROR。",
+        "幂等键格式固定为 'daily:{stock_code}:{trade_date}:{strategy_type}'（例如 'daily:600519.SH:2026-04-22:A'）；相同幂等键的重复请求返回现有 task_id 或 report_id（HTTP 200），不新建任务，不返回 HTTP 409。",
+        "strategy_type 不在 [A,B,C] 范围内返回 HTTP 422；trade_date 格式非 YYYY-MM-DD 返回 HTTP 422；响应体包含 report_id 或 task_id，响应 HTTP 201（新建）或 HTTP 200（已存在）。",
+        "python -m pytest tests/test_fr06_report_generate.py tests/test_internal_reports_api.py -q --tb=short",
+        "Typecheck passes"
+      ],
+      "priority": 47,
+      "passes": true,
+      "notes": "{\"group\":\"FR06\",\"dependsOn\":[\"US-013\",\"US-015\",\"US-042\"],\"endpoints\":[\"/api/v1/reports/generate\"],\"models\":[\"report\",\"report_generation_task\",\"stock_pool_snapshot\"],\"permissions\":[\"user\",\"admin\",\"internal\"],\"errorCodes\":[\"VALIDATION_ERROR\",\"NOT_IN_CORE_POOL\",\"REPORT_ALREADY_EXISTS\"],\"idempotency\":\"idempotency_key=daily:{stock_code}:{trade_date}:{strategy_type}\",\"enums\":[\"A\",\"B\",\"C\"],\"thresholds\":\"idempotencyPrefix=daily:,stockCodeRegex=^\\\\d{6}\\\\.(SH|SZ|BJ)$\",\"degradation\":\"duplicate_request_returns_200_with_existing_id\",\"exampleAssert\":\"assert idem_key.startswith('daily:') and resp.status_code in [200,201]\",\"pytest\":\"python -m pytest tests/test_fr06_report_generate.py tests/test_internal_reports_api.py -q --tb=short\"}"
+    },
+    {
+      "id": "US-048",
+      "title": "实现核心池资格门",
+      "description": "作为平台维护者，我希望正式研报默认只对核心池股票生成，以便资源集中在每日 Top200。",
+      "acceptanceCriteria": [
+        "公开生成入口 POST /api/v1/reports/generate 在 skip_pool_check=false 时，必须校验 stock_code 是否属于 trade_date 对应的当日 200 只核心池；非核心池立即返回 400 NOT_IN_CORE_POOL。",
+        "资格门必须发生在任何 LLM 调用、Prompt 组装和公开 payload 生成之前；非核心池请求不得消耗外部模型额度。",
+        "只有 admin|internal|system 可以显式绕过资格门；绕过时必须记录 actor、request_id、reason 和 bypass_source，普通用户不得绕过。",
+        "若当日核心池快照不存在或冷启动失败，生成入口必须返回 500 COLD_START_ERROR，而不是把全部股票视为可生成。",
+        "python -m pytest tests/test_fr06_report_generate.py tests/test_fr01_pool_refresh.py tests/test_internal_reports_api.py -q --tb=short",
+        "Typecheck passes"
+      ],
+      "priority": 48,
+      "passes": true,
+      "notes": "{\"group\":\"FR06\",\"dependsOn\":[\"US-036\",\"US-047\"],\"endpoints\":[\"/api/v1/reports/generate\"],\"models\":[\"report\",\"report_generation_task\",\"stock_pool_snapshot\"],\"permissions\":[\"admin\",\"internal\",\"system\"],\"errorCodes\":[\"NOT_IN_CORE_POOL\",\"COLD_START_ERROR\",\"DEPENDENCY_NOT_READY\"],\"idempotency\":\"pool_gate_keyed_by_stock_and_trade_date\",\"enums\":[\"core\",\"standby\"],\"thresholds\":\"skipPoolCheckDefault=false,corePoolSize=200\",\"degradation\":\"cold_start_or_non_core_blocks_before_llm\",\"exampleAssert\":\"assert error_code=='NOT_IN_CORE_POOL' and response.status_code==400\",\"pytest\":\"python -m pytest tests/test_fr06_report_generate.py tests/test_fr01_pool_refresh.py tests/test_internal_reports_api.py -q --tb=short\"}"
+    },
+    {
+      "id": "US-049",
+      "title": "实现研报前置非研报数据补采",
+      "description": "作为研报链维护者，我希望正式生成前自动补齐 non-report usage，以便生成输入来自当日可追溯事实。",
+      "acceptanceCriteria": [
+        "FR-06 在进入 Prompt 组装前必须触发 truth-layer 补采；至少尝试 market_state_input、stock_profile、main_force_flow 或 capital_usage、northbound_summary、etf_flow_summary。",
+        "每个数据集都必须写 report_data_usage，字段至少包含 dataset_name、source_name、status、status_reason、fetch_time、batch_id；status 仅允许 ok|stale_ok|missing|degraded。",
+        "required 数据集缺失必须进入后续质量门判断；optional 数据集失败不得回滚已成功 usage，但必须保留失败原因，不得伪装全集成功。",
+        "同一 stock_code+trade_date+dataset_name 的补采在同一批次内必须幂等复用，不得生成重复 usage 行。",
+        "python -m pytest tests/test_fr06_report_generate.py tests/test_usage_lineage.py tests/test_runtime_anchor_consistency.py -q --tb=short",
+        "Typecheck passes"
+      ],
+      "priority": 49,
+      "passes": true,
+      "notes": "{\"group\":\"FR04_FR06\",\"dependsOn\":[\"US-026\",\"US-027\",\"US-029\",\"US-047\"],\"endpoints\":[\"/api/v1/reports/generate\",\"/api/v1/internal/stocks/{stock_code}/non-report-data/collect\"],\"models\":[\"report\",\"report_generation_task\",\"report_data_usage\",\"data_batch\"],\"permissions\":[\"system\",\"admin\",\"internal\"],\"errorCodes\":[\"DEPENDENCY_NOT_READY\",\"DATA_SOURCE_UNAVAILABLE\",\"QUALITY_GATE_BLOCKED\"],\"idempotency\":\"precollect keyed by stock_code+trade_date+dataset_name\",\"enums\":[\"ok\",\"stale_ok\",\"missing\",\"degraded\"],\"thresholds\":\"requiredDatasets=market_state_input|stock_profile\",\"degradation\":\"precollect_missing_becomes_explicit_quality_input\",\"exampleAssert\":\"assert all(item['status_reason'] for item in usages if item['status']!='ok')\",\"pytest\":\"python -m pytest tests/test_fr06_report_generate.py tests/test_usage_lineage.py tests/test_runtime_anchor_consistency.py -q --tb=short\"}"
+    },
+    {
+      "id": "US-050",
+      "title": "实现 strategy_type 分类器",
+      "description": "作为研报链维护者，我希望在 LLM 前确定 A、B、C 策略类型，以便 prompt、置信度和批量预筛都有统一策略语义。",
+      "acceptanceCriteria": [
+        "规则引擎必须在 LLM 调用前判定最终 strategy_type：A=命中政策/公告/重大事件标签；B=MA20 向上且近 5 日涨幅 > 3%；C=ATR_pct < 2% 且近 20 日波动率处于市场后 30% 分位；未命中任何规则时默认 B。",
+        "分类器输出至少包含 strategy_type、strategy_reason 和 strategy_inputs_snapshot；LLM 推理链可以解释但不得覆盖最终 strategy_type。",
+        "当 forced_strategy_type 存在且值属于 A|B|C 时，最终 strategy_type 必须等于该覆盖值，并保留 forced_by 字段；非法覆盖值返回 422 VALIDATION_FAILED。",
+        "关键输入不足时必须返回 insufficient_signal 或 degraded，并把缺失特征写入 strategy_reason；不得在缺特征时静默给出高置信分类。",
+        "python -m pytest tests/test_fr06_report_generate.py tests/test_llm_parse_response.py tests/test_internal_reports_api.py -q --tb=short",
+        "Typecheck passes"
+      ],
+      "priority": 50,
+      "passes": true,
+      "notes": "{\"group\":\"FR06\",\"dependsOn\":[\"US-025\",\"US-039\",\"US-047\"],\"endpoints\":[\"/api/v1/reports/generate\"],\"models\":[\"report\",\"report_generation_task\",\"market_state_cache\"],\"permissions\":[\"system\"],\"errorCodes\":[\"INSUFFICIENT_SIGNAL\",\"VALIDATION_FAILED\",\"STRATEGY_TYPE_CONFLICT\"],\"idempotency\":\"classifier_keyed_by_stock_code+trade_date+forced_strategy_type\",\"enums\":[\"A\",\"B\",\"C\"],\"thresholds\":\"defaultType=B,atrPctThreshold=0.02,bTrend5dReturn=0.03\",\"degradation\":\"insufficient_signal_returns_degraded_or_reasoned_default\",\"exampleAssert\":\"assert classifier['strategy_type'] in ['A','B','C'] and classifier['strategy_reason']\",\"pytest\":\"python -m pytest tests/test_fr06_report_generate.py tests/test_llm_parse_response.py tests/test_internal_reports_api.py -q --tb=short\"}"
+    },
+    {
+      "id": "US-051",
+      "title": "实现 prior_stats 历史先验注入",
+      "description": "作为研报生成链，我希望 prompt 前拿到历史结算先验，以便模型知道该策略的样本数、胜率和覆盖率背景。",
+      "acceptanceCriteria": [
+        "prior_stats 只能来自 settlement_status=settled 且 signal_date < data_cutoff 的 FR-07 历史记录；data_cutoff 固定为 trade_date 所在月的 1 日。",
+        "先验统计必须按 strategy_type(A|B|C) 独立计算；当前报告只能注入与自身 strategy_type 对应的一组先验。",
+        "样本数 < 30 时 prior_stats 必须为 null，Prompt 中不得展示小样本胜率；样本数 >= 30 时 prior_stats 至少包含 strategy_type、sample_count、win_rate_historical、avg_profit_loss_ratio、data_cutoff。",
+        "Prompt 中先验前缀必须明确写明‘仅供参考，不代表未来’，禁止把历史胜率直接当作当前 confidence。",
+        "python -m pytest tests/test_fr06_report_generate.py tests/test_fr07_settlement_run.py -q --tb=short",
+        "Typecheck passes"
+      ],
+      "priority": 51,
+      "passes": true,
+      "notes": "{\"group\":\"FR06\",\"dependsOn\":[\"US-016\",\"US-047\"],\"endpoints\":[],\"models\":[\"settlement_result\",\"report\"],\"permissions\":[\"system\"],\"errorCodes\":[\"PRIOR_STATS_NOT_READY\",\"VALIDATION_FAILED\"],\"idempotency\":\"same_strategy_and_cutoff_same_prior_stats\",\"enums\":[\"A\",\"B\",\"C\"],\"thresholds\":\"minSamples=30\",\"degradation\":\"small_sample_returns_null_prior_stats\",\"exampleAssert\":\"assert prior_stats is None or prior_stats['sample_count']>=30\",\"pytest\":\"python -m pytest tests/test_fr06_report_generate.py tests/test_fr07_settlement_run.py -q --tb=short\"}"
+    },
+    {
+      "id": "US-052",
+      "title": "实现 Prompt 组装与敏感信息防护",
+      "description": "作为平台维护者，我希望 LLM prompt 只包含业务数据和证据，不包含身份信息、token、cookie 或内部密钥。",
+      "acceptanceCriteria": [
+        "Prompt builder 只允许读取 usage、行情、热点、市场状态、prior_stats、strategy_type 结果和必要业务上下文；不得直接读取 user 会话、支付、Cookie 或数据库配置。",
+        "Prompt 文本不得包含 email、JWT、refresh token、cookie、OAuth code、Webhook 密钥、支付签名密钥、数据库路径或本地文件绝对路径。",
+        "当某数据集 missing 或 degraded 时，Prompt 必须显式写出该缺口和影响范围，禁止把缺口静默抹平后让模型幻觉补全。",
+        "Prompt 结构必须稳定可复现：同一输入生成相同 prompt shape 与字段顺序，只允许内容值变化。",
+        "python -m pytest tests/test_fr06_quality_pipeline.py tests/test_fr06_llm_providers.py tests/test_nfr16_security.py -q --tb=short",
+        "Typecheck passes"
+      ],
+      "priority": 52,
+      "passes": true,
+      "notes": "{\"group\":\"FR06\",\"dependsOn\":[\"US-051\"],\"endpoints\":[],\"models\":[\"prompt_payload\"],\"permissions\":[\"system\"],\"errorCodes\":[\"PROMPT_PII_BLOCKED\",\"VALIDATION_FAILED\"],\"idempotency\":\"same_input_same_prompt_shape\",\"enums\":[\"grounded\",\"degraded\"],\"thresholds\":\"noPII=true\",\"degradation\":\"missing_dataset_must_be_explicit_in_prompt\",\"exampleAssert\":\"assert 'cookie' not in prompt.lower() and 'jwt' not in prompt.lower()\",\"pytest\":\"python -m pytest tests/test_fr06_quality_pipeline.py tests/test_fr06_llm_providers.py tests/test_nfr16_security.py -q --tb=short\"}"
+    },
+    {
+      "id": "US-053",
+      "title": "实现 LLM 路由与多级降级链",
+      "description": "作为平台维护者，我希望 LLM provider 按统一路由调用并记录降级，以便 provider 波动时系统诚实失败。",
+      "acceptanceCriteria": [
+        "所有 LLM 调用必须统一经过 llm_router.route_and_call，记录 llm_provider_name、llm_actual_model、llm_fallback_level 和 attempt_no。",
+        "路由层必须支持 primary、backup、cli、local 四级回退；当连续失败达到熔断阈值时必须打开 circuit，并把后续任务转为 Suspended 或 failed，而不是继续盲打外部 provider。",
+        "全 provider 失败时只能写 quality_flag=degraded、published=false、llm_fallback_level='failed' 和非空 status_reason；不得返回伪成功正文。",
+        "L4 只负责返回原始结果与错误，最终降级结论由 L2 业务层判定，再由持久化层原样落库，禁止持久化层改写业务降级语义。",
+        "python -m pytest tests/test_fr06_llm_providers.py tests/test_fr06_report_generate.py tests/test_internal_runtime_gates.py -q --tb=short",
+        "Typecheck passes"
+      ],
+      "priority": 53,
+      "passes": true,
+      "notes": "{\"group\":\"FR06\",\"dependsOn\":[\"US-006\",\"US-052\"],\"endpoints\":[],\"models\":[\"report\",\"report_generation_task\"],\"permissions\":[\"system\"],\"errorCodes\":[\"ALL_LLM_PROVIDERS_FAILED\",\"DEPENDENCY_NOT_READY\",\"CIRCUIT_BREAKER_OPEN\"],\"idempotency\":\"one_provider_route_per_attempt\",\"enums\":[\"primary\",\"backup\",\"cli\",\"local\",\"failed\"],\"thresholds\":\"openAfterFailures=3\",\"degradation\":\"all_provider_failure_keeps_published_false\",\"exampleAssert\":\"assert report['llm_fallback_level'] in ['primary','backup','cli','local','failed']\",\"pytest\":\"python -m pytest tests/test_fr06_llm_providers.py tests/test_fr06_report_generate.py tests/test_internal_runtime_gates.py -q --tb=short\"}"
+    },
+    {
+      "id": "US-054",
+      "title": "实现 LLM 输出解析与结构归一",
+      "description": "作为研报链维护者，我希望 LLM 原始输出被解析成稳定结构，以便质量门、持久化和页面展示不依赖不可靠文本。",
+      "acceptanceCriteria": [
+        "解析出字段：recommendation(BUY|SELL|HOLD)、confidence(DECIMAL 0.000-1.000)、reasoning_chain(list 非空)、analysis_steps(list 非空)、evidence_items(list)、risk_factors(list)、plain_report(str，字符数 ≥ 120)；字段缺失或类型错误时进入 LLM_PARSE_FAILED 路径。",
+        "非法枚举（recommendation 不在 BUY|SELL|HOLD）、confidence 越界 [0,1]、JSON 残缺（SyntaxError）均进入结构化错误并记录 parse_error_detail；单次 attempt 最多重试 3 次（含首次），超出后写 quality_flag=degraded、published=false。",
+        "plain_report 字符数 < 120 时视为内容不足，写 quality_flag=degraded 并在 status_reason 中记录 'plain_report_too_short'；confidence 精度保留 3 位小数（DECIMAL(4,3)）。",
+        "python -m pytest tests/test_llm_parse_response.py tests/test_fr06_report_generate.py -q --tb=short",
+        "Typecheck passes"
+      ],
+      "priority": 54,
+      "passes": true,
+      "notes": "{\"group\":\"FR06\",\"dependsOn\":[\"US-053\"],\"endpoints\":[],\"models\":[\"report_payload\"],\"permissions\":[\"system\"],\"errorCodes\":[\"LLM_PARSE_FAILED\",\"VALIDATION_ERROR\"],\"idempotency\":\"same_raw_output_same_normalized_payload\",\"enums\":[\"BUY\",\"SELL\",\"HOLD\"],\"thresholds\":\"plainReportMinChars=120,confidenceDecimals=3,maxRetries=3\",\"degradation\":\"bad_structure_fails_before_publish\",\"exampleAssert\":\"assert 0.0<=payload['confidence']<=1.0 and len(payload['plain_report'])>=120\",\"pytest\":\"python -m pytest tests/test_llm_parse_response.py tests/test_fr06_report_generate.py -q --tb=short\"}"
+    },
+    {
+      "id": "US-055",
+      "title": "实现研报输入质量门",
+      "description": "作为平台维护者，我希望生成前有输入质量门，以便核心数据缺失时不进入伪研报流程。",
+      "acceptanceCriteria": [
+        "输入质量门至少校验 kline_daily、market_state、以及一类可公开引用的外部证据来源；关键输入 status 为 missing 或 degraded 时不得进入公开发布路径。",
+        "停牌或 volume=0 的场景必须在 LLM 调用前短路，生成 recommendation='HOLD'、published=false、quality_flag=degraded，并写 skip_reason='SUSPENDED'。",
+        "质量门输出必须包含机器可读 issues 列表，每个 issue 至少包含 field、dataset_name、status、reason；不得只返回一段模糊字符串。",
+        "输入门失败时可以保留内部 report/task 记录，但 published 必须保持 false，且公开列表与详情都不可见。",
+        "python -m pytest tests/test_fr06_quality_pipeline.py tests/test_fr06_report_generate.py tests/test_usage_lineage.py -q --tb=short",
+        "Typecheck passes"
+      ],
+      "priority": 55,
+      "passes": true,
+      "notes": "{\"group\":\"FR06\",\"dependsOn\":[\"US-049\",\"US-054\"],\"endpoints\":[],\"models\":[\"report\",\"report_generation_task\",\"report_data_usage\"],\"permissions\":[\"system\"],\"errorCodes\":[\"QUALITY_GATE_BLOCKED\",\"DEPENDENCY_NOT_READY\"],\"idempotency\":\"same_input_gate_same_result\",\"enums\":[\"ok\",\"stale_ok\",\"missing\",\"degraded\"],\"thresholds\":\"requiredDatasets=kline_daily|market_state|hotspot_or_citation_source\",\"degradation\":\"critical_input_missing_blocks_publish_and_suspension_skips_llm\",\"exampleAssert\":\"assert report['published'] is False if quality_gate_result['blocked'] else True\",\"pytest\":\"python -m pytest tests/test_fr06_quality_pipeline.py tests/test_fr06_report_generate.py tests/test_usage_lineage.py -q --tb=short\"}"
+    },
+    {
+      "id": "US-056",
+      "title": "实现输出质量门与 grounding 校验",
+      "description": "作为审计方，我希望研报发布前校验结构、引用和公开 payload，以便用户看到的内容都有真实证据支撑。",
+      "acceptanceCriteria": [
+        "输出质量门至少校验 recommendation、confidence、strategy_type、instruction_card、citations、analysis_steps、plain_report、risk_factors 和 quality_flag 的结构、类型与枚举值。",
+        "公开 citation 必须满足 title/source_name/source_url 三要素齐全且 source_url 为 http(s)；任一 citation 失败都必须阻断 published=true。",
+        "grounding 校验失败、citation 三要素失败或公开 payload 缺关键字段时，quality_gate_result 必须输出机器可读 issue 列表，并把 published=false、quality_flag=degraded。",
+        "通过输出质量门前，不得把 prompt_snapshot、raw_llm_output、内部 token usage 明细或调试字段暴露到公开 read model。",
+        "python -m pytest tests/test_fr06_quality_pipeline.py tests/test_fr06_report_generate.py tests/test_usage_lineage.py tests/test_admin_dashboard_frontend_contract.py -q --tb=short",
+        "Typecheck passes"
+      ],
+      "priority": 56,
+      "passes": true,
+      "notes": "{\"group\":\"FR06\",\"dependsOn\":[\"US-054\",\"US-055\"],\"endpoints\":[],\"models\":[\"report\",\"report_citation\",\"quality_gate_result\"],\"permissions\":[\"system\"],\"errorCodes\":[\"GROUNDING_INSUFFICIENT\",\"QUALITY_GATE_FAILED\"],\"idempotency\":\"same_payload_same_quality_issues\",\"enums\":[\"BUY\",\"SELL\",\"HOLD\"],\"thresholds\":\"requiredFields=9\",\"degradation\":\"output_gate_failure_blocks_publish\",\"exampleAssert\":\"assert all(c['source_url'].startswith(('http://','https://')) for c in citations)\",\"pytest\":\"python -m pytest tests/test_fr06_quality_pipeline.py tests/test_fr06_report_generate.py tests/test_usage_lineage.py tests/test_admin_dashboard_frontend_contract.py -q --tb=short\"}"
+    },
+    {
+      "id": "US-057",
+      "title": "实现 BUY 高置信风险审计分支",
+      "description": "作为平台维护者，我希望高置信 BUY 报告经过风险审计，以便高收益结论不能绕过防御性复核直接公开。",
+      "acceptanceCriteria": [
+        "触发条件：recommendation=BUY 且 confidence ≥ 0.65；不满足此条件的 report 直接写 risk_audit_status=not_triggered，不调用审计逻辑；触发后审计结果写入 report.risk_audit_status。",
+        "审计超时（超过 30 秒）或服务不可用时写 risk_audit_status=skipped 且 status_reason 包含 'risk_audit_timeout' 或 'risk_audit_unavailable'（非空字符串）；skipped 状态不阻止发布但必须在高级区风险章节展示。",
+        "audit 完成（completed）时 report 可继续走发布门；audit failed 时 report.quality_flag=degraded、published=false；risk_audit_status 不得使用 null 或空字符串。",
+        "python -m pytest tests/test_fr06_report_generate.py tests/test_fr06_quality_pipeline.py -q --tb=short",
+        "Typecheck passes"
+      ],
+      "priority": 57,
+      "passes": true,
+      "notes": "{\"group\":\"FR06\",\"dependsOn\":[\"US-056\"],\"endpoints\":[],\"models\":[\"report\",\"risk_audit\"],\"permissions\":[\"system\"],\"errorCodes\":[\"RISK_AUDIT_SKIPPED\",\"RISK_AUDIT_FAILED\"],\"idempotency\":\"one_risk_audit_per_report\",\"enums\":[\"not_triggered\",\"completed\",\"skipped\",\"failed\"],\"thresholds\":\"buyAuditMinConfidence=0.65,auditTimeoutSeconds=30\",\"degradation\":\"audit_skipped_visible_in_advanced_section_not_blocking_publish\",\"exampleAssert\":\"assert report['risk_audit_status'] in ['not_triggered','completed','skipped','failed'] and report['risk_audit_status']!='' \",\"pytest\":\"python -m pytest tests/test_fr06_report_generate.py tests/test_fr06_quality_pipeline.py -q --tb=short\"}"
+    },
+    {
+      "id": "US-058",
+      "title": "实现分层置信度上限规则",
+      "description": "作为策略治理者，我希望不同策略和市场状态有置信度上限，以便 mock 和真实 LLM 输出都不能越过风险边界。",
+      "acceptanceCriteria": [
+        "C 型报告最终 confidence 上限 = 0.70（DECIMAL(4,3)），超出时截断为 0.700，写 status_reason='confidence_capped_by_market_state'；A 型在 BEAR 市场上限 = 0.60，超出时截断为 0.600；B 型在任何市场状态无上限约束。",
+        "mock 分支加减分后同样受此截断规则约束；截断在写入 DB 之前生效（SQL 层写入值 ≤ 上限）；截断后 report.confidence 不得再被任何分支恢复到上限以上。",
+        "校准未就绪（calibration_ready=false）时不得将所有输出压成同一默认值（如 0.5 或 0.0），原始信号必须可见于 quality_flag 或 raw_confidence 字段。",
+        "python -m pytest tests/test_fr06_report_generate.py tests/test_fr06_quality_pipeline.py -q --tb=short",
+        "Typecheck passes"
+      ],
+      "priority": 58,
+      "passes": true,
+      "notes": "{\"group\":\"FR06\",\"dependsOn\":[\"US-041\",\"US-050\"],\"endpoints\":[],\"models\":[\"report\",\"confidence_calibration\"],\"permissions\":[\"system\"],\"errorCodes\":[\"CONFIDENCE_CAP_APPLIED\",\"VALIDATION_ERROR\"],\"idempotency\":\"same_strategy_and_market_state_same_cap\",\"enums\":[\"A\",\"B\",\"C\",\"BULL\",\"BEAR\",\"NEUTRAL\"],\"thresholds\":\"cTypeMax=0.700,aTypeBearMax=0.600\",\"degradation\":\"calibration_not_ready_keeps_raw_signal_visible_in_quality_flag\",\"exampleAssert\":\"assert report['confidence']<=0.70 if strategy=='C' else (report['confidence']<=0.60 if strategy=='A' and market=='BEAR' else True)\",\"pytest\":\"python -m pytest tests/test_fr06_report_generate.py tests/test_fr06_quality_pipeline.py -q --tb=short\"}"
+    },
+    {
+      "id": "US-059",
+      "title": "实现指令卡与三挡执行计划",
+      "description": "作为研究用户，我希望研报输出指令卡和三挡资金执行计划，以便不同资金规模下的建议可执行且可解释。",
+      "acceptanceCriteria": [
+        "instruction_card 必须包含字段：signal_entry_price(DECIMAL 非负)、atr_pct(DECIMAL [0,1])、stop_loss(DECIMAL 非负)、target_price(DECIMAL > stop_loss)、valid_until(ISO-8601 日期)、risk_note(str 非空)。",
+        "三挡执行计划（capital_tier = 10k|100k|500k）各自状态：recommendation=BUY 且 confidence ≥ 0.65 时状态=EXECUTE；否则状态=SKIPPED，skip_reason 为非空字符串；不允许出现 null 状态或 null skip_reason（SKIPPED 时）。",
+        "target_price ≤ stop_loss 时视为逻辑倒置，三挡全部强制 SKIPPED，skip_reason='logic_inversion_detected'，不得写入 EXECUTE 状态。",
+        "python -m pytest tests/test_fr06_report_generate.py tests/test_fr06_quality_pipeline.py tests/test_fr08_sim_positioning.py -q --tb=short",
+        "Typecheck passes"
+      ],
+      "priority": 59,
+      "passes": true,
+      "notes": "{\"group\":\"FR06_FR08\",\"dependsOn\":[\"US-056\",\"US-058\"],\"endpoints\":[],\"models\":[\"instruction_card\",\"trade_instruction\"],\"permissions\":[\"system\"],\"errorCodes\":[\"LOGIC_INVERSION_FALLBACK\",\"LOW_CONFIDENCE\",\"POSITION_RATIO_EXCEEDED\"],\"idempotency\":\"one_instruction_bundle_per_report\",\"enums\":[\"EXECUTE\",\"SKIPPED\"],\"thresholds\":\"buyExecuteMinConfidence=0.65,capitalTiers=[10k,100k,500k]\",\"degradation\":\"logic_inversion_forces_skip_all_tiers\",\"exampleAssert\":\"assert trade_instructions['100k']['status'] in ['EXECUTE','SKIPPED'] and (trade_instructions['100k']['skip_reason'] is not None if trade_instructions['100k']['status']=='SKIPPED' else True)\",\"pytest\":\"python -m pytest tests/test_fr06_report_generate.py tests/test_fr06_quality_pipeline.py tests/test_fr08_sim_positioning.py -q --tb=short\"}"
+    },
+    {
+      "id": "US-060",
+      "title": "实现研报事务持久化",
+      "description": "作为平台维护者，我希望 report、citation、usage link 和任务状态在受控事务中写入，以便不会出现半份公开研报。",
+      "acceptanceCriteria": [
+        "同一数据库事务必须同时写入 report、report_citation、report_data_usage_link、instruction_card、trade_instruction_by_tier 和 report_generation_task 状态。",
+        "任一核心写入失败时必须整体回滚公开 bundle；published 保持 false，task 转 FAILED 或 SUSPENDED，并保留 request_id、quality_gate_result 和错误原因。",
+        "相同 idempotency_key 的重复成功写入只能返回同一 report_id，不得产生第二套 citation 或 usage link。",
+        "事务提交前不得发送 outbox、页面缓存或公开索引刷新；所有外发动作只能在事务成功后进行。",
+        "python -m pytest tests/test_fr06_report_generate.py tests/test_fr06_quality_pipeline.py tests/test_usage_lineage.py tests/test_request_id_webhook_backlink.py -q --tb=short",
+        "Typecheck passes"
+      ],
+      "priority": 60,
+      "passes": true,
+      "notes": "{\"group\":\"FR06\",\"dependsOn\":[\"US-056\",\"US-059\"],\"endpoints\":[],\"models\":[\"report\",\"report_citation\",\"report_data_usage_link\",\"report_generation_task\"],\"permissions\":[\"system\"],\"errorCodes\":[\"DB_WRITE_CONFLICT\",\"QUALITY_GATE_FAILED\"],\"idempotency\":\"idempotency_key protects one published bundle\",\"enums\":[\"FAILED\",\"SUSPENDED\"],\"thresholds\":\"atomicBundleWrite=true\",\"degradation\":\"write_failure_never_leaves_half_published_report\",\"exampleAssert\":\"assert report['published'] is False or task['status']=='COMPLETED'\",\"pytest\":\"python -m pytest tests/test_fr06_report_generate.py tests/test_fr06_quality_pipeline.py tests/test_usage_lineage.py tests/test_request_id_webhook_backlink.py -q --tb=short\"}"
+    },
+    {
+      "id": "US-061",
+      "title": "实现已发布研报只读与强制重建关系",
+      "description": "作为审计方，我希望已发布正文默认只读，纠错只能通过强制重建形成新旧关系，以便历史证据不被覆盖。",
+      "acceptanceCriteria": [
+        "已发布 report 的正文、citation、reasoning_chain、结论、instruction_card 和 trade_instruction_by_tier 默认只读；普通更新请求不得原地改写这些事实。",
+        "force_regenerate 只允许 super_admin，且必须提供 reason_code；若旧报告已被 settlement_result 或 sim_position 引用，则只能生成新的 report_id 并建立 supersedes 关系，不得覆盖原行。",
+        "被引用的已发布 report 返回 409 CONFLICT；权限不足返回 403 FORBIDDEN；缺 reason_code 返回 422 MISSING_REASON_CODE。",
+        "每次强制重建必须落审计记录，包含 old_report_id、new_report_id、actor、reason_code、request_id、timestamp。",
+        "python -m pytest tests/test_fr06_report_generate.py tests/test_fr07_settlement_run.py tests/test_fr08_position_lifecycle_e2e.py -q --tb=short",
+        "Typecheck passes"
+      ],
+      "priority": 61,
+      "passes": true,
+      "notes": "{\"group\":\"FR06\",\"dependsOn\":[\"US-013\",\"US-060\"],\"endpoints\":[\"/api/v1/admin/reports/{report_id}\"],\"models\":[\"report\",\"audit_log\"],\"permissions\":[\"admin\",\"super_admin\"],\"errorCodes\":[\"FORBIDDEN\",\"CONFLICT\",\"MISSING_REASON_CODE\"],\"idempotency\":\"one_force_regenerate_chain_per_report\",\"enums\":[\"published\",\"review_only\"],\"thresholds\":\"forceRegenerateRequiresSuperAdmin=true\",\"degradation\":\"referenced_report_cannot_be_overwritten\",\"exampleAssert\":\"assert response.status_code in [403,409,422]\",\"pytest\":\"python -m pytest tests/test_fr06_report_generate.py tests/test_fr07_settlement_run.py tests/test_fr08_position_lifecycle_e2e.py -q --tb=short\"}"
+    },
+    {
+      "id": "US-062",
+      "title": "实现公开研报列表查询",
+      "description": "作为普通用户，我希望列表 API 只返回已发布且通过公开门的研报，并支持常用筛选。",
+      "acceptanceCriteria": [
+        "GET /api/v1/reports 必须支持 stock_code、q、trade_date、date_from、date_to、recommendation、strategy_type、market_state、page、page_size、sort；默认 page_size=20，最大 100。",
+        "列表只允许返回 published=true 且公开门通过的 report；任何 quality_gate blocked、未发布、被 superseded 或无权限报告都不得出现在 items 中。",
+        "涉及百分比或 KPI 的字段必须同时披露 sample_size 和 coverage_pct，禁止只返回孤立百分比。",
+        "空结果必须返回显式 empty state，而不是 null items 或 500；默认排序为 trade_date desc。",
+        "python -m pytest tests/test_fr10_site_dashboard.py tests/test_admin_dashboard_frontend_contract.py tests/test_fr10_reports.py -q --tb=short",
+        "Typecheck passes"
+      ],
+      "priority": 62,
+      "passes": true,
+      "notes": "{\"group\":\"FR10\",\"dependsOn\":[\"US-060\",\"US-061\"],\"endpoints\":[\"/api/v1/reports\"],\"models\":[\"report\"],\"permissions\":[\"public_read\"],\"errorCodes\":[\"VALIDATION_FAILED\",\"FORBIDDEN\"],\"idempotency\":\"query_is_read_only\",\"enums\":[\"BUY\",\"SELL\",\"HOLD\",\"A\",\"B\",\"C\"],\"thresholds\":\"defaultPageSize=20,maxPageSize=100\",\"degradation\":\"empty_result_uses_explicit_empty_state\",\"exampleAssert\":\"assert all(item['published'] for item in payload['data']['items'])\",\"pytest\":\"python -m pytest tests/test_fr10_site_dashboard.py tests/test_admin_dashboard_frontend_contract.py tests/test_fr10_reports.py -q --tb=short\"}"
+    },
+    {
+      "id": "US-063",
+      "title": "实现公开研报详情 read model",
+      "description": "作为普通用户，我希望详情 API 返回结论、指令卡、证据摘要和风险提示，同时隐藏内部调试字段。",
+      "acceptanceCriteria": [
+        "GET /api/v1/reports/{report_id} 至少返回 recommendation、confidence、strategy_type、instruction_card、citations、risk_factors、data_quality_banner、disclaimer 和 term_context。",
+        "未发布、无权限或不存在的 report 必须返回真实 403/404，不得 200 返回空字段。",
+        "公开详情不得泄露 prompt、raw_llm_output、内部 token、cookie、admin-only 字段、数据库路径或其他调试字段。",
+        "详情 read model 必须与公开列表锚点一致；当字段受权益裁剪时，裁剪必须由后端完成，不得把完整值下发给前端再隐藏。",
+        "python -m pytest tests/test_fr10_site_dashboard.py tests/test_admin_dashboard_frontend_contract.py tests/test_fr10_reports.py -q --tb=short",
+        "Typecheck passes"
+      ],
+      "priority": 63,
+      "passes": true,
+      "notes": "{\"group\":\"FR10\",\"dependsOn\":[\"US-060\",\"US-061\"],\"endpoints\":[\"/api/v1/reports/{report_id}\"],\"models\":[\"report\",\"report_citation\"],\"permissions\":[\"public_read_published_only\"],\"errorCodes\":[\"FORBIDDEN\",\"NOT_FOUND\"],\"idempotency\":\"query_is_read_only\",\"enums\":[\"BUY\",\"SELL\",\"HOLD\"],\"thresholds\":\"publicPayloadMustHideDebugFields=true\",\"degradation\":\"missing_citation_blocks_public_detail\",\"exampleAssert\":\"assert 'raw_llm_output' not in payload['data']\",\"pytest\":\"python -m pytest tests/test_fr10_site_dashboard.py tests/test_admin_dashboard_frontend_contract.py tests/test_fr10_reports.py -q --tb=short\"}"
+    },
+    {
+      "id": "US-064",
+      "title": "实现高级区 payload 与 tier 裁剪",
+      "description": "作为付费用户，我希望高级区接口返回中文所用数据和生成全过程；作为 Free 用户，我只能看到后端裁剪摘要。",
+      "acceptanceCriteria": [
+        "入口固定为 GET /api/v1/reports/{report_id}/advanced；匿名返回 401 UNAUTHORIZED，Free 返回后端裁剪摘要，Pro|Enterprise|admin 返回完整高级区。",
+        "响应至少包含 used_data_lineage、analysis_steps、prior_stats_snapshot、risk_audit_status、quality_gate_issues 和 degraded_datasets；字段命名必须与事实层一致。",
+        "Free 裁剪摘要长度必须受限并带省略标记；完整 reasoning_chain、generation_log 和敏感 token 统计不得出现在 Free 响应或 DOM 中。",
+        "裁剪必须在后端完成；前端不得收到完整高级区后再隐藏。",
+        "python -m pytest tests/test_fr10_site_dashboard.py tests/test_admin_dashboard_frontend_contract.py tests/test_fr09_auth.py -q --tb=short",
+        "Typecheck passes"
+      ],
+      "priority": 64,
+      "passes": true,
+      "notes": "{\"group\":\"FR10\",\"dependsOn\":[\"US-051\",\"US-057\",\"US-060\"],\"endpoints\":[\"/api/v1/reports/{report_id}/advanced\"],\"models\":[\"advanced_payload\",\"membership_entitlement\"],\"permissions\":[\"free_summary\",\"pro_full\",\"enterprise_full\",\"admin_override\"],\"errorCodes\":[\"UNAUTHORIZED\",\"FORBIDDEN\",\"NOT_FOUND\"],\"idempotency\":\"query_is_read_only\",\"enums\":[\"Free\",\"Pro\",\"Enterprise\"],\"thresholds\":\"freeSummaryMaxChars=200\",\"degradation\":\"backend_crops_payload_before_response\",\"exampleAssert\":\"assert '所用数据' in payload['data'] or 'used_data_lineage' in payload['data']\",\"pytest\":\"python -m pytest tests/test_fr10_site_dashboard.py tests/test_admin_dashboard_frontend_contract.py tests/test_fr09_auth.py -q --tb=short\"}"
+    },
+    {
+      "id": "US-065",
+      "title": "实现批量生成预筛与断点恢复",
+      "description": "作为平台维护者，我希望内部批量生成按受控并发和 one_per_strategy_type 预筛运行，以便每轮能稳定生成 A、B、C 候选。",
+      "acceptanceCriteria": [
+        "内部入口 /api/v1/internal/reports/generate-batch 必须校验 X-Internal-Token，并支持 limit、trade_date、one_per_strategy_type、strategy_type_override_map、resume_token；无 token 返回 401 INTERNAL_AUTH_FAILED。",
+        "当 one_per_strategy_type=true 时，每轮最多生成 3 份，A、B、C 各 1 份；若自然分类不足，系统必须显式记录缺席类型和补位来源。",
+        "批量任务必须落持久化游标；服务重启或中断后只能恢复 Pending|Failed|Suspended 且仍在窗口内的任务，resume_token 不得恢复已完成或过期任务。",
+        "依赖未就绪时只允许返回异步任务状态或 suspended，不得伪装 batch 成功完成。",
+        "python -m pytest tests/test_fr06_report_generate.py tests/test_fr06_quality_pipeline.py tests/test_runtime_anchor_consistency.py tests/test_internal_reports_api.py -q --tb=short",
+        "Typecheck passes"
+      ],
+      "priority": 65,
+      "passes": true,
+      "notes": "{\"group\":\"FR06\",\"dependsOn\":[\"US-015\",\"US-047\",\"US-050\"],\"endpoints\":[\"/api/v1/internal/reports/generate-batch\"],\"models\":[\"report_generation_task\",\"report\"],\"permissions\":[\"internal\",\"admin\"],\"errorCodes\":[\"INTERNAL_AUTH_FAILED\",\"DEPENDENCY_NOT_READY\",\"CONCURRENT_CONFLICT\"],\"idempotency\":\"resume_token and task_id guard resume path\",\"enums\":[\"A\",\"B\",\"C\"],\"thresholds\":\"onePerStrategyTypeMax=3\",\"degradation\":\"dependency_not_ready_returns_async_status\",\"exampleAssert\":\"assert len(generated)<=3\",\"pytest\":\"python -m pytest tests/test_fr06_report_generate.py tests/test_fr06_quality_pipeline.py tests/test_runtime_anchor_consistency.py tests/test_internal_reports_api.py -q --tb=short\"}"
+    },
+    {
+      "id": "US-066",
+      "title": "实现不完整研报清理与任务修复",
+      "description": "作为平台维护者，我希望异常中断的不完整 report bundle 可被识别和清理，以便公开面不会看到半成品。",
+      "acceptanceCriteria": [
+        "修复器必须识别 input gate failure、public payload gap、FAILED 或 SUSPENDED 过期任务、孤儿 citation、孤儿 usage link 和半写 report bundle。",
+        "清理操作只允许触碰 unpublished 或 dirty 状态对象；任何已发布且被 settlement/sim 引用的对象不得被静默删除。",
+        "修复器必须支持 dry-run、until-clean 和 machine-readable summary，输出 scanned、cleaned、skipped、reason。",
+        "清理与修复不得阻断当日 FR-06 主链；同一脏 bundle 的重复清理必须幂等。",
+        "python -m pytest tests/test_fr06_quality_pipeline.py tests/test_usage_lineage.py tests/test_fr07_settlement_run.py -q --tb=short",
+        "Typecheck passes"
+      ],
+      "priority": 66,
+      "passes": true,
+      "notes": "{\"group\":\"FR06\",\"dependsOn\":[\"US-060\",\"US-061\"],\"endpoints\":[],\"models\":[\"report\",\"report_generation_task\",\"report_citation\",\"report_data_usage_link\"],\"permissions\":[\"admin\",\"system\"],\"errorCodes\":[\"INCOMPLETE_REPORT_BUNDLE\",\"VALIDATION_FAILED\"],\"idempotency\":\"dry_run_safe_and_cleanup_repeatable\",\"enums\":[\"FAILED\",\"SUSPENDED\",\"PUBLISHED\"],\"thresholds\":\"cleanupOnlyTouchesUnpublishedOrDirty=true\",\"degradation\":\"cleanup_does_not_block_daily_chain\",\"exampleAssert\":\"assert result['cleaned']>=0 and result['scanned']>=result['cleaned']\",\"pytest\":\"python -m pytest tests/test_fr06_quality_pipeline.py tests/test_usage_lineage.py tests/test_fr07_settlement_run.py -q --tb=short\"}"
+    },
+    {
+      "id": "US-067",
+      "title": "实现 FR-07 结算候选选择器",
+      "description": "作为策略评估者，我希望系统按窗口选择需要结算的历史研报，以便只处理已到期且未结算的真实信号。",
+      "acceptanceCriteria": [
+        "候选只包含 published=true、可结算 recommendation、质量门通过且未被 superseded 的 report。",
+        "按 1、7、14、30、60 日窗口判断是否到期，已 settled 的 report/window 不重复选择。",
+        "pytest: python -m pytest tests/test_fr07_settlement_run.py tests/test_fr07_truth_filters.py -q --tb=short",
+        "Typecheck passes"
+      ],
+      "priority": 67,
+      "passes": true,
+      "notes": "{\"group\":\"FR07\",\"dependsOn\":[\"US-013\",\"US-061\"],\"endpoints\":[],\"models\":[\"report\",\"settlement_task\"],\"permissions\":[\"system\"],\"errorCodes\":[\"DEPENDENCY_NOT_READY\",\"SETTLEMENT_ALREADY_EXISTS\"],\"idempotency\":\"report_id+window_days unique candidate\",\"enums\":[\"1\",\"7\",\"14\",\"30\",\"60\"],\"thresholds\":\"windows=1|7|14|30|60\",\"degradation\":\"missing_kline_marks_pending_or_degraded\",\"exampleAssert\":\"assert candidate['window_days'] in [1,7,14,30,60]\",\"pytest\":\"python -m pytest tests/test_fr07_settlement_run.py tests/test_fr07_truth_filters.py -q --tb=short\"}"
+    },
+    {
+      "id": "US-068",
+      "title": "实现 100 股标准结算计算",
+      "description": "作为策略评估者，我希望 FR-07 使用固定 100 股标准口径，以便胜率和收益不与三挡资金模拟混用。",
+      "acceptanceCriteria": [
+        "买入和卖出都基于前复权收盘价（front_adjusted_close）计算；shares 严格固定为 100，不可通过任何参数修改。",
+        "成本模型完整：单边滑点 slippage=0.0005（买卖均收）、佣金双边 commission_rate=0.0003 且每笔最低 5 元（commission_min=5 CNY）、卖出印花税 stamp_tax=0.001（买入不收）；settlement_result 须分别写入 gross_return_pct（不含成本）和 net_return_pct（含成本）。",
+        "settlement 窗口 = [1,7,14,30,60] 日；cost_breakdown_fr07 结构需包含 slippage_buy、slippage_sell、commission_buy、commission_sell、stamp_tax，5 个数值字段精度 DECIMAL(10,6)。",
+        "python -m pytest tests/test_fr07_settlement_run.py tests/test_fr07_truth_filters.py -q --tb=short",
+        "Typecheck passes"
+      ],
+      "priority": 68,
+      "passes": true,
+      "notes": "{\"group\":\"FR07\",\"dependsOn\":[\"US-016\",\"US-067\"],\"endpoints\":[],\"models\":[\"settlement_result\"],\"permissions\":[\"system\"],\"errorCodes\":[\"SETTLEMENT_PRICE_MISSING\",\"VALIDATION_ERROR\"],\"idempotency\":\"report_id+strategy_type+window_days unique\",\"enums\":[\"settled\",\"pending\",\"skipped\",\"degraded\"],\"thresholds\":\"shares=100,commissionMin=5,slippage=0.0005,stampTax=0.001,windows=[1,7,14,30,60]\",\"degradation\":\"missing_price_prevents_fake_settlement\",\"exampleAssert\":\"assert result['shares']==100 and result['net_return_pct']<=result['gross_return_pct']\",\"pytest\":\"python -m pytest tests/test_fr07_settlement_run.py tests/test_fr07_truth_filters.py -q --tb=short\"}"
+    },
+    {
+      "id": "US-069",
+      "title": "实现结算失真标记与成本拆解",
+      "description": "作为策略评估者，我希望结算记录包含失真标记和成本拆解，以便知道收益来自价格还是费用影响。",
+      "acceptanceCriteria": [
+        "每条 settlement_result 都必须写 exit_reason、is_misclassified、cost_breakdown_fr07、settlement_status 和 status_reason；当 settlement_status!=settled 时，status_reason 必须为非空。",
+        "is_misclassified=true 仅用于标记信号与窗口事实不一致、价格锚点异常、停牌/退市导致口径失真等场景；不得把所有亏损样本都标成 misclassified。",
+        "零收益样本必须计入 sample_size 与 coverage_pct，但不得进入 win_rate 或 profit_loss_ratio 的分子/分母；相关过滤规则必须在 snapshot 汇总层保持一致。",
+        "cost_breakdown_fr07 必须保留 US-068 约定的 5 个成本字段；gross_return_pct 与 net_return_pct 的差值必须可由成本拆解解释。",
+        "python -m pytest tests/test_fr07_settlement_run.py tests/test_fr07_truth_filters.py tests/test_fr07_metrics_supplemental.py -q --tb=short",
+        "Typecheck passes"
+      ],
+      "priority": 69,
+      "passes": true,
+      "notes": "{\"group\":\"FR07\",\"dependsOn\":[\"US-068\"],\"endpoints\":[],\"models\":[\"settlement_result\"],\"permissions\":[\"system\"],\"errorCodes\":[\"MISCLASSIFIED_SETTLEMENT\",\"VALIDATION_FAILED\"],\"idempotency\":\"same_report_window_same_distortion_mark\",\"enums\":[\"pending\",\"settled\",\"skipped\",\"degraded\"],\"thresholds\":\"zeroReturnEpsilon=0.0001\",\"degradation\":\"bad_price_or_suspension_marks_reason\",\"exampleAssert\":\"assert result['net_return_pct']<=result['gross_return_pct'] and (result['status_reason'] if result['settlement_status']!='settled' else True)\",\"pytest\":\"python -m pytest tests/test_fr07_settlement_run.py tests/test_fr07_truth_filters.py tests/test_fr07_metrics_supplemental.py -q --tb=short\"}"
+    },
+    {
+      "id": "US-070",
+      "title": "实现 baseline_random 生命周期",
+      "description": "作为策略评估者，我希望随机基线独立运行和保存，以便与主策略对比时不偷换样本分母。",
+      "acceptanceCriteria": [
+        "baseline_random 使用独立 sample_type='random'、run_id(UUID)、version 保存结果，不与主策略 settlement_result 混写；相同 run_id 的重复写入返回 HTTP 409 BASELINE_ALREADY_EXISTS。",
+        "模拟执行次数固定 simulation_runs=500；样本少于 30 时 win_rate、profit_loss_ratio、alpha_annual、max_drawdown_pct 全部返回 null，display_hint 非空字符串说明原因；不允许用小样本填充伪指标。",
+        "python -m pytest tests/test_fr07_baseline_truth.py tests/test_fr07_settlement_run.py -q --tb=short",
+        "Typecheck passes"
+      ],
+      "priority": 70,
+      "passes": true,
+      "notes": "{\"group\":\"FR07\",\"dependsOn\":[\"US-016\",\"US-067\"],\"endpoints\":[],\"models\":[\"baseline_random\"],\"permissions\":[\"system\"],\"errorCodes\":[\"BASELINE_NOT_READY\",\"INSUFFICIENT_SAMPLES\",\"BASELINE_ALREADY_EXISTS\"],\"idempotency\":\"run_id unique\",\"enums\":[\"insufficient_samples\"],\"thresholds\":\"simulationRuns=500,minSamples=30\",\"degradation\":\"low_sample_returns_null_metrics_with_hint\",\"exampleAssert\":\"assert baseline['simulation_runs']==500 and (baseline['win_rate'] is None if baseline['sample_size']<30 else True)\",\"pytest\":\"python -m pytest tests/test_fr07_baseline_truth.py tests/test_fr07_settlement_run.py -q --tb=short\"}"
+    },
+    {
+      "id": "US-071",
+      "title": "实现 baseline_ma_cross 生命周期",
+      "description": "作为策略评估者，我希望 MA 交叉基线独立运行和重建，以便技术基准与研报策略可真实比较。",
+      "acceptanceCriteria": [
+        "baseline_ma_cross 必须使用独立 baseline_type='baseline_ma_cross'、run_id、version 和 sample 分母保存结果，不得与主体 settlement_result 或 baseline_random 混写。",
+        "MA 基线信号规则固定为 MA5 上穿 MA20 买入，样本来源固定为当日核心池候选股，并复用 FR-07 相同费用模型与窗口定义。",
+        "重建必须生成新的 version 或等效审计记录；禁止无痕覆盖历史基线事实。",
+        "样本数 < 30 时 baseline_ma_cross 的四维指标必须全部为 null，并返回 display_hint；运行时必须走 market baseline path，不得退回 legacy 假样本实现。",
+        "python -m pytest tests/test_fr07_baseline_truth.py tests/test_fr07_truth_filters.py tests/test_fr07_settlement_run.py -q --tb=short",
+        "Typecheck passes"
+      ],
+      "priority": 71,
+      "passes": true,
+      "notes": "{\"group\":\"FR07\",\"dependsOn\":[\"US-016\",\"US-067\"],\"endpoints\":[],\"models\":[\"baseline_ma_cross\"],\"permissions\":[\"system\"],\"errorCodes\":[\"BASELINE_REBUILD_FAILED\",\"INSUFFICIENT_SAMPLES\"],\"idempotency\":\"run_id unique\",\"enums\":[\"insufficient_samples\"],\"thresholds\":\"minSamples=30,maShort=5,maLong=20\",\"degradation\":\"low_sample_hides_metrics\",\"exampleAssert\":\"assert baseline['baseline_type']=='baseline_ma_cross' and baseline['version'] is not None\",\"pytest\":\"python -m pytest tests/test_fr07_baseline_truth.py tests/test_fr07_truth_filters.py tests/test_fr07_settlement_run.py -q --tb=short\"}"
+    },
+    {
+      "id": "US-072",
+      "title": "实现 FR-07 KPI 快照",
+      "description": "作为平台使用者，我希望系统生成真实 KPI 快照，以便胜率、盈亏比、Alpha 和回撤有统一口径。",
+      "acceptanceCriteria": [
+        "按 strategy_type(A|B|C) 和 windows=[1,7,14,30,60] 日保存 strategy_metric_snapshot，字段包含 sample_size(INT ≥ 0)、coverage_pct(DECIMAL 0-1)、win_rate(DECIMAL|null)、profit_loss_ratio(DECIMAL|null)、alpha_annual(DECIMAL|null)、max_drawdown_pct(DECIMAL|null)。",
+        "样本少于 30（sample_size < 30）时 win_rate、profit_loss_ratio、alpha_annual、max_drawdown_pct 全部写 null，同时写入 display_hint 非空字符串；禁止把 direction_hit_rate 的值填入 win_rate 字段。",
+        "商业目标阈值（仅告警、不阻断生成）：win_rate ≥ 0.55、profit_loss_ratio ≥ 1.5、alpha_annual ≥ 0.10；低于阈值时 signal_validity_warning=true；不足样本时 signal_validity_warning=null。",
+        "python -m pytest tests/test_fr07_settlement_run.py tests/test_fr07_baseline_truth.py tests/test_fr10_site_dashboard.py -q --tb=short",
+        "Typecheck passes"
+      ],
+      "priority": 72,
+      "passes": true,
+      "notes": "{\"group\":\"FR07\",\"dependsOn\":[\"US-068\",\"US-069\",\"US-070\",\"US-071\"],\"endpoints\":[\"/api/v1/dashboard/stats\"],\"models\":[\"strategy_metric_snapshot\"],\"permissions\":[\"public_read\",\"admin_read\"],\"errorCodes\":[\"METRIC_NOT_READY\",\"INSUFFICIENT_SAMPLES\"],\"idempotency\":\"strategy_type+window_days+snapshot_date unique\",\"enums\":[\"A\",\"B\",\"C\"],\"thresholds\":\"minSamples=30,windows=1|7|14|30|60,winRateTarget=0.55,plRatioTarget=1.5,alphaTarget=0.10\",\"degradation\":\"small_sample_returns_null_core_metrics_with_hint\",\"exampleAssert\":\"assert snapshot['win_rate'] is None if snapshot['sample_size']<30 else snapshot['win_rate']>=0\",\"pytest\":\"python -m pytest tests/test_fr07_settlement_run.py tests/test_fr07_baseline_truth.py tests/test_fr10_site_dashboard.py -q --tb=short\"}"
+    },
+    {
+      "id": "US-073",
+      "title": "实现结算指标查询与覆盖率展示",
+      "description": "作为 Dashboard 使用者，我希望查询接口返回 FR-07 指标、样本数和覆盖率，以便页面不会只展示一个孤立百分比。",
+      "acceptanceCriteria": [
+        "GET /api/v1/dashboard/stats 必须要求 window_days in [1,7,14,30,60]；非法窗口返回 422 VALIDATION_FAILED。",
+        "响应至少包含 total_reports、total_settled、data_status、status_reason、display_hint、by_strategy_type(A|B|C)、baseline_random、baseline_ma_cross；所有百分比字段必须同时披露 sample_size 与 coverage_pct。",
+        "当主体指标已就绪但 baseline_random 或 baseline_ma_cross 仍在异步计算时，data_status 必须为 READY，基线字段为 null，并返回 display_hint='基线对照数据计算中' 或等效明确提示。",
+        "当 AI 研报累计净收益跑输随机基线时，signal_validity_warning=true；样本不足时该字段必须为 null，而不是 false。",
+        "python -m pytest tests/test_fr10_site_dashboard.py tests/test_fr07_settlement_run.py tests/test_admin_dashboard_frontend_contract.py tests/test_doc_driven_verify.py -q --tb=short",
+        "Typecheck passes"
+      ],
+      "priority": 73,
+      "passes": true,
+      "notes": "{\"group\":\"FR07_FR10\",\"dependsOn\":[\"US-072\"],\"endpoints\":[\"/api/v1/dashboard/stats\"],\"models\":[\"strategy_metric_snapshot\",\"baseline_random\",\"baseline_ma_cross\"],\"permissions\":[\"public_read\"],\"errorCodes\":[\"VALIDATION_FAILED\",\"STATE_COMPUTING\",\"INSUFFICIENT_SAMPLES\"],\"idempotency\":\"query_is_read_only\",\"enums\":[\"computing\",\"empty\",\"degraded\",\"ready\"],\"thresholds\":\"windowDays=[1,7,14,30,60]\",\"degradation\":\"underperforming_signal_sets_warning\",\"exampleAssert\":\"assert 'coverage_pct' in payload['data']['by_strategy_type']['A']\",\"pytest\":\"python -m pytest tests/test_fr10_site_dashboard.py tests/test_fr07_settlement_run.py tests/test_admin_dashboard_frontend_contract.py tests/test_doc_driven_verify.py -q --tb=short\"}"
+    },
+    {
+      "id": "US-074",
+      "title": "实现结算重放与管理入口",
+      "description": "作为管理员，我希望可以受控重放结算和基线，以便历史修复后 KPI 可以重建且可审计。",
+      "acceptanceCriteria": [
+        "管理入口固定为 POST /api/v1/admin/settlement/replay；请求体必须支持 trade_date、report_id、stock_code、window_days、baseline_type、force 和 reason。",
+        "HTTP 层只受理异步任务，成功返回 202 和 task_id；不得在请求连接内同步返回 processed_count。",
+        "force=false 时已 settled 记录必须跳过并返回 skipped_count>0；force=true 时允许重算，但必须落审计并保留旧 version 或 old_result_id 引用。",
+        "匿名返回 401，非 admin|super_admin 返回 403；并发重放相同 scope 时返回 409 CONCURRENT_CONFLICT。",
+        "python -m pytest tests/test_fr07_settlement_run.py tests/test_fr07_baseline_truth.py tests/test_runtime_anchor_consistency.py tests/test_fr12_admin.py -q --tb=short",
+        "Typecheck passes"
+      ],
+      "priority": 74,
+      "passes": true,
+      "notes": "{\"group\":\"FR07\",\"dependsOn\":[\"US-072\",\"US-046\"],\"endpoints\":[\"/api/v1/admin/settlement/replay\"],\"models\":[\"settlement_task\",\"audit_log\"],\"permissions\":[\"admin\",\"super_admin\"],\"errorCodes\":[\"UNAUTHORIZED\",\"FORBIDDEN\",\"CONCURRENT_CONFLICT\",\"VALIDATION_FAILED\"],\"idempotency\":\"task_id and replay scope unique\",\"enums\":[\"queued\",\"running\",\"completed\",\"failed\"],\"thresholds\":\"httpAccepted=202\",\"degradation\":\"replay_does_not_block_http_request\",\"exampleAssert\":\"assert response.status_code==202 and response.json()['data']['task_id']\",\"pytest\":\"python -m pytest tests/test_fr07_settlement_run.py tests/test_fr07_baseline_truth.py tests/test_runtime_anchor_consistency.py tests/test_fr12_admin.py -q --tb=short\"}"
+    },
+    {
+      "id": "US-075",
+      "title": "实现 BUY 信号模拟开仓",
+      "description": "作为用户，我希望 BUY 报告能在三挡资金下开模拟仓，以便验证研报建议是否具备真实可执行性。",
+      "acceptanceCriteria": [
+        "开仓前置条件：published=true、recommendation='BUY'、confidence ≥ 0.65、三挡指令至少一挡 status=EXECUTE；不满足任一条件直接写 position_status=SKIPPED，skip_reason 非空。",
+        "每个 capital_tier 以 T+1 开盘价（front_adjusted_open）计算 raw_shares=floor(capital/price)；sim_qty=floor(raw_shares/100)*100（lot_size=100）；sim_qty=0 时该 tier 写 SKIPPED，skip_reason='insufficient_quantity_after_rounding'。",
+        "同一 report_id + capital_tier 只能有一条 OPEN 状态的 sim_position（唯一约束）；重复开仓请求返回现有 sim_position_id（HTTP 200），不重复写入。",
+        "python -m pytest tests/test_fr08_sim_positioning.py tests/test_fr08_position_lifecycle_e2e.py -q --tb=short",
+        "Typecheck passes"
+      ],
+      "priority": 75,
+      "passes": true,
+      "notes": "{\"group\":\"FR08\",\"dependsOn\":[\"US-017\",\"US-059\"],\"endpoints\":[],\"models\":[\"sim_position\",\"sim_account_snapshot\"],\"permissions\":[\"system\"],\"errorCodes\":[\"INSUFFICIENT_FUNDS_AFTER_ROUNDING\",\"STOCK_PRICE_EXCEEDS_TIER_BUDGET\"],\"idempotency\":\"report_id+capital_tier unique\",\"enums\":[\"EXECUTE\",\"SKIPPED\"],\"thresholds\":\"buyExecuteMinConfidence=0.65,lotSize=100\",\"degradation\":\"failed_tier_keeps_cash_unchanged; legacy tests/test_e2e_sim.py stays outside US-075 because it mixes later-scope dashboard/auth/audit assertions and legacy 10w/code=0 contracts\",\"exampleAssert\":\"assert position['position_status'] in ['OPEN','SKIPPED'] and position['sim_qty']%100==0\",\"pytest\":\"python -m pytest tests/test_fr08_sim_positioning.py tests/test_fr08_position_lifecycle_e2e.py -q --tb=short\"}"
+    },
+    {
+      "id": "US-076",
+      "title": "实现费用滑点与整数股规则",
+      "description": "作为模拟盘使用者，我希望开仓数量和成本遵守 A 股交易约束，以便模拟结果不理想化。",
+      "acceptanceCriteria": [
+        "shares 必须按 floor(raw_shares/100)*100 取整；不足 100 股直接写 SKIPPED，skip_reason='insufficient_quantity_after_rounding'。",
+        "模拟盘成本模型必须至少包含买卖双边滑点、佣金（每笔最低 5 元）和卖出印花税；各字段都要落到 cost_breakdown。",
+        "同一交易日同一 capital_tier 的多信号必须按 confidence desc 排序抢占现金；排序相同时使用稳定次序键，避免结果随机漂移。",
+        "超出仓位上限、现金不足或回撤状态阻断时，不得偷改数量强行成交；必须保留 SKIPPED 与明确 skip_reason。",
+        "python -m pytest tests/test_fr08_sim_positioning.py tests/test_fr08_sim_scenarios.py tests/test_fr08_position_lifecycle_e2e.py -q --tb=short",
+        "Typecheck passes"
+      ],
+      "priority": 76,
+      "passes": true,
+      "notes": "{\"group\":\"FR08\",\"dependsOn\":[\"US-075\"],\"endpoints\":[],\"models\":[\"sim_position\",\"cost_breakdown\"],\"permissions\":[\"system\"],\"errorCodes\":[\"POSITION_RATIO_EXCEEDED\",\"INSUFFICIENT_FUNDS_AFTER_ROUNDING\",\"DRAWDOWN_HALT_ACTIVE\"],\"idempotency\":\"one_open_decision_per_report_and_tier\",\"enums\":[\"OPEN\",\"SKIPPED\"],\"thresholds\":\"lotSize=100,commissionMin=5\",\"degradation\":\"over_cap_positions_are_skipped\",\"exampleAssert\":\"assert shares % 100 == 0 and (position['skip_reason'] if position['position_status']=='SKIPPED' else True)\",\"pytest\":\"python -m pytest tests/test_fr08_sim_positioning.py tests/test_fr08_sim_scenarios.py tests/test_fr08_position_lifecycle_e2e.py -q --tb=short\"}"
+    },
+    {
+      "id": "US-077",
+      "title": "实现模拟平仓与悲观撮合",
+      "description": "作为模拟盘使用者，我希望平仓使用保守撮合规则，以便止盈、止损和超时收益更接近真实执行。",
+      "acceptanceCriteria": [
+        "同日最低价（adj_low） ≤ stop_loss 且最高价（adj_high） ≥ target_price 时：按悲观规则判定为 STOP_LOSS，exit_reason='PESSIMISTIC_BOTH_HIT'，平仓价取 stop_loss；不允许取 target_price 或两者均值。",
+        "止损单独触发（adj_low ≤ stop_loss）：exit_reason=STOP_LOSS，平仓价=stop_loss；止盈单独触发（adj_high ≥ target_price）：exit_reason=TAKE_PROFIT，平仓价=target_price；两者均不触发且持仓满 180 日历日：exit_reason=TIMEOUT，平仓价取到期日收盘价。",
+        "一字板（adj_high=adj_low）、当日成交量=0（is_suspended=true 或 volume=0）时不判断平仓，保持 OPEN 状态，不写 exit_reason；退市清算写 exit_reason=DELISTED_LIQUIDATED。",
+        "python -m pytest tests/test_fr08_position_lifecycle_e2e.py tests/test_fr08_sim_positioning.py tests/test_fr08_sim_scenarios.py -q --tb=short",
+        "Typecheck passes"
+      ],
+      "priority": 77,
+      "passes": true,
+      "notes": "{\"group\":\"FR08\",\"dependsOn\":[\"US-075\",\"US-076\"],\"endpoints\":[],\"models\":[\"sim_position\"],\"permissions\":[\"system\"],\"errorCodes\":[\"PESSIMISTIC_BOTH_HIT\",\"TIMEOUT\"],\"idempotency\":\"one_exit_decision_per_position_and_trade_date\",\"enums\":[\"TAKE_PROFIT\",\"STOP_LOSS\",\"TIMEOUT\",\"CLOSED\",\"DELISTED_LIQUIDATED\",\"OPEN\",\"PESSIMISTIC_BOTH_HIT\"],\"thresholds\":\"timeoutCalendarDays=180\",\"degradation\":\"limit_locked_or_suspended_position_stays_open\",\"exampleAssert\":\"assert position['exit_reason']=='PESSIMISTIC_BOTH_HIT' if both_hit else True\",\"pytest\":\"python -m pytest tests/test_fr08_position_lifecycle_e2e.py tests/test_fr08_sim_positioning.py tests/test_fr08_sim_scenarios.py -q --tb=short\"}"
+    },
+    {
+      "id": "US-078",
+      "title": "实现三挡账户 NAV 快照",
+      "description": "作为用户，我希望每个资金挡位都有独立账户快照，以便不同资金规模的收益和现金不互相污染。",
+      "acceptanceCriteria": [
+        "每日必须按 capital_tier 分别写入 NAV、cash_available、market_value、realized_pnl、unrealized_pnl、peak_total_asset、drawdown_pct 和 drawdown_state；三挡之间不得共享余额或仓位。",
+        "日内批处理顺序固定为先平仓再开仓再估值；估值缺失时必须返回 degraded 与 status_reason，不得伪造市值补齐 NAV。",
+        "同一 capital_tier+snapshot_date 只允许一条有效 snapshot；重复计算必须幂等覆盖同一快照事实，而不是追加第二条。",
+        "peak_total_asset 只能在创新高时更新；drawdown_pct 必须直接由 current_total_asset 与 peak_total_asset 推导。",
+        "python -m pytest tests/test_fr08_position_lifecycle_e2e.py tests/test_fr10_site_dashboard.py tests/test_runtime_anchor_consistency.py -q --tb=short",
+        "Typecheck passes"
+      ],
+      "priority": 78,
+      "passes": true,
+      "notes": "{\"group\":\"FR08\",\"dependsOn\":[\"US-017\",\"US-077\"],\"endpoints\":[\"/api/v1/portfolio/sim-dashboard\"],\"models\":[\"sim_account_snapshot\"],\"permissions\":[\"public_read_limited\",\"admin_read\"],\"errorCodes\":[\"MARK_TO_MARKET_MISSING\",\"DEGRADED\"],\"idempotency\":\"capital_tier+snapshot_date unique\",\"enums\":[\"10k\",\"100k\",\"500k\"],\"thresholds\":\"threeTiers=true\",\"degradation\":\"missing_price_marks_snapshot_degraded\",\"exampleAssert\":\"assert snapshot['capital_tier'] in ['10k','100k','500k'] and snapshot['peak_total_asset']>=snapshot['nav']\",\"pytest\":\"python -m pytest tests/test_fr08_position_lifecycle_e2e.py tests/test_fr10_site_dashboard.py tests/test_runtime_anchor_consistency.py -q --tb=short\"}"
+    },
+    {
+      "id": "US-079",
+      "title": "实现回撤状态机与开仓限制",
+      "description": "作为风险治理者，我希望模拟账户根据回撤进入 NORMAL、REDUCE、HALT，以便高回撤时自动减少风险暴露。",
+      "acceptanceCriteria": [
+        "drawdown_state 按回撤幅度（peak_total_asset - current_nav）/ peak_total_asset 判定：max_drawdown_pct > -0.12（即绝对值 < 12%）→ NORMAL；-0.20 < max_drawdown_pct ≤ -0.12 → REDUCE；max_drawdown_pct ≤ -0.20 → HALT；阈值为开区间/闭区间如上定义，不允许其他阈值。",
+        "首次进入 REDUCE 状态时写入 DRAWDOWN_ALERT event（event_type=DRAWDOWN_REDUCE_ENTERED）；首次进入 HALT 状态时写入 DRAWDOWN_ALERT event（event_type=DRAWDOWN_HALT_ENTERED）；同一 capital_tier 同一 drawdown_state 变更只写一次，相同条件重复触发写 skipped。",
+        "HALT 状态下不允许新开仓（sim_position 新建请求返回 HTTP 409 DRAWDOWN_HALT_ACTIVE）；HALT 状态下持有的 OPEN 仓位继续参与每日平仓评估（止盈/止损/超时逻辑不受影响）。",
+        "python -m pytest tests/test_fr08_sim_positioning.py tests/test_fr08_sim_scenarios.py tests/test_fr13_event_dispatch.py -q --tb=short",
+        "Typecheck passes"
+      ],
+      "priority": 79,
+      "passes": true,
+      "notes": "{\"group\":\"FR08\",\"dependsOn\":[\"US-078\"],\"endpoints\":[\"/api/v1/portfolio/sim-dashboard\"],\"models\":[\"sim_account_snapshot\",\"notification_outbox\"],\"permissions\":[\"system\"],\"errorCodes\":[\"DRAWDOWN_REDUCE_ENTERED\",\"DRAWDOWN_HALT_ENTERED\",\"DRAWDOWN_HALT_ACTIVE\"],\"idempotency\":\"capital_tier+trade_date alert unique\",\"enums\":[\"NORMAL\",\"REDUCE\",\"HALT\"],\"thresholds\":\"reduceThreshold=-0.12,haltThreshold=-0.20\",\"degradation\":\"halt_blocks_new_buy_but_keeps_exit_evaluation\",\"exampleAssert\":\"assert snapshot['drawdown_state'] in ['NORMAL','REDUCE','HALT'] and (snapshot['drawdown_state']=='HALT' if snapshot['max_drawdown_pct']<=-0.20 else True)\",\"pytest\":\"python -m pytest tests/test_fr08_sim_positioning.py tests/test_fr08_sim_scenarios.py tests/test_fr13_event_dispatch.py -q --tb=short\"}"
+    },
+    {
+      "id": "US-080",
+      "title": "实现模拟仓位与账户查询 API",
+      "description": "作为付费用户，我希望通过 API 查看当前仓位、报告关联仓位和账户快照，以便理解模拟盘状态。",
+      "acceptanceCriteria": [
+        "查询入口固定为 GET /api/v1/sim/positions、GET /api/v1/sim/positions/{position_id}、GET /api/v1/sim/positions/by-report/{report_id} 和 GET /api/v1/sim/account/snapshots。",
+        "capital_tier 只允许 10k|100k|500k；非法值返回 422 VALIDATION_FAILED。Free 用户只允许访问 100k，请求其他挡位返回 403 TIER_NOT_AVAILABLE。",
+        "返回字段至少包含 position_status、entry_price、exit_price、shares、net_return_pct、cost_breakdown、capital_tier 和 report_id；查询不存在对象返回 404。",
+        "列表接口必须支持分页与 stock_code/date 过滤；按 report_id 查询时只能返回调用方有权限看到的 tier 结果。",
+        "python -m pytest tests/test_fr08_position_lifecycle_e2e.py tests/test_diagnosis_ssot_read_routes.py tests/test_fr10_site_dashboard.py -q --tb=short",
+        "Typecheck passes"
+      ],
+      "priority": 80,
+      "passes": true,
+      "notes": "{\"group\":\"FR08\",\"dependsOn\":[\"US-075\",\"US-078\",\"US-090\"],\"endpoints\":[\"/api/v1/sim/positions\",\"/api/v1/sim/positions/{position_id}\",\"/api/v1/sim/positions/by-report/{report_id}\",\"/api/v1/sim/account/snapshots\"],\"models\":[\"sim_position\",\"sim_account_snapshot\"],\"permissions\":[\"free_100k\",\"pro_all\",\"enterprise_all\",\"admin_override\"],\"errorCodes\":[\"FORBIDDEN\",\"NOT_FOUND\",\"TIER_NOT_AVAILABLE\",\"VALIDATION_FAILED\"],\"idempotency\":\"query_is_read_only\",\"enums\":[\"10k\",\"100k\",\"500k\"],\"thresholds\":\"freeVisibleTier=100k\",\"degradation\":\"restricted_tier_returns_permission_prompt; legacy tests/test_e2e_sim.py stays outside US-080 because it still mixes stale 10w/code=0 assertions with later-scope audit/detail flows\",\"exampleAssert\":\"assert 'cost_breakdown' in payload['data'] or 'items' in payload['data']\",\"pytest\":\"python -m pytest tests/test_fr08_position_lifecycle_e2e.py tests/test_diagnosis_ssot_read_routes.py tests/test_fr10_site_dashboard.py -q --tb=short\"}"
+    },
+    {
+      "id": "US-081",
+      "title": "实现 sim-dashboard 查询与权限",
+      "description": "作为用户，我希望模拟看板查询返回绩效曲线、持仓摘要和回撤状态，并按会员权益裁剪挡位。",
+      "acceptanceCriteria": [
+        "GET /api/v1/portfolio/sim-dashboard 返回 nav_curve、positions_summary、capital_tier、drawdown_state、data_status、status_reason、baseline_random 和 baseline_ma_cross。",
+        "Free 用户不传 capital_tier 时默认使用 100k；请求 10k 或 500k 返回 403 TIER_NOT_AVAILABLE。Pro、Enterprise、admin 可查看 10k|100k|500k。",
+        "当账户快照已就绪但基线曲线仍在异步计算时，data_status 必须为 READY，baseline_random/baseline_ma_cross 为 null，并返回 display_hint。",
+        "权限裁剪必须在后端完成；前端不得收到完整高挡位 payload 后再隐藏。",
+        "python -m pytest tests/test_fr10_site_dashboard.py tests/test_fr09_auth.py tests/test_nfr18_schema.py -q --tb=short",
+        "Typecheck passes"
+      ],
+      "priority": 81,
+      "passes": true,
+      "notes": "{\"group\":\"FR08_FR10\",\"dependsOn\":[\"US-078\",\"US-080\",\"US-095\"],\"endpoints\":[\"/api/v1/portfolio/sim-dashboard\"],\"models\":[\"sim_account_snapshot\",\"membership_entitlement\"],\"permissions\":[\"free_100k\",\"pro_all\",\"enterprise_all\",\"admin_override\"],\"errorCodes\":[\"FORBIDDEN\",\"STATE_COMPUTING\",\"TIER_NOT_AVAILABLE\"],\"idempotency\":\"query_is_read_only\",\"enums\":[\"10k\",\"100k\",\"500k\",\"computing\",\"empty\",\"degraded\",\"ready\"],\"thresholds\":\"threeTierVisibilityControlled=true\",\"degradation\":\"stats_not_ready_returns_computing_or_degraded\",\"exampleAssert\":\"assert payload['data']['capital_tier'] in ['100k','10k','500k']\",\"pytest\":\"python -m pytest tests/test_fr10_site_dashboard.py tests/test_fr09_auth.py tests/test_nfr18_schema.py -q --tb=short\"}"
+    },
+    {
+      "id": "US-082",
+      "title": "实现平仓与回撤 Outbox 事件",
+      "description": "作为平台维护者，我希望 POSITION_CLOSED 和 DRAWDOWN_ALERT 先入 outbox，以便通知失败不影响资金事实。",
+      "acceptanceCriteria": [
+        "平仓事实提交成功后才允许写 POSITION_CLOSED outbox；首次进入 REDUCE 或 HALT 时分别写 DRAWDOWN_REDUCE_ENTERED、DRAWDOWN_HALT_ENTERED。",
+        "相同 event_type、entity_id、trade_date 和 capital_tier 的重复触发必须写 skipped，不得重复外发。",
+        "通知写失败只能把 outbox.status 标为 failed 并保留重试上下文；不得回滚已提交的仓位、账户或回撤事实。",
+        "dispatcher 重试必须可见 pending|sent|failed|skipped 四态，并记录 last_error、attempt_count、next_retry_at。",
+        "python -m pytest tests/test_fr13_event_dispatch.py tests/test_fr08_position_lifecycle_e2e.py tests/test_fr08_sim_scenarios.py -q --tb=short",
+        "Typecheck passes"
+      ],
+      "priority": 82,
+      "passes": true,
+      "notes": "{\"group\":\"FR08_FR13\",\"dependsOn\":[\"US-079\"],\"endpoints\":[],\"models\":[\"notification_outbox\",\"sim_position\"],\"permissions\":[\"system\"],\"errorCodes\":[\"OUTBOX_DUPLICATE\",\"OUTBOX_FAILED\"],\"idempotency\":\"event_type+entity_id+trade_date+capital_tier unique\",\"enums\":[\"pending\",\"sent\",\"failed\",\"skipped\"],\"thresholds\":\"noDispatchBeforeCommit=true\",\"degradation\":\"notification_failure_never_blocks_position_fact\",\"exampleAssert\":\"assert event['status'] in ['pending','sent','failed','skipped']\",\"pytest\":\"python -m pytest tests/test_fr13_event_dispatch.py tests/test_fr08_position_lifecycle_e2e.py tests/test_fr08_sim_scenarios.py -q --tb=short\"}"
+    },
+    {
+      "id": "US-083",
+      "title": "实现密码哈希与注册接口",
+      "description": "作为访客，我希望注册账户时密码被强哈希存储，并创建未激活用户，以便账户安全可控。",
+      "acceptanceCriteria": [
+        "POST /auth/register 成功返回 HTTP 201；请求体必须包含 email(合法 email 格式)、password(≥ 8 字符，含至少 1 大写、1 数字)、username(3-50 字符)；任一字段不合法返回 HTTP 422 VALIDATION_ERROR。",
+        "密码存储算法：bcrypt（cost_factor ≥ 12）或 argon2；password_hash 只存哈希，不存明文；日志、响应体、错误信息中禁止出现明文密码；注册成功后用户 is_active=false、tier=Free（只允许注册时创建 Free 账户，其他 tier 返回 HTTP 403）。",
+        "重复邮箱返回 HTTP 409 EMAIL_ALREADY_REGISTERED，响应体含 error_code；邮箱重复校验大小写不敏感（email 存储前 lower() 处理）。",
+        "python -m pytest tests/test_fr09_auth.py tests/test_fr09_auth_supplemental.py tests/test_fr09b_cleanup.py tests/test_nfr16_security.py -q --tb=short",
+        "Typecheck passes"
+      ],
+      "priority": 83,
+      "passes": true,
+      "notes": "{\"group\":\"FR09\",\"dependsOn\":[\"US-018\"],\"endpoints\":[\"/auth/register\"],\"models\":[\"user\"],\"permissions\":[\"anonymous\"],\"errorCodes\":[\"EMAIL_ALREADY_REGISTERED\",\"WEAK_PASSWORD\",\"VALIDATION_ERROR\"],\"idempotency\":\"email unique (case-insensitive)\",\"enums\":[\"Free\"],\"thresholds\":\"passwordMinLen=8,bcryptCostFactor>=12,emailCaseInsensitive=true\",\"degradation\":\"unverified_user_cannot_login\",\"exampleAssert\":\"assert response.status_code==201 and user['tier']=='Free' and user['is_active']==False\",\"pytest\":\"python -m pytest tests/test_fr09_auth.py tests/test_fr09_auth_supplemental.py tests/test_fr09b_cleanup.py tests/test_nfr16_security.py -q --tb=short\"}"
+    },
+    {
+      "id": "US-084",
+      "title": "实现账户激活与登录接口",
+      "description": "作为用户，我希望账户激活后可登录，并在未激活或凭据错误时得到明确但安全的失败响应。",
+      "acceptanceCriteria": [
+        "POST /auth/activate?token={token} 必须使用单次激活 token；超过 24 小时、重复使用或不存在的 token 返回 400 ACTIVATION_TOKEN_INVALID；成功后 user.is_active=true 且写 used_at。",
+        "POST /auth/login 成功返回 200，data 至少包含 access_token、refresh_token、exp、user_id、role、tier；所有响应都必须符合 NFR-14 envelope。",
+        "邮箱不存在与密码错误必须统一返回 401 UNAUTHORIZED；未激活账户返回 401 EMAIL_NOT_VERIFIED；不得通过错误文案泄露账号存在性。",
+        "同一 IP 或同一 email 10 分钟内 5 次失败后，第 6 次必须返回 429 RATE_LIMITED；10 分钟后自动解锁。access_token TTL=15 分钟，refresh_token TTL=7 天。",
+        "python -m pytest tests/test_fr09_auth.py tests/test_fr09_auth_supplemental.py tests/test_nfr17_token.py -q --tb=short",
+        "Typecheck passes"
+      ],
+      "priority": 84,
+      "passes": true,
+      "notes": "{\"group\":\"FR09\",\"dependsOn\":[\"US-083\"],\"endpoints\":[\"/auth/activate\",\"/auth/login\"],\"models\":[\"user\",\"refresh_token\"],\"permissions\":[\"anonymous\"],\"errorCodes\":[\"EMAIL_NOT_VERIFIED\",\"UNAUTHORIZED\",\"RATE_LIMITED\",\"ACTIVATION_TOKEN_INVALID\"],\"idempotency\":\"activation_token single_use\",\"enums\":[\"Free\",\"Pro\",\"Enterprise\"],\"thresholds\":\"failedLoginLimit=5 per 10m,accessTokenTTL=900s,refreshTokenTTL=604800s\",\"degradation\":\"wrong_credential_does_not_leak_user_existence\",\"exampleAssert\":\"assert login.status_code in [200,401,429] and ('access_token' in login.json()['data'] if login.status_code==200 else True)\",\"pytest\":\"python -m pytest tests/test_fr09_auth.py tests/test_fr09_auth_supplemental.py tests/test_nfr17_token.py -q --tb=short\"}"
+    },
+    {
+      "id": "US-085",
+      "title": "实现当前用户与登出接口",
+      "description": "作为登录用户，我希望能查询当前身份并安全登出，以便浏览器状态与服务端会话一致。",
+      "acceptanceCriteria": [
+        "GET /auth/me 仅允许已登录用户访问；成功返回 id、user_id、email、role、tier、membership_level、tier_expires_at、membership_expires_at、email_verified 和 permissions；未登录或已撤销 token 返回 401 UNAUTHORIZED。",
+        "POST /auth/logout 必须始终清除认证 cookie，并撤销当前 access subject 与 refresh 会话；重复 logout 仍返回 200，不得抛 500。",
+        "调用 /auth/logout 后，刚才的 access_token 访问 /auth/me 必须返回 401；对应 refresh_token 再调用 /auth/refresh 也必须失败。",
+        "两条接口都必须走 NFR-14 envelope，并保留 request_id 以便回溯。",
+        "python -m pytest tests/test_fr09_auth.py tests/test_gate_account.py tests/test_nfr17_token.py -q --tb=short",
+        "Typecheck passes"
+      ],
+      "priority": 85,
+      "passes": true,
+      "notes": "{\"group\":\"FR09\",\"dependsOn\":[\"US-084\"],\"endpoints\":[\"/auth/me\",\"/auth/logout\"],\"models\":[\"user\",\"refresh_token\"],\"permissions\":[\"authenticated_user\"],\"errorCodes\":[\"UNAUTHORIZED\",\"TOKEN_REVOKED\"],\"idempotency\":\"logout_idempotent_per_session\",\"enums\":[\"authenticated\"],\"thresholds\":\"revokedAccessTokenMustBeBlocked=true\",\"degradation\":\"logged_out_token_cannot_pass_until_expiry\",\"exampleAssert\":\"assert me.status_code in [200,401]\",\"pytest\":\"python -m pytest tests/test_fr09_auth.py tests/test_gate_account.py tests/test_nfr17_token.py -q --tb=short\"}"
+    },
+    {
+      "id": "US-086",
+      "title": "实现 refresh token 轮换与黑名单",
+      "description": "作为平台维护者，我希望 refresh token 一次使用即轮换，并能撤销旧 access jti，以便令牌泄露风险可控。",
+      "acceptanceCriteria": [
+        "数据库只保存 token_hash=SHA256(raw_refresh_token)，原始 token 不落库；刷新成功后旧 refresh_token.revoked=true，replaced_by_id 指向新 token 的 id；新旧 token 共存窗口（grace_seconds=60 秒）内旧 token 仍可成功换取 access_token。",
+        "并发/重放检测：grace_seconds 超时后，以同一 jti 提交 refresh 请求返回 HTTP 401 TOKEN_REUSE_DETECTED；检测到重放后立即撤销该用户全部 refresh_token（revoked=true）和所有未过期 access_token jti（写入黑名单）。",
+        "POST /auth/refresh 成功返回 HTTP 200，响应体含 access_token(JWT)、refresh_token(opaque or JWT)、expires_in；旧 refresh_token 写 revoked_at 时间戳，不删除行（留审计）。",
+        "python -m pytest tests/test_fr09_auth.py tests/test_nfr17_token.py tests/test_fr09_auth_supplemental.py -q --tb=short",
+        "Typecheck passes"
+      ],
+      "priority": 86,
+      "passes": true,
+      "notes": "{\"group\":\"FR09\",\"dependsOn\":[\"US-018\",\"US-084\"],\"endpoints\":[\"/auth/refresh\"],\"models\":[\"refresh_token\",\"access_token_blacklist\"],\"permissions\":[\"authenticated_user\"],\"errorCodes\":[\"TOKEN_REUSE_DETECTED\",\"TOKEN_REVOKED\",\"UNAUTHORIZED\"],\"idempotency\":\"refresh jti single_use with grace_seconds=60\",\"enums\":[\"access\",\"refresh\"],\"thresholds\":\"graceSeconds=60,reuseRevokesAllSessions=true\",\"degradation\":\"replay_triggers_full_session_revoke\",\"exampleAssert\":\"assert refresh_resp.status_code==200 and old_token_revoked==True\",\"pytest\":\"python -m pytest tests/test_fr09_auth.py tests/test_nfr17_token.py tests/test_fr09_auth_supplemental.py -q --tb=short\"}"
+    },
+    {
+      "id": "US-087",
+      "title": "实现忘记密码与重置撤销",
+      "description": "作为用户，我希望可以重置密码，并在重置后让旧令牌失效，以便账户恢复流程安全。",
+      "acceptanceCriteria": [
+        "POST /auth/forgot-password 对存在与不存在邮箱都必须统一返回 200 和通用成功文案，防止邮箱枚举。",
+        "当邮箱存在时，系统必须签发单次 reset_token，TTL=1 小时；同一 token 成功使用后立即失效。",
+        "POST /auth/reset-password 成功后必须更新 password_hash，撤销该用户全部 refresh_token，并把仍在有效期内的 access_token jti 写入黑名单。",
+        "reset_token 过期或已使用返回 400 RESET_TOKEN_EXPIRED；新密码不满足强度要求返回 422 WEAK_PASSWORD。",
+        "python -m pytest tests/test_fr09_auth.py::test_fr09_forgot_password_anti_enum tests/test_fr09_auth.py::test_fr09_forgot_password_existing_and_missing_share_same_fail_closed_payload tests/test_fr_supplement_batch_a.py::TestFR09S04PasswordResetRevokesTokens::test_reset_password_revokes_all_refresh_tokens tests/test_v7_audit_batch7.py::TestFR09ResetPassword::test_reset_password_expired_token -q --tb=short",
+        "Typecheck passes"
+      ],
+      "priority": 87,
+      "passes": true,
+      "notes": "{\"group\":\"FR09\",\"dependsOn\":[\"US-083\",\"US-086\"],\"endpoints\":[\"/auth/forgot-password\",\"/auth/reset-password\"],\"models\":[\"user\",\"refresh_token\"],\"permissions\":[\"anonymous\"],\"errorCodes\":[\"RESET_TOKEN_EXPIRED\",\"WEAK_PASSWORD\",\"UNAUTHORIZED\"],\"idempotency\":\"reset_token single_use\",\"enums\":[\"email_status\"],\"thresholds\":\"resetTokenTtlHours=1\",\"degradation\":\"forgot_password_response_never_leaks_account_existence; trimmed legacy mixed-suite mapping so US-087 only verifies forgot/reset flows instead of unrelated WAL/runtime and report batch-id regressions\",\"exampleAssert\":\"assert response.status_code==200\",\"pytest\":\"python -m pytest tests/test_fr09_auth.py::test_fr09_forgot_password_anti_enum tests/test_fr09_auth.py::test_fr09_forgot_password_existing_and_missing_share_same_fail_closed_payload tests/test_fr_supplement_batch_a.py::TestFR09S04PasswordResetRevokesTokens::test_reset_password_revokes_all_refresh_tokens tests/test_v7_audit_batch7.py::TestFR09ResetPassword::test_reset_password_expired_token -q --tb=short\"}"
+    },
+    {
+      "id": "US-088",
+      "title": "实现 OAuth provider 列表与发起授权",
+      "description": "作为用户，我希望看到 QQ 和微信 OAuth 可用状态并发起授权，以便第三方登录链路从真实入口开始。",
+      "acceptanceCriteria": [
+        "GET /auth/oauth/providers 必须返回 contract_status、provider_status、live_verified 和 providers；每个 provider 至少包含 id、name、start_path、method='POST'，不得暴露原始授权 URL。",
+        "当没有可用 provider 时，providers 必须为空数组，并返回 provider-not-configured 与明确 message；不得伪装可登录。",
+        "POST /auth/oauth/{provider}/start 只允许 provider in [qq,wechat]；非法 provider 返回 400 INVALID_PROVIDER；provider 未完整配置返回 503 OAUTH_PROVIDER_UNAVAILABLE。",
+        "start 成功时必须持久化 state，返回 302 重定向；若带 next 参数，必须写 state-scoped next cookie，并清空通用 oauth_next，避免串标签页泄漏。",
+        "python -m pytest tests/test_fr09_auth.py tests/test_gate_browser_playwright.py -k oauth -q --tb=short",
+        "Typecheck passes"
+      ],
+      "priority": 88,
+      "passes": true,
+      "notes": "{\"group\":\"FR09\",\"dependsOn\":[\"US-018\"],\"endpoints\":[\"/auth/oauth/providers\",\"/auth/oauth/{provider}/start\"],\"models\":[\"oauth_state\"],\"permissions\":[\"anonymous\"],\"errorCodes\":[\"INVALID_PROVIDER\",\"OAUTH_PROVIDER_UNAVAILABLE\"],\"idempotency\":\"oauth_state unique\",\"enums\":[\"qq\",\"wechat\"],\"thresholds\":\"stateMinChars=16\",\"degradation\":\"missing_provider_config_fail_closes_without_state_write\",\"exampleAssert\":\"assert provider['start_path'] == '/auth/oauth/' + provider['id'] + '/start'\",\"pytest\":\"python -m pytest tests/test_fr09_auth.py tests/test_gate_browser_playwright.py -k oauth -q --tb=short\"}"
+    },
+    {
+      "id": "US-089",
+      "title": "实现 OAuth 回调与 Mock 闭环",
+      "description": "作为用户，我希望 OAuth 回调能完成登录或绑定；当真实参数不足时也能走完整 Mock 闭环。",
+      "acceptanceCriteria": [
+        "GET /auth/oauth/{provider}/callback 必须先校验 state 单次使用，再执行 code exchange 或 mock flow；provider 未就绪时必须在 exchange 前返回 OAUTH_PROVIDER_UNAVAILABLE。",
+        "同一 provider+provider_user_id 必须绑定到同一 oauth_identity；二次登录不得重复建户。缺邮箱时允许创建 email=null 的 Free 账户。",
+        "Accept: application/json 时成功返回 200 和可用会话数据；Accept: text/html 时成功返回 302/303 到 state-scoped next 或 '/'，并直接写认证 cookie。",
+        "回调成功或失败后都必须清理 state-scoped next cookie；HTML 失败必须重定向到 /login?error=CODE，JSON 失败必须返回 NFR-14 错误 envelope。",
+        "python -m pytest tests/test_fr09_auth.py tests/test_auth_ui_copy.py tests/test_gate_browser_playwright.py -k oauth -q --tb=short",
+        "Typecheck passes"
+      ],
+      "priority": 89,
+      "passes": true,
+      "notes": "{\"group\":\"FR09\",\"dependsOn\":[\"US-088\"],\"endpoints\":[\"/auth/oauth/{provider}/callback\"],\"models\":[\"oauth_identity\",\"user\",\"user_session\"],\"permissions\":[\"anonymous\"],\"errorCodes\":[\"INVALID_PROVIDER\",\"UNAUTHORIZED\",\"OAUTH_PROVIDER_UNAVAILABLE\"],\"idempotency\":\"provider+provider_user_id unique\",\"enums\":[\"qq\",\"wechat\"],\"thresholds\":\"mockFlowMustBeComplete=true\",\"degradation\":\"mock_mode_must_finish_without_501\",\"exampleAssert\":\"assert callback.status_code in [200,302,303]\",\"pytest\":\"python -m pytest tests/test_fr09_auth.py tests/test_auth_ui_copy.py tests/test_gate_browser_playwright.py -k oauth -q --tb=short\"}"
+    },
+    {
+      "id": "US-090",
+      "title": "实现 RBAC 与 tier 权限中间件",
+      "description": "作为平台维护者，我希望 API 和页面使用同一权限判断，以便 admin、Free、Pro、Enterprise 的能力边界一致。",
+      "acceptanceCriteria": [
+        "必须提供统一的 require_admin、require_super_admin 和 tier entitlement helper；所有受限 API 和页面都复用同一套权限判断。",
+        "高级区、历史范围、sim-dashboard 档位、管理接口、补单、强制重建和内部 override 都必须通过该 helper，而不是各自散落判断。",
+        "未登录返回 401，已登录但无权返回 403；权限不足时不得返回 200 空数据伪装成功。",
+        "涉及 Free 摘要、Pro 90 天、Enterprise 全历史和 admin override 的裁剪必须在后端完成。",
+        "python -m pytest tests/test_fr09_auth.py tests/test_fr10_reports.py tests/test_fr12_admin.py tests/test_gate_browser_playwright.py -q --tb=short",
+        "Typecheck passes"
+      ],
+      "priority": 90,
+      "passes": true,
+      "notes": "{\"group\":\"FR09\",\"dependsOn\":[\"US-018\",\"US-019\"],\"endpoints\":[\"/api/v1/reports/{report_id}/advanced\",\"/api/v1/portfolio/sim-dashboard\",\"/api/v1/admin/*\"],\"models\":[\"membership_entitlement\",\"user\"],\"permissions\":[\"Free\",\"Pro\",\"Enterprise\",\"admin\",\"super_admin\"],\"errorCodes\":[\"UNAUTHORIZED\",\"FORBIDDEN\"],\"idempotency\":\"permission_check_is_read_only\",\"enums\":[\"Free\",\"Pro\",\"Enterprise\"],\"thresholds\":\"backendCroppingRequired=true\",\"degradation\":\"permission_denied_never_falls_back_to_full_data\",\"exampleAssert\":\"assert response.status_code in [200,401,403]\",\"pytest\":\"python -m pytest tests/test_fr09_auth.py tests/test_fr10_reports.py tests/test_fr12_admin.py tests/test_gate_browser_playwright.py -q --tb=short\"}"
+    },
+    {
+      "id": "US-091",
+      "title": "实现订单创建接口",
+      "description": "作为付费用户，我希望创建一笔可支付订单，以便订阅升级能进入真实支付或真实 Mock 支付流程。",
+      "acceptanceCriteria": [
+        "订单入口固定为 POST /billing/create_order；仅允许已登录用户调用。请求体至少包含 tier_id、period_months、provider。",
+        "成功创建返回 201，data 至少包含 order_id、status='CREATED'、provider、payment_url、expires_at。tier_id=Free 或字段非法返回 422 VALIDATION_FAILED。",
+        "当前用户已拥有同级或更高有效权益时返回 409 TIER_ALREADY_ACTIVE；同一 scope 存在未过期待支付订单时必须复用现有订单，不得新建第二笔。",
+        "支付 provider 未配置时返回 503 PAYMENT_PROVIDER_NOT_CONFIGURED，不得伪装可支付。",
+        "python -m pytest tests/test_fr09_auth.py::test_fr09_billing_create_order_basic tests/test_fr09_auth.py::test_fr09_billing_create_order_provider_not_configured_projects_to_invalid_payload tests/test_fr09_auth.py::test_fr09_webhook_reconcile_poller -q --tb=short",
+        "Typecheck passes"
+      ],
+      "priority": 91,
+      "passes": true,
+      "notes": "{\"group\":\"FR09\",\"dependsOn\":[\"US-019\",\"US-090\"],\"endpoints\":[\"/billing/create_order\"],\"models\":[\"billing_order\"],\"permissions\":[\"authenticated_user\"],\"errorCodes\":[\"UNAUTHORIZED\",\"VALIDATION_FAILED\",\"TIER_ALREADY_ACTIVE\",\"PAYMENT_PROVIDER_NOT_CONFIGURED\"],\"idempotency\":\"reuse_pending_order_per_user_tier_period_provider\",\"enums\":[\"CREATED\"],\"thresholds\":\"orderCreateRequiresAuthenticatedUser=true\",\"degradation\":\"provider_disabled_stays_visible; narrowed to create-order slice because full auth+webhook file pair mixes unrelated tmp_path WAL checks and duplicate-webhook backlink coverage for later billing stories\",\"exampleAssert\":\"assert order['status']=='CREATED'\",\"pytest\":\"python -m pytest tests/test_fr09_auth.py::test_fr09_billing_create_order_basic tests/test_fr09_auth.py::test_fr09_billing_create_order_provider_not_configured_projects_to_invalid_payload tests/test_fr09_auth.py::test_fr09_webhook_reconcile_poller -q --tb=short\"}"
+    },
+    {
+      "id": "US-092",
+      "title": "实现支付 Webhook 幂等与权益发放",
+      "description": "作为平台维护者，我希望支付回调和权益发放原子完成，以便不会出现到账未升级或重复升级。",
+      "acceptanceCriteria": [
+        "支付回调入口固定为 POST /billing/webhook；请求头使用 Webhook-Signature。签名校验失败返回 400 PAYMENT_SIGNATURE_INVALID，不写任何订单或权益状态。",
+        "event_id 是唯一幂等键；重复回调返回 200 且 duplicate=true，不重复发放权益。首次成功后 payment_webhook_event 必须留下 processed 成功痕迹。",
+        "订单状态更新为 PAID 与 membership_entitlement 写入必须在同一数据库事务中完成；事务内失败返回 500 并整体回滚。",
+        "较低 tier 的回调不得覆盖当前更高或更晚到期的权益；冲突时必须显式保留旧权益并记录 status_reason。",
+        "python -m pytest tests/test_fr09_auth.py::test_fr09_billing_webhook_projects_business_validation_failures_to_invalid_payload tests/test_fr09_auth.py::test_fr09_billing_webhook_fails_closed_when_signature_verifier_not_ready tests/test_fr09_auth.py::test_fr09_billing_webhook_rejects_invalid_signature tests/test_fr09_auth.py::test_fr09_billing_webhook_marks_duplicate_event_without_double_grant tests/test_fr09_auth.py::test_fr09_billing_webhook_rolls_back_event_and_order_on_internal_failure tests/test_request_id_webhook_backlink.py::test_request_id_roundtrips_into_payment_webhook_event[explicit-header] -q --tb=short",
+        "Typecheck passes"
+      ],
+      "priority": 92,
+      "passes": true,
+      "notes": "{\"group\":\"FR09\",\"dependsOn\":[\"US-019\",\"US-091\"],\"endpoints\":[\"/billing/webhook\"],\"models\":[\"payment_webhook_event\",\"membership_entitlement\",\"billing_order\"],\"permissions\":[\"webhook_write\"],\"errorCodes\":[\"PAYMENT_SIGNATURE_INVALID\",\"LOWER_TIER_IGNORED\",\"IDEMPOTENT_SKIP\"],\"idempotency\":\"event_id unique\",\"enums\":[\"PROCESSED\",\"duplicate\"],\"thresholds\":\"transactionalWriteRequired=true\",\"degradation\":\"bad_signature_blocks_all_state_change; narrowed to webhook idempotency/signature/rollback/request-id slice and left tmp_path duplicate-backfill helper test out of this story because it is infrastructure-specific\",\"exampleAssert\":\"assert (payload.get('duplicate')==True and resp.status_code==200) or (resp.status_code==400)\",\"pytest\":\"python -m pytest tests/test_fr09_auth.py::test_fr09_billing_webhook_projects_business_validation_failures_to_invalid_payload tests/test_fr09_auth.py::test_fr09_billing_webhook_fails_closed_when_signature_verifier_not_ready tests/test_fr09_auth.py::test_fr09_billing_webhook_rejects_invalid_signature tests/test_fr09_auth.py::test_fr09_billing_webhook_marks_duplicate_event_without_double_grant tests/test_fr09_auth.py::test_fr09_billing_webhook_rolls_back_event_and_order_on_internal_failure tests/test_request_id_webhook_backlink.py::test_request_id_roundtrips_into_payment_webhook_event[explicit-header] -q --tb=short\"}"
+    },
+    {
+      "id": "US-093",
+      "title": "实现订阅状态与到期计算",
+      "description": "作为会员用户，我希望系统能计算当前有效权益与到期状态，以便前后端对 tier 的判断一致。",
+      "acceptanceCriteria": [
+        "订阅状态计算必须输出 tier、plan_code、status、tier_expires_at、permissions 和 status_reason；过期权益立即回退为 Free。",
+        "付费 tier 但缺少到期事实时，status 必须为 unknown，status_reason='expiry_unconfirmed'；不得伪装 active。",
+        "/auth/me 暴露的 tier 与 permissions 必须与订阅状态计算服务完全一致。兼容路由 /api/v1/membership/subscription/status 当前若保留，必须稳定返回 410 ROUTE_RETIRED。",
+        "python -m pytest tests/test_fr09_auth.py::test_fr09_auth_me_keeps_paid_membership_level_distinct_from_tier tests/test_fr09_auth.py::test_fr09_subscription_status_route_is_retired tests/test_fr09_auth.py::test_fr09_subscription_status_preserves_unknown_when_paid_tier_has_no_expiry tests/test_gate_account.py::test_gate_account_user_login_and_me -q --tb=short",
+        "Typecheck passes"
+      ],
+      "priority": 93,
+      "passes": true,
+      "notes": "{\"group\":\"FR09\",\"dependsOn\":[\"US-019\",\"US-092\"],\"endpoints\":[\"/api/v1/membership/subscription/status\",\"/auth/me\"],\"models\":[\"membership_entitlement\",\"user\"],\"permissions\":[\"authenticated_user\"],\"errorCodes\":[\"UNAUTHORIZED\",\"STATE_MISSING\",\"ROUTE_RETIRED\"],\"idempotency\":\"query_is_read_only\",\"enums\":[\"Free\",\"Pro\",\"Enterprise\",\"unknown\"],\"thresholds\":\"expired_entitlement_reverts_to_Free\",\"degradation\":\"missing_entitlement_never_pretends_active; narrowed to subscription-status and /auth/me consistency slice and excluded unrelated sqlite WAL runtime probe\",\"exampleAssert\":\"assert payload['tier'] in ['Free','Pro','Enterprise'] or payload['status']=='unknown'\",\"pytest\":\"python -m pytest tests/test_fr09_auth.py::test_fr09_auth_me_keeps_paid_membership_level_distinct_from_tier tests/test_fr09_auth.py::test_fr09_subscription_status_route_is_retired tests/test_fr09_auth.py::test_fr09_subscription_status_preserves_unknown_when_paid_tier_has_no_expiry tests/test_gate_account.py::test_gate_account_user_login_and_me -q --tb=short\"}"
+    },
+    {
+      "id": "US-094",
+      "title": "实现管理员补单接口",
+      "description": "作为管理员，我希望可以对异常订单执行幂等补单，以便支付渠道延迟或漏回调时仍能恢复权益。",
+      "acceptanceCriteria": [
+        "管理入口固定为 POST /api/v1/admin/billing/orders/{order_id}/reconcile；仅 exact admin 可调用。请求体必须包含 provider、order_id、expected_tier、reason_code，且 body.order_id 必须与 path 一致。",
+        "补单必须先验证 provider truth；缺少 webhook 或探针真相时返回 503 UPSTREAM_TIMEOUT，不得直接发权益。",
+        "首次成功补单返回 200 且 reconciled=true；重复相同补单请求必须返回同一 operation_id，不得重复发权益或新增第二条 admin_operation。",
+        "成功与失败都必须写 audit/admin_operation，包含 provider_truth_source、before_snapshot、after_snapshot、request_id。",
+        "python -m pytest tests/test_fr12_admin.py::test_fr12_billing_reconcile_idempotent tests/test_fr12_admin.py::test_fr12_billing_reconcile_requires_provider_truth_before_granting tests/test_fr12_admin.py::test_fr12_billing_reconcile_rejects_local_paid_without_webhook tests/test_fr12_admin.py::test_fr12_billing_reconcile_super_admin_forbidden tests/test_fr12_admin.py::test_fr12_billing_reconcile_rejects_expected_tier_mismatch_without_side_effects -q --tb=short",
+        "Typecheck passes"
+      ],
+      "priority": 94,
+      "passes": true,
+      "notes": "{\"group\":\"FR09\",\"dependsOn\":[\"US-005\",\"US-092\"],\"endpoints\":[\"/api/v1/admin/billing/orders/{order_id}/reconcile\"],\"models\":[\"billing_order\",\"membership_entitlement\",\"audit_log\",\"admin_operation\"],\"permissions\":[\"admin\"],\"errorCodes\":[\"UNAUTHORIZED\",\"FORBIDDEN\",\"INVALID_PAYLOAD\",\"UPSTREAM_TIMEOUT\",\"NOT_FOUND\"],\"idempotency\":\"reconcile_per_order_id unique\",\"enums\":[\"PAID\",\"PENDING\",\"EXPIRED\"],\"thresholds\":\"reasonRequired=true\",\"degradation\":\"provider_truth_missing_blocks_grant; narrowed to admin billing reconcile slice and excluded unrelated auth/runtime WAL coverage\",\"exampleAssert\":\"assert audit['request_id'] is not None and data['reconciled'] in [True,False]\",\"pytest\":\"python -m pytest tests/test_fr12_admin.py::test_fr12_billing_reconcile_idempotent tests/test_fr12_admin.py::test_fr12_billing_reconcile_requires_provider_truth_before_granting tests/test_fr12_admin.py::test_fr12_billing_reconcile_rejects_local_paid_without_webhook tests/test_fr12_admin.py::test_fr12_billing_reconcile_super_admin_forbidden tests/test_fr12_admin.py::test_fr12_billing_reconcile_rejects_expected_tier_mismatch_without_side_effects -q --tb=short\"}"
+    },
+    {
+      "id": "US-095",
+      "title": "实现会员权益门控统一接入",
+      "description": "作为产品负责人，我希望高级区、历史范围和模拟看板统一读取会员权益，以便付费能力不出现前后端分裂。",
+      "acceptanceCriteria": [
+        "高级区完整内容、Pro 90 天历史、Enterprise 全历史、详情价格脱敏和三挡 sim-dashboard 都必须走统一 entitlement helper。",
+        "会员过期后，受限接口必须立即按 Free 处理；前端不得先收到完整数据再隐藏。",
+        "/api/v1/reports、/api/v1/reports/{report_id}、/api/v1/reports/{report_id}/advanced、/api/v1/portfolio/sim-dashboard 与 /reports/{report_id} 页面必须共享同一权限结果。",
+        "python -m pytest tests/test_fr09_auth.py::test_fr09_auth_me_keeps_paid_membership_level_distinct_from_tier tests/test_doc_driven_verify.py::TestViewerTierAccess::test_FR09_free_advanced_truncated tests/test_doc_driven_verify.py::TestViewerTierAccess::test_FR09_pro_advanced_full tests/test_doc_driven_verify.py::TestViewerTierAccess::test_FR08_free_sim_html_and_api_unified_denied tests/test_doc_driven_verify.py::TestViewerTierAccess::test_FR09_admin_free_role_keeps_paid_area_access tests/test_fr10_site_dashboard.py::test_fr10_sim_dashboard_capital_tier tests/test_fr10_site_dashboard.py::test_fr10_sim_dashboard_unknown_paid_membership_matches_html_gate -q --tb=short",
+        "Typecheck passes"
+      ],
+      "priority": 95,
+      "passes": true,
+      "notes": "{\"group\":\"FR09_FR10\",\"dependsOn\":[\"US-090\",\"US-093\"],\"endpoints\":[\"/api/v1/reports/{report_id}/advanced\",\"/api/v1/portfolio/sim-dashboard\",\"/api/v1/reports\",\"/api/v1/reports/{report_id}\"],\"models\":[\"membership_entitlement\"],\"permissions\":[\"Free\",\"Pro\",\"Enterprise\",\"admin\"],\"errorCodes\":[\"FORBIDDEN\",\"UNAUTHORIZED\",\"TIER_NOT_AVAILABLE\"],\"idempotency\":\"permission_check_is_read_only\",\"enums\":[\"Free\",\"Pro\",\"Enterprise\"],\"thresholds\":\"backendCroppingRequired=true\",\"degradation\":\"expired_membership_immediately_reverts_to_free_scope; narrowed to entitlement-helper gating slice across auth-me, advanced area, sim dashboard, and admin override instead of unrelated report/dashboard regressions\",\"exampleAssert\":\"assert payload['data'] is not None\",\"pytest\":\"python -m pytest tests/test_fr09_auth.py::test_fr09_auth_me_keeps_paid_membership_level_distinct_from_tier tests/test_doc_driven_verify.py::TestViewerTierAccess::test_FR09_free_advanced_truncated tests/test_doc_driven_verify.py::TestViewerTierAccess::test_FR09_pro_advanced_full tests/test_doc_driven_verify.py::TestViewerTierAccess::test_FR08_free_sim_html_and_api_unified_denied tests/test_doc_driven_verify.py::TestViewerTierAccess::test_FR09_admin_free_role_keeps_paid_area_access tests/test_fr10_site_dashboard.py::test_fr10_sim_dashboard_capital_tier tests/test_fr10_site_dashboard.py::test_fr10_sim_dashboard_unknown_paid_membership_matches_html_gate -q --tb=short\"}"
+    },
+    {
+      "id": "US-096",
+      "title": "实现首页聚合 API 与模板",
+      "description": "作为访客，我希望首页直接看到市场状态、池规模和今日研报数，以便快速判断平台当前可用性。",
+      "acceptanceCriteria": [
+        "GET /api/v1/home 至少返回 market_state、pool_size、today_report_count、hot_stocks；并使用 NFR-14 envelope。",
+        "首页 API 与 HTML 首页必须展示一致的事实口径；非交易日应回退最近交易日，而不是空白。",
+        "home payload 必须显式包含 data_status 或等效降级语义；数据未就绪时显示计算中/降级态，禁止伪造 featured report。",
+        "首页缓存 TTL 固定为 5 分钟；单请求目标延迟应满足现有门槛测试。",
+        "python -m pytest tests/test_fr10_site_dashboard.py::test_fr10_home_api_fields tests/test_fr10_site_dashboard.py::test_fr10_home_degrades_when_reports_are_newer_than_effective_pool tests/test_api_bridge_contract.py::test_api_bridge_exposes_shared_home_helpers_for_authoritative_and_supplemental_calls tests/test_doc_driven_verify.py::TestDOMVerification::test_FR10_SITE_01_home_dom -q --tb=short",
+        "Typecheck passes"
+      ],
+      "priority": 96,
+      "passes": true,
+      "notes": "{\"group\":\"FR10\",\"dependsOn\":[\"US-040\",\"US-062\"],\"endpoints\":[\"/api/v1/home\"],\"models\":[\"home_payload\"],\"permissions\":[\"public_read\"],\"errorCodes\":[\"STATE_COMPUTING\",\"DEGRADED\"],\"idempotency\":\"query_is_read_only\",\"enums\":[\"ok\",\"computing\",\"degraded\",\"empty\"],\"thresholds\":\"homeCacheTtlSeconds=300\",\"degradation\":\"no_public_reports_shows_empty_state; narrowed to home API/degradation/api-bridge/home DOM slice instead of unrelated features-page and supplemental suites\",\"exampleAssert\":\"assert 'market_state' in payload['data'] and 'hot_stocks' in payload['data']\",\"pytest\":\"python -m pytest tests/test_fr10_site_dashboard.py::test_fr10_home_api_fields tests/test_fr10_site_dashboard.py::test_fr10_home_degrades_when_reports_are_newer_than_effective_pool tests/test_api_bridge_contract.py::test_api_bridge_exposes_shared_home_helpers_for_authoritative_and_supplemental_calls tests/test_doc_driven_verify.py::TestDOMVerification::test_FR10_SITE_01_home_dom -q --tb=short\"}"
+    },
+    {
+      "id": "US-097",
+      "title": "实现股票搜索热点与快照入口",
+      "description": "作为用户，我希望能搜索股票、查看热点和基础快照，以便在研报详情外也能看到真实数据状态。",
+      "acceptanceCriteria": [
+        "公共入口固定为 GET /api/v1/stocks、GET /api/v1/stocks/autocomplete、GET /api/v1/market/hotspots 和 GET /api/v1/stocks/{stock_code}/snapshot。",
+        "/api/v1/stocks 与 /autocomplete 只能从 stock_master 返回真实证券，limit 必须受控；空 q 返回空 items 而不是 500。",
+        "/api/v1/market/hotspots 必须返回 items、total 和 data_status；当外部热点不可用时，返回空列表+DEGRADED，而不是伪造热点。",
+        "/api/v1/stocks/{stock_code}/snapshot 至少返回 company_overview、valuation、financial_analysis、industry_competition、capital_data、news_policy、hotspot、market_state 和 data_status。",
+        "python -m pytest tests/test_non_report_snapshot_api.py tests/test_fr04_hotspot_bridge.py tests/test_fr10_reports.py -q --tb=short",
+        "Typecheck passes"
+      ],
+      "priority": 97,
+      "passes": true,
+      "notes": "{\"group\":\"FR10\",\"dependsOn\":[\"US-021\",\"US-025\",\"US-026\"],\"endpoints\":[\"/api/v1/stocks\",\"/api/v1/stocks/autocomplete\",\"/api/v1/market/hotspots\",\"/api/v1/stocks/{stock_code}/snapshot\"],\"models\":[\"stock_master\",\"report_data_usage\"],\"permissions\":[\"public_read\"],\"errorCodes\":[\"VALIDATION_FAILED\",\"NOT_FOUND\"],\"idempotency\":\"query_is_read_only\",\"enums\":[\"missing\",\"degraded\",\"ok\"],\"thresholds\":\"stocksLimitMax=50,autocompleteLimitMax=30,hotspotsLimitMax=100\",\"degradation\":\"hotspot_gap_is_explicit\",\"exampleAssert\":\"assert 'data_status' in payload['data']\",\"pytest\":\"python -m pytest tests/test_non_report_snapshot_api.py tests/test_fr04_hotspot_bridge.py tests/test_fr10_reports.py -q --tb=short\"}"
+    },
+    {
+      "id": "US-098",
+      "title": "实现研报列表 HTML 与筛选",
+      "description": "作为普通用户，我希望从 /reports 页面按日期、推荐和状态筛选研报，而不是只能看 JSON。",
+      "acceptanceCriteria": [
+        "GET /reports 必须渲染真实列表、分页和筛选控件；兼容旧路径 /reports/list 时只允许 302 重定向到 /reports。",
+        "HTML 列表筛选语义必须与 GET /api/v1/reports 一致，至少覆盖 q、stock_code、recommendation、strategy_type、market_state、date_from、date_to、page、page_size。",
+        "未发布、无权限或 quality gate blocked 的报告不得通过 HTML 泄露。空结果必须显示明确文案，而不是白页。",
+        "列表项必须可构造 /reports/{report_id} 链接，并与 API 返回的 report_id 对齐。",
+        "python -m pytest tests/test_fr10_reports.py::test_fr10_reports_list_contract tests/test_fr10_reports.py::test_fr10_reports_text_filters_escape_literals tests/test_doc_driven_verify.py::TestDOMVerification::test_FR10_SITE_03_reports_list_dom tests/test_frontend_backend_integration.py::TestRoutingConsistency::test_reports_list_page_loads tests/test_frontend_backend_integration.py::TestRoutingConsistency::test_reports_api_items_have_report_id -q --tb=short",
+        "Typecheck passes"
+      ],
+      "priority": 98,
+      "passes": true,
+      "notes": "{\"group\":\"FR10\",\"dependsOn\":[\"US-062\"],\"endpoints\":[\"/reports\",\"/api/v1/reports\"],\"models\":[\"report\"],\"permissions\":[\"public_read\"],\"errorCodes\":[\"FORBIDDEN\",\"NOT_FOUND\"],\"idempotency\":\"page_query_is_read_only\",\"enums\":[\"BUY\",\"SELL\",\"HOLD\",\"A\",\"B\",\"C\"],\"thresholds\":\"pageAndApiFilterParity=true\",\"degradation\":\"empty_result_has_explicit_copy; narrowed to list-filter/api-linkage/dom slice and used live browser fallback verification because local Playwright subprocess launch is denied in this sandbox\",\"exampleAssert\":\"assert payload['data']['items'] is not None\",\"pytest\":\"python -m pytest tests/test_fr10_reports.py::test_fr10_reports_list_contract tests/test_fr10_reports.py::test_fr10_reports_text_filters_escape_literals tests/test_doc_driven_verify.py::TestDOMVerification::test_FR10_SITE_03_reports_list_dom tests/test_frontend_backend_integration.py::TestRoutingConsistency::test_reports_list_page_loads tests/test_frontend_backend_integration.py::TestRoutingConsistency::test_reports_api_items_have_report_id -q --tb=short\"}"
+    },
+    {
+      "id": "US-099",
+      "title": "实现研报详情 HTML 与状态横幅",
+      "description": "作为普通用户，我希望详情页展示结论、指令卡、证据和风险提示，并在降级时看到明确横幅。",
+      "acceptanceCriteria": [
+        "/reports/{report_id} 页面必须展示 recommendation、confidence、strategy_type、instruction_card、citations、risk_factors、data_quality_banner、免责声明和 term_context。",
+        "匿名或 Free 用户看到的敏感价格字段必须按后端口径脱敏为 '¥**.**'；Pro/Enterprise/admin 才能看到完整价格。",
+        "未发布、无权限或不存在的 report 必须返回真实 403/404 页面；降级报告必须显示中文状态横幅。",
+        "页面 DOM 不得包含 raw_llm_output、prompt_snapshot 或其他内部调试字段。",
+        "python -m pytest tests/test_fr10_reports.py tests/test_fr06_quality_pipeline.py tests/test_frontend_backend_integration.py -q --tb=short",
+        "Typecheck passes"
+      ],
+      "priority": 99,
+      "passes": true,
+      "notes": "{\"group\":\"FR10\",\"dependsOn\":[\"US-063\",\"US-095\"],\"endpoints\":[\"/reports/{report_id}\",\"/api/v1/reports/{report_id}\"],\"models\":[\"report\",\"report_citation\"],\"permissions\":[\"public_read_published_only\"],\"errorCodes\":[\"FORBIDDEN\",\"NOT_FOUND\"],\"idempotency\":\"page_query_is_read_only\",\"enums\":[\"ok\",\"stale_ok\",\"degraded\"],\"thresholds\":\"publicCitationRequiresHttpUrl=true\",\"degradation\":\"status_banner_visible_for_degraded_reports\",\"exampleAssert\":\"assert 'data_quality_banner' in payload['data']\",\"pytest\":\"python -m pytest tests/test_fr10_reports.py tests/test_fr06_quality_pipeline.py tests/test_frontend_backend_integration.py -q --tb=short\"}"
+    },
+    {
+      "id": "US-100",
+      "title": "实现高级区页面权限与中文展示",
+      "description": "作为付费用户，我希望详情页高级区展示中文所用数据和生成全过程；作为 Free 用户，我看到明确裁剪和升级提示。",
+      "acceptanceCriteria": [
+        "高级区展示位于 /reports/{report_id} 详情页内，并只从 GET /api/v1/reports/{report_id}/advanced 读取后端已裁剪 payload。",
+        "页面至少展示所用数据、生成全过程、风险审计和历史先验；Free 只显示摘要与升级提示，不得在 DOM 中包含完整 reasoning_chain。",
+        "未登录用户查看详情页时，不得偷偷预取 advanced API；已登录但无权时必须显示明确升级提示，而不是静默失败。",
+        "高级区的中文标签、裁剪状态与 API 的 is_truncated/degraded_datasets/quality_gate_issues 必须一致。",
+        "python -m pytest tests/test_doc_driven_verify.py::TestViewerTierAccess::test_FR09_anonymous_no_advanced tests/test_doc_driven_verify.py::TestViewerTierAccess::test_FR09_free_report_detail_shows_advanced_preview tests/test_doc_driven_verify.py::TestViewerTierAccess::test_FR09_pro_advanced_hides_internal_fallback_terms tests/test_fr10_reports.py::test_fr10_report_detail_and_advanced_anchor_history_window_to_runtime_data tests/test_fr10_reports.py::test_fr10_report_advanced_api_sanitizes_internal_fallback_reasoning tests/test_frontend_backend_integration.py::test_report_detail_html_loads_advanced_area_via_api_not_ssr -q --tb=short",
+        "Typecheck passes"
+      ],
+      "priority": 100,
+      "passes": true,
+      "notes": "{\"group\":\"FR10\",\"dependsOn\":[\"US-064\",\"US-095\"],\"endpoints\":[\"/reports/{report_id}\",\"/api/v1/reports/{report_id}/advanced\"],\"models\":[\"advanced_payload\",\"membership_entitlement\"],\"permissions\":[\"Free_summary\",\"Pro_full\",\"Enterprise_full\",\"admin_override\"],\"errorCodes\":[\"FORBIDDEN\",\"NOT_FOUND\",\"UNAUTHORIZED\"],\"idempotency\":\"page_query_is_read_only\",\"enums\":[\"Free\",\"Pro\",\"Enterprise\"],\"thresholds\":\"full_reasoning_hidden_for_free=true\",\"degradation\":\"degraded_dataset_reason_visible_in_ui; narrowed to advanced-area permission/preview/full-text/API-load slice and excluded Playwright subprocess coverage that is blocked by sandbox process permissions\",\"exampleAssert\":\"assert '所用数据' in page_payload['sections']\",\"pytest\":\"python -m pytest tests/test_doc_driven_verify.py::TestViewerTierAccess::test_FR09_anonymous_no_advanced tests/test_doc_driven_verify.py::TestViewerTierAccess::test_FR09_free_report_detail_shows_advanced_preview tests/test_doc_driven_verify.py::TestViewerTierAccess::test_FR09_pro_advanced_hides_internal_fallback_terms tests/test_fr10_reports.py::test_fr10_report_detail_and_advanced_anchor_history_window_to_runtime_data tests/test_fr10_reports.py::test_fr10_report_advanced_api_sanitizes_internal_fallback_reasoning tests/test_frontend_backend_integration.py::test_report_detail_html_loads_advanced_area_via_api_not_ssr -q --tb=short\"}"
+    },
+    {
+      "id": "US-101",
+      "title": "恢复 FR-01 运行态股票池锚点",
+      "description": "作为系统维护者，我希望针对一个具备日线数据的目标交易日重新刷新核心池并保留回退证据，以便 FR-04/FR-06 使用真实运行态 200 股核心池。",
+      "acceptanceCriteria": [
+        "对一个存在 kline_daily 的目标 trade_date 执行 POST /api/v1/admin/pool/refresh 或等效服务后，stock_pool_refresh_task 与 stock_pool_snapshot 落库同一 pool_version，且至少有 200 条 pool_role='core' 与 50 条 pool_role='standby'。",
+        "GET /api/v1/pool/stocks?trade_date=<trade_date> 返回非空 items 与真实 pool_date/pool_version；若使用回退，响应必须同时给出 fallback_from 与非空 status_reason，禁止 200 返回空壳成功。",
+        "执行证据必须来自运行态服务、API 或数据库，不得用 test helper 或手工 SQL 直写 stock_pool_snapshot 伪造成功。",
+        "python -m pytest tests/test_fr01_pool_refresh.py tests/test_compat_public_endpoints.py -q --tb=short",
+        "Typecheck passes"
+      ],
+      "priority": 101,
+      "passes": false,
+      "notes": "{\"group\":\"FR01_RUNTIME\",\"dependsOn\":[\"US-034\",\"US-035\",\"US-036\",\"US-037\",\"US-038\"],\"endpoints\":[\"POST /api/v1/admin/pool/refresh\",\"GET /api/v1/pool/stocks?trade_date={trade_date}\"],\"models\":[\"stock_pool_refresh_task\",\"stock_pool_snapshot\",\"stock_master\",\"kline_daily\"],\"permissions\":[\"admin\",\"system\",\"public_read\"],\"errorCodes\":[\"COLD_START_ERROR\",\"CONCURRENT_CONFLICT\",\"VALIDATION_ERROR\"],\"idempotency\":\"trade_date refresh may reuse latest successful task; snapshot rows stay keyed by trade_date+pool_version+stock_code+pool_role\",\"enums\":[\"core\",\"standby\",\"SUCCESS\",\"FALLBACK\"],\"thresholds\":\"corePoolSize=200,standbyPoolSize=50,targetTradeDateMustHaveKline=true\",\"degradation\":\"fallback_from and status_reason must stay explicit; no seed-helper writes to runtime DB\",\"exampleAssert\":\"assert core_count>=200 and standby_count>=50 and api_items_count>0\",\"pytest\":\"python -m pytest tests/test_fr01_pool_refresh.py tests/test_compat_public_endpoints.py -q --tb=short\"}"
+    },
+    {
+      "id": "US-102",
+      "title": "恢复 FR-04 运行态 truth-layer 补采",
+      "description": "作为数据工程师，我希望在同一 trade_date 上把研报所需 non-report usage 与外部证据补采落到真实运行库，以便 FR-06 引用真实 report_data_usage。",
+      "acceptanceCriteria": [
+        "对至少 1 只核心池股票调用 POST /api/v1/internal/stocks/{stock_code}/non-report-data/collect?trade_date=<trade_date> 后，report_data_usage 至少包含 kline_daily、market_state_input、stock_profile 与 1 个外部证据数据集的真实 rows，status 只能为 ok|stale_ok|missing|degraded。",
+        "每条 usage 都能追到 data_batch 或等价 batch/id；status != ok 时 status_reason 非空，不能把 missing/degraded 静默改成 ok。",
+        "重跑同一 stock_code+trade_date+dataset_name 只允许幂等复用，不得新增重复 usage 或通过删除旧行重建伪装成功。",
+        "python -m pytest tests/test_fr04_multisource_ingest.py tests/test_usage_lineage.py tests/test_runtime_anchor_consistency.py -q --tb=short",
+        "Typecheck passes"
+      ],
+      "priority": 102,
+      "passes": false,
+      "notes": "{\"group\":\"FR04_RUNTIME\",\"dependsOn\":[\"US-026\",\"US-027\",\"US-028\",\"US-029\",\"US-030\",\"US-031\",\"US-101\"],\"endpoints\":[\"POST /api/v1/internal/stocks/{stock_code}/non-report-data/collect?trade_date={trade_date}\",\"GET /api/v1/stocks/{stock_code}/snapshot\"],\"models\":[\"report_data_usage\",\"data_batch\",\"stock_profile\",\"hotspot_top50\",\"market_state_cache\"],\"permissions\":[\"internal\",\"admin\",\"system\"],\"errorCodes\":[\"DEPENDENCY_NOT_READY\",\"DATA_SOURCE_UNAVAILABLE\",\"QUALITY_GATE_BLOCKED\"],\"idempotency\":\"stock_code+trade_date+dataset_name usage rows must be reused on rerun\",\"enums\":[\"ok\",\"stale_ok\",\"missing\",\"degraded\"],\"thresholds\":\"requiredDatasets=kline_daily|market_state_input|stock_profile,externalEvidenceMin=1\",\"degradation\":\"bad datasets remain explicit in report_data_usage and never get rewritten to ok without new evidence\",\"exampleAssert\":\"assert {'kline_daily','market_state_input','stock_profile'} <= dataset_names and external_ok_count>=1\",\"pytest\":\"python -m pytest tests/test_fr04_multisource_ingest.py tests/test_usage_lineage.py tests/test_runtime_anchor_consistency.py -q --tb=short\"}"
+    },
+    {
+      "id": "US-103",
+      "title": "恢复 FR-05 运行态 market_state 与 lineage",
+      "description": "作为系统维护者，我希望把 market_state 计算重新绑定到真实运行态锚点和 lineage，以便 FR-06/首页读取到同一份市场状态事实。",
+      "acceptanceCriteria": [
+        "对与 US-101/102 同一运行态锚点执行市场状态计算或修复后，market_state_cache 最新有效记录至少覆盖该 trade_date，并同时写出 market_state、reference_date、state_reason、market_state_degraded。",
+        "report_data_usage.dataset_name='market_state_input' 必须指向同一 market state 事实或显式回退事实；GET /api/v1/market/state 与首页聚合读取的 trade_date 不得漂移到不同锚点。",
+        "降级时只允许以 market_state_degraded=true + 非空 state_reason 显式暴露；不得把降级伪装成普通 NEUTRAL。",
+        "python -m pytest tests/test_fr05_market_state.py tests/test_runtime_anchor_consistency.py -q --tb=short",
+        "Typecheck passes"
+      ],
+      "priority": 103,
+      "passes": false,
+      "notes": "{\"group\":\"FR05_RUNTIME\",\"dependsOn\":[\"US-039\",\"US-040\",\"US-041\",\"US-101\",\"US-102\"],\"endpoints\":[\"GET /api/v1/market/state\",\"GET /api/v1/home\"],\"models\":[\"market_state_cache\",\"report_data_usage\",\"data_batch\"],\"permissions\":[\"system\",\"public_read\",\"admin\"],\"errorCodes\":[\"INSUFFICIENT_KLINE_DATA\",\"MARKET_STATE_DEGRADED\",\"VALIDATION_ERROR\"],\"idempotency\":\"market_state_cache is keyed by trade_date and should upsert in place for the same runtime anchor\",\"enums\":[\"BULL\",\"BEAR\",\"NEUTRAL\"],\"thresholds\":\"latestRuntimeAnchorMustCoverTargetTradeDate=true\",\"degradation\":\"market_state_degraded must stay explicit in DB, API and home payload; never silent neutral fallback\",\"exampleAssert\":\"assert state_row and state_row['trade_date']>=target_trade_date and api_state==home_state\",\"pytest\":\"python -m pytest tests/test_fr05_market_state.py tests/test_runtime_anchor_consistency.py -q --tb=short\"}"
+    },
+    {
+      "id": "US-104",
+      "title": "恢复 FR-06 运行态正式发布链",
+      "description": "作为研报生成工程师，我希望在具备真实依赖锚点的 trade_date 上产出至少 1 条正式 published 研报，以便整个站点不再停留在 Total published: 0。",
+      "acceptanceCriteria": [
+        "在具备核心池、usage 和 market_state 锚点的 trade_date 上，通过 POST /api/v1/reports/generate 或 POST /api/v1/internal/reports/generate-batch 产出至少 1 条 published=1 AND is_deleted=0 的正式研报；python .\\check_state.py 必须显示 Total published > 0。",
+        "新发布 report 必须同时具备 report_generation_task、report_citation、report_data_usage_link、instruction_card 和公开 read model 记录；publish_status 不得停留在 UNPUBLISHED。",
+        "禁止通过手工 SQL 直接把 published 置为 1；若 provider 或 quality gate 失败，必须继续修到至少 1 条真实 published，或以真实 status_reason/quality_flag fail-close。",
+        "GET /api/v1/reports 与 GET /api/v1/reports/{report_id} 必须能读到该正式 report，且 citation 三要素完整。",
+        "python -m pytest tests/test_fr06_report_generate.py tests/test_fr06_quality_pipeline.py tests/test_internal_reports_api.py -q --tb=short",
+        "Typecheck passes"
+      ],
+      "priority": 104,
+      "passes": false,
+      "notes": "{\"group\":\"FR06_RUNTIME\",\"dependsOn\":[\"US-049\",\"US-053\",\"US-054\",\"US-055\",\"US-056\",\"US-060\",\"US-065\",\"US-103\"],\"endpoints\":[\"POST /api/v1/reports/generate\",\"POST /api/v1/internal/reports/generate-batch\",\"GET /api/v1/reports\",\"GET /api/v1/reports/{report_id}\"],\"models\":[\"report\",\"report_generation_task\",\"report_citation\",\"report_data_usage_link\",\"instruction_card\"],\"permissions\":[\"system\",\"internal\",\"admin\",\"public_read\"],\"errorCodes\":[\"DEPENDENCY_NOT_READY\",\"QUALITY_GATE_BLOCKED\",\"LLM_PROVIDER_UNAVAILABLE\",\"PUBLISH_GATE_FAILED\"],\"idempotency\":\"idempotency_key and batch resume must still dedupe report generation while allowing one real published report to emerge\",\"enums\":[\"BUY\",\"SELL\",\"HOLD\",\"ok\",\"degraded\",\"UNPUBLISHED\",\"PUBLISHED\"],\"thresholds\":\"publishedReportsMin=1,checkStateTotalPublishedGt=0\",\"degradation\":\"manual DB flips are forbidden; provider fallback must stay explicit until at least one real report publishes or the story blocks fail-close\",\"exampleAssert\":\"assert published_count>0 and any(row['published']==1 for row in reports_api_items)\",\"pytest\":\"python -m pytest tests/test_fr06_report_generate.py tests/test_fr06_quality_pipeline.py tests/test_internal_reports_api.py -q --tb=short\"}"
+    },
+    {
+      "id": "US-105",
+      "title": "恢复 FR-07 运行态结算与 KPI 快照",
+      "description": "作为测试与质量角色，我希望对真实已发布研报跑通结算与 KPI 快照，以便 Dashboard 上的统计来自真实样本而不是空壳字段。",
+      "acceptanceCriteria": [
+        "对至少 1 条已发布且到达结算窗口的正式 report 执行结算或重放后，settlement_result 新增真实记录，且 settlement_status、exit_reason、net_return_pct、cost_breakdown_fr07 可查询。",
+        "同步生成或刷新匹配窗口的 strategy_metric_snapshot；当 sample_size < 30 时核心指标可以为 null，但 display_hint 与 coverage_pct 必须非空、真实可解释。",
+        "GET /api/v1/dashboard/stats?window_days=<matured_window> 必须返回与运行态 published report 对齐的 total_reports、total_settled、by_strategy_type、baseline_random、baseline_ma_cross 或显式 not-ready 提示。",
+        "结算证据必须来自运行态 published report，不得通过测试夹具写入 settlement_result 伪装恢复。",
+        "python -m pytest tests/test_fr07_settlement_run.py tests/test_fr07_baseline_truth.py tests/test_fr10_site_dashboard.py -q --tb=short",
+        "Typecheck passes"
+      ],
+      "priority": 105,
+      "passes": false,
+      "notes": "{\"group\":\"FR07_RUNTIME\",\"dependsOn\":[\"US-067\",\"US-068\",\"US-069\",\"US-070\",\"US-071\",\"US-072\",\"US-073\",\"US-074\",\"US-104\"],\"endpoints\":[\"POST /api/v1/admin/settlement/replay\",\"GET /api/v1/dashboard/stats?window_days={window_days}\"],\"models\":[\"settlement_result\",\"strategy_metric_snapshot\",\"baseline_random\",\"baseline_ma_cross\",\"report\"],\"permissions\":[\"admin\",\"system\",\"public_read\"],\"errorCodes\":[\"METRIC_NOT_READY\",\"INSUFFICIENT_SAMPLES\",\"CONCURRENT_CONFLICT\",\"VALIDATION_FAILED\"],\"idempotency\":\"replay on the same report/window must be idempotent or versioned without duplicate current facts\",\"enums\":[\"settled\",\"pending\",\"skipped\",\"A\",\"B\",\"C\"],\"thresholds\":\"maturedWindowMustExist=true,minSamplesForCoreMetrics=30\",\"degradation\":\"small samples may keep null metrics with display_hint, but dashboard cannot return fabricated zeros or hide missing runtime data\",\"exampleAssert\":\"assert settled_rows>0 and dashboard_payload['total_reports']>=dashboard_payload['total_settled']>=1\",\"pytest\":\"python -m pytest tests/test_fr07_settlement_run.py tests/test_fr07_baseline_truth.py tests/test_fr10_site_dashboard.py -q --tb=short\"}"
+    },
+    {
+      "id": "US-106",
+      "title": "恢复 FR-08 运行态模拟仓位与账户快照",
+      "description": "作为系统维护者，我希望基于真实 BUY 正式研报跑通模拟仓位与账户快照，以便 sim-dashboard 有真实账户曲线而不是空看板。",
+      "acceptanceCriteria": [
+        "基于至少 1 条运行态 BUY 正式 report 执行模拟盘后，sim_position 与 sim_account_snapshot 至少有一档资金的真实 rows；sim_qty、cost_breakdown、capital_tier 与 published report 一致。",
+        "GET /api/v1/portfolio/sim-dashboard?capital_tier=100k 或等效查询必须返回非空 nav_curve / positions_summary，或明确的 data_status / display_hint；不得 200 返回空壳看板。",
+        "重跑不得产生同 report_id+capital_tier 的重复 OPEN 仓位；回撤/通知若未触发，可保持 pending/none，但不得绕开权限与状态机。",
+        "python -m pytest tests/test_fr08_sim_positioning.py tests/test_fr08_position_lifecycle_e2e.py tests/test_fr10_site_dashboard.py -q --tb=short",
+        "Typecheck passes"
+      ],
+      "priority": 106,
+      "passes": false,
+      "notes": "{\"group\":\"FR08_RUNTIME\",\"dependsOn\":[\"US-075\",\"US-076\",\"US-077\",\"US-078\",\"US-079\",\"US-080\",\"US-081\",\"US-082\",\"US-104\"],\"endpoints\":[\"GET /api/v1/portfolio/sim-dashboard?capital_tier=100k\",\"GET /api/v1/sim/positions/by-report/{report_id}\"],\"models\":[\"sim_position\",\"sim_account_snapshot\",\"notification\",\"report\"],\"permissions\":[\"system\",\"paid_read\",\"admin\",\"public_read\"],\"errorCodes\":[\"INSUFFICIENT_FUNDS_AFTER_ROUNDING\",\"DRAWDOWN_HALT_ACTIVE\",\"TIER_NOT_AVAILABLE\"],\"idempotency\":\"report_id+capital_tier position uniqueness and same-day snapshot upsert must hold during runtime replay\",\"enums\":[\"10k\",\"100k\",\"500k\",\"OPEN\",\"CLOSED\",\"SKIPPED\",\"NORMAL\",\"REDUCE\",\"HALT\"],\"thresholds\":\"defaultTier=100k,lotSize=100,buyExecuteMinConfidence=0.65\",\"degradation\":\"sim dashboard may return explicit data_status/display_hint, but never empty success when runtime positions or snapshots are missing\",\"exampleAssert\":\"assert snapshot_rows>0 and dashboard_payload['capital_tier']=='100k'\",\"pytest\":\"python -m pytest tests/test_fr08_sim_positioning.py tests/test_fr08_position_lifecycle_e2e.py tests/test_fr10_site_dashboard.py -q --tb=short\"}"
+    },
+    {
+      "id": "US-107",
+      "title": "验证 FR-10 运行态页面与高级区",
+      "description": "作为前端与体验角色，我希望首页、列表、详情和高级区都读取到真实运行态数据，以便用户看到的是实际研报闭环而不是空模板。",
+      "acceptanceCriteria": [
+        "基于运行态正式 report，GET /api/v1/home、GET /api/v1/reports、GET /api/v1/reports/{report_id}、GET /api/v1/reports/{report_id}/advanced 返回的计数、标题、market_state 与 python .\\check_state.py / 数据库 published rows 一致。",
+        "`/`、`/reports`、`/reports/{report_id}` 页面必须展示真实数据或显式降级文案；高级区必须中文展示“所用数据”和“生成全过程”，不得继续停留在空模板或占位文案。",
+        "浏览器验证可使用现有浏览器工具或本地 HTML fallback，但必须留下访问 URL 与关键 DOM/文案证据；若浏览器验证不可用，按 BLOCKED fail-close。",
+        "python -m pytest tests/test_fr10_site_dashboard.py tests/test_fr10_reports.py tests/test_doc_driven_verify.py tests/test_frontend_backend_integration.py -q --tb=short",
+        "Typecheck passes"
+      ],
+      "priority": 107,
+      "passes": false,
+      "notes": "{\"group\":\"FR10_RUNTIME\",\"dependsOn\":[\"US-096\",\"US-097\",\"US-098\",\"US-099\",\"US-100\",\"US-104\",\"US-105\",\"US-106\"],\"endpoints\":[\"GET /api/v1/home\",\"GET /api/v1/reports\",\"GET /api/v1/reports/{report_id}\",\"GET /api/v1/reports/{report_id}/advanced\",\"GET /reports/{report_id}\"],\"models\":[\"home_payload\",\"report_list_read_model\",\"report_detail_read_model\",\"advanced_payload\"],\"permissions\":[\"public_read\",\"Free_summary\",\"Pro_full\",\"Enterprise_full\",\"admin_override\"],\"errorCodes\":[\"UNAUTHORIZED\",\"FORBIDDEN\",\"NOT_FOUND\",\"DEGRADED\"],\"idempotency\":\"page and API verification are read-only and must reflect the same published dataset across repeated checks\",\"enums\":[\"ok\",\"computing\",\"degraded\",\"empty\",\"Free\",\"Pro\",\"Enterprise\"],\"thresholds\":\"checkStateTotalPublishedGt=0,advancedChineseSections=2\",\"degradation\":\"if runtime data is missing, UI must render explicit degraded or empty-state copy instead of blank success; browser verification is fail-close\",\"exampleAssert\":\"assert home_count>0 and '所用数据' in advanced_html and '生成全过程' in advanced_html\",\"pytest\":\"python -m pytest tests/test_fr10_site_dashboard.py tests/test_fr10_reports.py tests/test_doc_driven_verify.py tests/test_frontend_backend_integration.py -q --tb=short\"}"
+    },
+    {
+      "id": "US-108",
+      "title": "恢复 FR-12 管理入口与运行态修复闭环",
+      "description": "作为管理员，我希望 overview 与修复入口都绑定到同一份真实运行态数据库，以便管理操作可以审计地推动 Ralph 收尾。",
+      "acceptanceCriteria": [
+        "GET /api/v1/admin/overview 必须反映与运行态同一数据库的 stock_pool_snapshot、market_state_cache、report_generation_task、published reports 等 freshness/summary 事实，不得继续显示与 check_state.py 脱节的占位统计。",
+        "至少 1 个管理员修复入口（如 POST /api/v1/admin/pool/refresh、POST /api/v1/admin/settlement/replay、强制重建/修复入口）能够对同一运行态锚点执行并写入审计记录。",
+        "管理端修复只能通过 API、service 与 audit path 完成；禁止直接改 data/app.db 伪造 overview、published 或结算结果。",
+        "python -m pytest tests/test_fr12_admin.py tests/test_admin_dashboard_frontend_contract.py tests/test_runtime_anchor_consistency.py -q --tb=short",
+        "Typecheck passes"
+      ],
+      "priority": 108,
+      "passes": false,
+      "notes": "{\"group\":\"FR12_RUNTIME\",\"dependsOn\":[\"US-046\",\"US-074\",\"US-094\",\"US-101\",\"US-103\",\"US-104\",\"US-105\",\"US-107\"],\"endpoints\":[\"GET /api/v1/admin/overview\",\"POST /api/v1/admin/pool/refresh\",\"POST /api/v1/admin/settlement/replay\"],\"models\":[\"audit_log\",\"stock_pool_refresh_task\",\"report_generation_task\",\"report\",\"settlement_result\"],\"permissions\":[\"admin\",\"super_admin\"],\"errorCodes\":[\"FORBIDDEN\",\"UNAUTHORIZED\",\"CONCURRENT_CONFLICT\",\"VALIDATION_FAILED\"],\"idempotency\":\"admin replay and refresh actions must stay idempotent or auditable-versioned on the same runtime anchor\",\"enums\":[\"pending\",\"running\",\"completed\",\"failed\",\"sent\",\"skipped\"],\"thresholds\":\"overviewMustReflectRuntimeDb=true,auditRecordsMin=1\",\"degradation\":\"overview may show explicit degraded freshness, but cannot drift away from check_state.py or manual sqlite evidence\",\"exampleAssert\":\"assert overview_counts['published_reports']>=published_count_from_check_state and audit_rows>=1\",\"pytest\":\"python -m pytest tests/test_fr12_admin.py tests/test_admin_dashboard_frontend_contract.py tests/test_runtime_anchor_consistency.py -q --tb=short\"}"
+    }
+  ]
+}

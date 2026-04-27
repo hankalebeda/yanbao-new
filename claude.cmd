@@ -2,7 +2,7 @@
 setlocal
 
 set "ADAPTER_STARTER=C:\Users\Administrator\Desktop\AI\claude\start-claude-local-adapter.ps1"
-set "CLAUDE_EXE=C:\Users\Administrator\.local\bin\claude.exe"
+set "CLAUDE_EXE=C:\Users\Administrator\AppData\Roaming\npm\claude.cmd"
 
 if not exist "%CLAUDE_EXE%" (
   echo [claude-wrapper] Claude executable not found: %CLAUDE_EXE% 1>&2

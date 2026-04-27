@@ -1,0 +1,8 @@
+﻿# Ralph Progress Log
+Started: 2026-04-27 17:02:08
+---
+## Codebase Patterns
+- python .\check_state.py is the runtime canary for active tasks and published reports.
+- Any PRD pass flip must update both .claude/ralph/loop/prd.json and .claude/ralph/prd/yanbao-platform-enhancement.json.
+- Runtime closure stories must verify real data/app.db facts or endpoint/browser evidence; test helpers and manual SQL do not count as runtime proof.
+---

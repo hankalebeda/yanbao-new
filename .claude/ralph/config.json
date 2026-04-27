@@ -1,0 +1,64 @@
+{
+  "name": "yanbao-new-ralph-install",
+  "mode": "repo-local-official-install",
+  "project": "yanbao-new",
+  "installedAt": "2026-04-24",
+  "upstreamClone": ".claude/ralph/vendor/snarktank-ralph",
+  "skills": {
+    "prd": ".claude/skills/prd/SKILL.md",
+    "ralph": ".claude/skills/ralph/SKILL.md"
+  },
+  "markdownPrd": "docs/core/27_PRD_研报平台增强与整体验收基线.md",
+  "acceptanceDoc": "docs/core/28_严格验收与上线门禁.md",
+  "mappingDoc": "docs/core/29_Ralph_PRD字段映射说明.md",
+  "runtimePrd": ".claude/ralph/loop/prd.json",
+  "jsonPrd": ".claude/ralph/prd/yanbao-platform-enhancement.json",
+  "runner": ".claude/ralph/run-ralph.ps1",
+  "loopDir": ".claude/ralph/loop",
+  "branchNamePolicy": {
+    "currentValue": "ralph/ashare-research-platform",
+    "workspaceHasGit": true,
+    "executionMode": "git-present-local-commit-only",
+    "replaceOnlyWhenGitAvailable": false
+  },
+  "tooling": {
+    "defaultTool": "claude",
+    "gitRequired": true,
+    "autoCommitAllowed": true,
+    "bashResolvedFromGitInstall": true,
+    "localJqPath": ".claude/ralph/bin/jq.exe"
+  },
+  "constraints": {
+    "forbiddenWritePaths": [
+      "scripts/",
+      "data/",
+      "output/"
+    ],
+    "allowedWriteRoots": [
+      ".claude/ralph/",
+      "docs/core/"
+    ],
+    "mustKeepTruthfulRuntimeNotes": true,
+    "mustNotInventMissingDocs": [
+      "docs/core/08_AI接入策略.md"
+    ]
+  },
+  "sourcesOfTruth": [
+    "docs/core/01_需求基线.md",
+    "docs/core/02_系统架构.md",
+    "docs/core/05_API与数据契约.md",
+    "docs/core/06_全量数据需求说明.md",
+    "docs/core/22_全量功能进度总表_v12.md",
+    "docs/core/25_系统问题分析角度清单.md",
+    "docs/core/26_自动化执行记忆.md",
+    "docs/core/27_PRD_研报平台增强与整体验收基线.md",
+    "docs/core/28_严格验收与上线门禁.md",
+    "docs/core/29_Ralph_PRD字段映射说明.md"
+  ],
+  "validation": {
+    "jsonParse": true,
+    "runnerDryRun": true,
+    "pytestSlicesDeclaredInAcceptanceDoc": true,
+    "browserGateOptional": true
+  }
+}
