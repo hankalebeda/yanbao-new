@@ -24,7 +24,7 @@
   "tooling": {
     "defaultTool": "claude",
     "gitRequired": true,
-    "autoCommitAllowed": true,
+    "autoCommitAllowed": false,
     "bashResolvedFromGitInstall": true,
     "localJqPath": ".claude/ralph/bin/jq.exe"
   },
