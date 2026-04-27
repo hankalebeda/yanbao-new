@@ -1660,7 +1660,7 @@
         "Typecheck passes"
       ],
       "priority": 107,
-      "passes": false,
+      "passes": true,
       "notes": "{\"group\":\"FR10_RUNTIME\",\"dependsOn\":[\"US-096\",\"US-097\",\"US-098\",\"US-099\",\"US-100\",\"US-104\",\"US-105\",\"US-106\"],\"endpoints\":[\"GET /api/v1/home\",\"GET /api/v1/reports\",\"GET /api/v1/reports/{report_id}\",\"GET /api/v1/reports/{report_id}/advanced\",\"GET /reports/{report_id}\"],\"models\":[\"home_payload\",\"report_list_read_model\",\"report_detail_read_model\",\"advanced_payload\"],\"permissions\":[\"public_read\",\"Free_summary\",\"Pro_full\",\"Enterprise_full\",\"admin_override\"],\"errorCodes\":[\"UNAUTHORIZED\",\"FORBIDDEN\",\"NOT_FOUND\",\"DEGRADED\"],\"idempotency\":\"page and API verification are read-only and must reflect the same published dataset across repeated checks\",\"enums\":[\"ok\",\"computing\",\"degraded\",\"empty\",\"Free\",\"Pro\",\"Enterprise\"],\"thresholds\":\"checkStateTotalPublishedGt=0,advancedChineseSections=2\",\"degradation\":\"if runtime data is missing, UI must render explicit degraded or empty-state copy instead of blank success; browser verification is fail-close\",\"exampleAssert\":\"assert home_count>0 and '所用数据' in advanced_html and '生成全过程' in advanced_html\",\"pytest\":\"python -m pytest tests/test_fr10_site_dashboard.py tests/test_fr10_reports.py tests/test_doc_driven_verify.py tests/test_frontend_backend_integration.py -q --tb=short\"}"
     },
     {
