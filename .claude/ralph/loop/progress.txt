@@ -6,3 +6,17 @@ Started: 2026-04-27 17:02:08
 - Any PRD pass flip must update both .claude/ralph/loop/prd.json and .claude/ralph/prd/yanbao-platform-enhancement.json.
 - Runtime closure stories must verify real data/app.db facts or endpoint/browser evidence; test helpers and manual SQL do not count as runtime proof.
 ---
+## 2026-04-27 19:10 - US-101
+- Confirmed the runtime pool anchor on 2026-04-24 already satisfies the FR-01 closure requirements without code changes: stock_pool_refresh_task(status=COMPLETED, pool_version=21, core_pool_size=200, standby_pool_size=50) and matching stock_pool_snapshot counts (core=200, standby=50).
+- Validation evidence:
+  - python -m pytest tests/test_fr01_pool_refresh.py tests/test_compat_public_endpoints.py -q --tb=short → 17 passed in 60.43s.
+  - Runtime DB query on data/app.db confirmed stock_pool_snapshot rows for trade_date=2026-04-24 are core=200, standby=50.
+  - FastAPI TestClient against the real app with Host: 127.0.0.1 returned GET /api/v1/pool/stocks?trade_date=2026-04-24 → HTTP 200, data.total=200, non-empty items.
+- Files changed: .claude/ralph/loop/progress.txt, .claude/ralph/prd/yanbao-platform-enhancement.json, deleted stray temp_us101.json.
+- Git commit: pending in current run.
+- **Learnings for future iterations:**
+  - The public pool endpoint enforces host validation; local TestClient calls must send Host: 127.0.0.1 or they fail with Invalid host header.
+  - Runtime closure stories can legitimately pass on existing real data, but the agent must still append progress.txt and sync both PRD JSON files before moving on.
+---
+
+

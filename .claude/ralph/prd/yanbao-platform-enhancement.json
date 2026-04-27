@@ -1568,7 +1568,7 @@
         "Typecheck passes"
       ],
       "priority": 101,
-      "passes": false,
+      "passes": true,
       "notes": "{\"group\":\"FR01_RUNTIME\",\"dependsOn\":[\"US-034\",\"US-035\",\"US-036\",\"US-037\",\"US-038\"],\"endpoints\":[\"POST /api/v1/admin/pool/refresh\",\"GET /api/v1/pool/stocks?trade_date={trade_date}\"],\"models\":[\"stock_pool_refresh_task\",\"stock_pool_snapshot\",\"stock_master\",\"kline_daily\"],\"permissions\":[\"admin\",\"system\",\"public_read\"],\"errorCodes\":[\"COLD_START_ERROR\",\"CONCURRENT_CONFLICT\",\"VALIDATION_ERROR\"],\"idempotency\":\"trade_date refresh may reuse latest successful task; snapshot rows stay keyed by trade_date+pool_version+stock_code+pool_role\",\"enums\":[\"core\",\"standby\",\"SUCCESS\",\"FALLBACK\"],\"thresholds\":\"corePoolSize=200,standbyPoolSize=50,targetTradeDateMustHaveKline=true\",\"degradation\":\"fallback_from and status_reason must stay explicit; no seed-helper writes to runtime DB\",\"exampleAssert\":\"assert core_count>=200 and standby_count>=50 and api_items_count>0\",\"pytest\":\"python -m pytest tests/test_fr01_pool_refresh.py tests/test_compat_public_endpoints.py -q --tb=short\"}"
     },
     {
