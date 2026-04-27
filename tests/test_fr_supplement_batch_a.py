@@ -913,13 +913,16 @@ class TestBatchIdNotLeaked:
             db_session, report_id=report_id, trade_date=trade_date
         )
 
-        user = create_user(email="probe2@example.com", tier="Pro")
+        # 普通 Pro 详情接口会在 routes_business 层继续去掉 batch_id；这里用 admin
+        # 观察 payload 级别的 seed/bootstrap 过滤是否仍保留正常 UUID batch_id。
+        user = create_user(email="probe2@example.com", tier="Free", role="admin")
         login = client.post("/auth/login", json={"email": "probe2@example.com", "password": "Password123"})
         token = login.json()["data"]["access_token"]
         resp = client.get(f"/api/v1/reports/{report_id}", headers={"Authorization": f"Bearer {token}"})
         assert resp.status_code == 200
         data = resp.json()["data"]
         returned_batch_ids = [item.get("batch_id") for item in (data.get("used_data") or [])]
+        assert seed_bid not in returned_batch_ids
         assert uuid_bid in returned_batch_ids, (
             f"普通 UUID batch_id {uuid_bid} 应被正常返回，但实际返回了 {returned_batch_ids}"
         )

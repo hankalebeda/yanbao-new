@@ -1,5 +1,7 @@
-﻿import os
+import os
+import sqlite3
 import sys
+import tempfile
 from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 from uuid import uuid4
@@ -7,6 +9,69 @@ from uuid import uuid4
 import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import sessionmaker
+
+
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+
+
+def _candidate_pytest_temp_roots() -> list[Path]:
+    candidates: list[Path] = [PROJECT_ROOT / "_archive"]
+    code_home = os.environ.get("CODEX_HOME", "").strip()
+    if code_home:
+        candidates.append(Path(code_home) / "automations" / "automation" / "_pytest_tmp")
+    candidates.append(Path.home() / ".codex" / "automations" / "automation" / "_pytest_tmp")
+    candidates.append(Path(tempfile.gettempdir()) / "yanbao-new-pytest")
+
+    deduped: list[Path] = []
+    seen: set[str] = set()
+    for candidate in candidates:
+        key = str(candidate.resolve()) if candidate.exists() else str(candidate)
+        if key in seen:
+            continue
+        seen.add(key)
+        deduped.append(candidate)
+    return deduped
+
+
+def _sqlite_writable(path: Path) -> bool:
+    probe_dir = path / ".sqlite_probe"
+    probe_db = probe_dir / "probe.db"
+    try:
+        probe_dir.mkdir(parents=True, exist_ok=True)
+        with sqlite3.connect(str(probe_db)) as conn:
+            conn.execute("CREATE TABLE IF NOT EXISTS t(x INTEGER)")
+            conn.commit()
+        return True
+    except Exception:
+        return False
+    finally:
+        try:
+            probe_db.unlink(missing_ok=True)
+        except Exception:
+            pass
+        try:
+            probe_dir.rmdir()
+        except Exception:
+            pass
+
+
+def _resolve_pytest_temp_root() -> Path:
+    for candidate in _candidate_pytest_temp_roots():
+        if _sqlite_writable(candidate):
+            return candidate
+    raise RuntimeError("No sqlite-writable pytest temp root available")
+
+
+@pytest.fixture()
+def tmp_path():
+    import shutil
+
+    base = _resolve_pytest_temp_root()
+    path = Path(tempfile.mkdtemp(prefix="case_", dir=str(base)))
+    try:
+        yield path
+    finally:
+        shutil.rmtree(path, ignore_errors=True)
 
 
 def pytest_configure(config):
@@ -24,7 +89,7 @@ def pytest_sessionstart(session):
     TempPathFactory 已就绪，可直接覆写 _basetemp。
     """
     import time, shutil, subprocess
-    archive = Path(__file__).resolve().parents[1] / "_archive"
+    archive = _resolve_pytest_temp_root()
 
     # 清理超过 2 小时的旧 pytest_tmp_* 目录（忽略权限错误）
     for old in sorted(archive.glob("pytest_tmp_*")):
@@ -78,8 +143,10 @@ def isolated_app(tmp_path, monkeypatch):
     import app.services.trade_calendar as trade_calendar
     from app.models import Base
 
-    db_path = tmp_path / "test.db"
-    engine = core_db.build_engine(f"sqlite:///{db_path}")
+    db_root = _resolve_pytest_temp_root() / f"app_db_{uuid4().hex}"
+    db_root.mkdir(parents=True, exist_ok=True)
+    db_path = (db_root / "test.db").resolve()
+    engine = core_db.build_engine(f"sqlite:///{db_path.as_posix()}")
     testing_session_local = sessionmaker(autocommit=False, autoflush=False, bind=engine)
     Base.metadata.create_all(bind=engine)
     core_db.ensure_sqlite_schema_alignment(engine)

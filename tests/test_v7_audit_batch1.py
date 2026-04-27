@@ -119,9 +119,9 @@ class TestFR02DAG:
         """FR02-SCHED-02: DAG 拓扑依赖链完整性。"""
         from app.services.dag_scheduler import DAG_DEPENDENCIES
         assert "fr06_report_gen" in DAG_DEPENDENCIES
-        # FR-06 必须依赖 FR-04
+        # FR-06 现在经由 fr05_non_report_truth_materialize 间接依赖 FR-04。
         fr06_deps = DAG_DEPENDENCIES.get("fr06_report_gen", [])
-        assert "fr04_data_collect" in fr06_deps, "fr06 must depend on fr04"
+        assert "fr05_non_report_truth_materialize" in fr06_deps, "fr06 must depend on fr05 truth materialize"
         # FR-07/08 必须依赖 FR-06
         for node in ("fr07_settlement", "fr08_sim_positioning"):
             if node in DAG_DEPENDENCIES:

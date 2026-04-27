@@ -702,6 +702,7 @@
 - `EXT-03`：真实 OAuth / Billing SaaS 接入参数可能仍未到位，若用 Mock 必须是**全真闭环 Mock**。  
 - `EXT-04`：live LLM provider 可能不可达；provider 故障不能被包装成“研报已完成”。  
 - `EXT-05`：真实 SQLite 写锁争用仍可能阻断 live 补数与批量落库。  
+- `EXT-06`: `docs/core/08_AI????.md` is missing in the current worktree; Ralph runtime artifacts must preserve this as missing and must not invent the file contents.  
 
 ### 12.2 仍需明确但不允许靠猜的事项
 

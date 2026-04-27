@@ -173,12 +173,12 @@ class TestFR02DAGEngine:
     def test_dag_dependencies_topology(self):
         """FR02-SCHED-02: DAG拓扑完整性。"""
         from app.services.dag_scheduler import DAG_DEPENDENCIES
-        # 7 nodes
-        assert len(DAG_DEPENDENCIES) == 7
+        # 8 nodes after introducing fr05_non_report_truth_materialize.
+        assert len(DAG_DEPENDENCIES) == 8
         assert DAG_DEPENDENCIES["fr01_stock_pool"] == []
         assert DAG_DEPENDENCIES["fr05_market_state"] == []
         assert "fr01_stock_pool" in DAG_DEPENDENCIES["fr04_data_collect"]
-        assert "fr04_data_collect" in DAG_DEPENDENCIES["fr06_report_gen"]
+        assert "fr05_non_report_truth_materialize" in DAG_DEPENDENCIES["fr06_report_gen"]
         assert "fr06_report_gen" in DAG_DEPENDENCIES["fr07_settlement"]
         assert "fr06_report_gen" in DAG_DEPENDENCIES["fr08_sim_trade"]
         assert "fr08_sim_trade" in DAG_DEPENDENCIES["fr13_event_notify"]
@@ -186,9 +186,9 @@ class TestFR02DAGEngine:
     def test_fr06_blocked_without_fr04(self, db_session):
         """FR02-SCHED-02 差距1: FR-04未完成时FR-06被阻断。"""
         from app.services.dag_scheduler import DAG_DEPENDENCIES, STATUS_SUCCESS
-        # fr06 depends on fr04; if fr04 not SUCCESS, fr06 should not run
+        # fr06 now depends on fr05_non_report_truth_materialize, which in turn depends on fr04.
         deps = DAG_DEPENDENCIES["fr06_report_gen"]
-        assert "fr04_data_collect" in deps
+        assert "fr05_non_report_truth_materialize" in deps
         # Verify via scheduler_ops that checking upstream requires SUCCESS
         from app.services.dag_scheduler import STATUS_WAITING
         assert STATUS_WAITING == "WAITING_UPSTREAM"
