@@ -181,7 +181,7 @@ class Settings(BaseSettings):
     strategy_failure_auto_pause: bool = False     # 默认仅告警，不自动暂停
 
     # ---- 前端/平台配置（供 /platform/config 使用）----
-    capital_tiers: str = '{"1w":{"label":"1 万档","amount":10000},"10w":{"label":"10 万档","amount":100000},"50w":{"label":"50 万档","amount":500000}}'
+    capital_tiers: str = '{"10k":{"label":"1 万档","amount":10000},"100k":{"label":"10 万档","amount":100000},"500k":{"label":"50 万档","amount":500000}}'
     stock_aliases: str = '{"600519":["贵州茅台","茅台","白酒","酱香"],"000001":["平安银行","银行","金融"],"300750":["宁德时代","动力电池","锂电"]}'
     stock_industry_keywords: str = '{"600519":["白酒","消费","酱香","高端白酒"],"000001":["银行","信贷","金融"],"300750":["锂电","动力电池","新能源车"]}'
 

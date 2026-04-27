@@ -82,3 +82,10 @@ node_modules/
 # ===== Temp files =====
 *.tmp
 *.bak
+
+# ===== Local private credentials =====
+ai账户.txt
+github/*.token
+github/*.token.txt
+github/*.local
+github/*.local.*

@@ -6,13 +6,15 @@ from pathlib import Path
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 
+from app.core.config import settings
+from app.core.enums import CAPITAL_TIER_VALUES, DEFAULT_CAPITAL_TIERS
+from app.core.response import envelope
 from app.governance.build_feature_catalog import (
     summarize_catalog_audit_scope,
     summarize_catalog_denominators,
     summarize_catalog_features,
     summarize_feature_traceability,
 )
-from app.core.response import envelope
 from app.core.security import get_current_user_optional
 from app.services.governance_catalog_live import get_live_governance_catalog
 
@@ -80,6 +82,33 @@ def _get_catalog(source: str) -> dict:
     if source == "snapshot":
         return _load_snapshot_catalog()
     return get_live_governance_catalog()
+
+
+def _capital_tier_config() -> dict:
+    try:
+        configured = json.loads(settings.capital_tiers or "{}")
+    except json.JSONDecodeError:
+        configured = {}
+    if set(configured) != set(CAPITAL_TIER_VALUES):
+        configured = dict(DEFAULT_CAPITAL_TIERS)
+    return configured
+
+
+@features_router.get("")
+async def features_overview():
+    tiers = _capital_tier_config()
+    return envelope(
+        data={
+            "capital_tiers": list(CAPITAL_TIER_VALUES),
+            "default_capital_tier": "100k",
+            "capital_tier_config": tiers,
+        }
+    )
+
+
+@features_router.get("/")
+async def features_overview_slash():
+    return await features_overview()
 
 
 def _filter_catalog(

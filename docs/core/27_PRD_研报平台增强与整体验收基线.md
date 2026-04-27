@@ -3,11 +3,11 @@
 > **文档编号**：27  
 > **文档名称**：研报平台增强与整体验收基线（Ralph 执行版 PRD）  
 > **项目名称**：A 股个股研报平台（`yanbao-new`）  
-> **版本**：v2.1（面向 Ralph 的原子执行版）  
-> **产出日期**：2026-04-25  
+> **版本**：v2.2（面向 Ralph 的两步闭环执行版）  
+> **产出日期**：2026-04-26  
 > **适用对象**：产品、研发、测试、运维、自治代理（Ralph / Codex / Gemini CLI）  
 > **编写依据**：`AGENTS.md`、`docs/core/01_需求基线.md`、`02_系统架构.md`、`04_数据治理与血缘.md`、`05_API与数据契约.md`、`06_全量数据需求说明.md`、`22_全量功能进度总表_v12.md`、`25_系统问题分析角度清单.md`、`26_自动化执行记忆.md`，以及 `app/`、`tests/` 当前实现  
-> **文档目标**：把“业务目标、关键对象、页面行为、失败与降级边界、数据血缘、任务拆解、测试锚点”收敛为一份 AI 可执行 PRD，并把 `prd.json` 拆到单轮可完成的原子故事，使 Ralph 仅依据 JSON、本文与 SSOT 文档就能逐步生成系统。  
+> **文档目标**：把“业务目标、关键对象、页面行为、失败与降级边界、数据血缘、任务拆解、测试锚点”收敛为一份 AI 可执行 PRD，并把 `prd.json` 拆到单轮可完成的原子故事；Step 2 只能把 `.claude/ralph/loop/prd.json` 作为直接任务入口，本文与 SSOT 文档只作为 Step 1 生成 JSON 的来源。  
 > **真实性声明**：本文描述的是**目标系统**与**必须满足的真实约束**，同时显式保留当前运行态阻塞与外部依赖缺口；禁止把未接入或未恢复的能力写成“已完成”。
 
 ---
@@ -16,7 +16,7 @@
 
 1. `01/02/04/05/06` 仍是正式 SSOT；本文不替代它们，而是把实现者真正需要的跨文档信息整合成执行视图。  
 2. 本文读者包括 junior 开发者与 AI 代理，因此必须写明：**触发、输入、输出、状态、降级、异常、页面、接口、关键对象、验证方式**。  
-3. 对 Ralph 而言，本文只定义**系统目标与切片原则**；真正的原子执行任务以 `.claude/ralph/loop/prd.json` 为准。  
+3. 对 Ralph 而言，本文只定义**系统目标与切片原则**；真正的原子执行任务以 `.claude/ralph/loop/prd.json` 为准，Step 2 不再依赖口头补充或临时说明。  
 4. 正式文档必须放在 `docs/core/`；禁止把正式需求、验收与中间产物放入桌面或无编号目录。  
 5. 任何实现都必须遵守项目红线：**禁止伪造数据、禁止偷换分母、禁止以 HTTP 200 伪装功能可用、禁止把 soft delete 当成修复完成**。
 
@@ -61,7 +61,7 @@
 
 ### 2.2 交付目标
 
-- 让代理仅依赖 `prd.json` 就能按依赖顺序完成系统实现，而不是依赖口头说明。  
+- 让 Ralph 仅依赖 runtime 版 `prd.json` 就能按依赖顺序完成系统实现，而不是依赖口头说明。  
 - 让每个执行切片都足够小：一个切片只做一类模型、一个 API、一个页面区块、一个任务治理点或一个统计闭环。  
 - 让每个切片都可验证：能通过 typecheck、targeted tests、必要时通过浏览器验证。  
 
@@ -582,8 +582,8 @@
 - 每条 story 的 `acceptanceCriteria` 至少覆盖 5 类信息：入口与权限、状态码与错误码、幂等键或唯一键、枚举或阈值与降级、示例断言与 pytest 命令。  
 - 每条 story 必须包含 `Typecheck passes`；涉及业务逻辑、API、持久化、权限或统计时必须包含 `Tests pass`；涉及 HTML/UI 时必须包含 `Verify in browser using dev-browser skill`。  
 - `passes` 初始值统一为 `false`。`notes` 不能再留空，必须是紧凑 JSON 字符串，至少包含 `group`、`dependsOn`、`endpoints`、`models`、`permissions`、`errorCodes`、`idempotency`、`enums`、`thresholds`、`degradation`、`exampleAssert`、`pytest`。  
-- `branchName` 以 `.claude/ralph/config.json` 与 `.claude/ralph/loop/prd.json` 为准，固定为 `ralph/ashare-research-platform`；当前 no-git workspace 由 restricted mode 跳过 checkout/commit，但不改写该 branchName。  
-- `.claude/ralph/prompt.md` 与 loop 指令中引用的 `docs/core/28_严格验收与上线门禁.md`、`docs/core/29_Ralph_PRD字段映射说明.md` 当前缺失，因此 27 文档与 `prd.json` 本身必须内联这些关键规则，不能把执行约束外包给不存在文档。  
+- `branchName` 以 `.claude/ralph/config.json` 与 `.claude/ralph/loop/prd.json` 为准，固定为 `ralph/ashare-research-platform`；当前仓库存在 `.git`，但 Ralph 不得自动 checkout、commit 或改写分支，除非用户在当轮明确授权。  
+- `docs/core/28_严格验收与上线门禁.md` 与 `docs/core/29_Ralph_PRD字段映射说明.md` 是 Ralph 的规则补充来源；runtime 版 `prd.json` 仍必须内联 story 选择、依赖、验收、降级、blocked/fail-close 与 `passes` 变更规则，不能把关键执行语义外包给隐藏上下文。  
 - `prd.json` 顶层与 story 级字段只能使用 Ralph 官方最小 schema：`project`、`branchName`、`description`、`userStories`，以及 story 的 `id`、`title`、`description`、`acceptanceCriteria`、`priority`、`passes`、`notes`。禁止自定义 `tags`、`deps`、`owner`、`component` 等扩展字段。  
 
 #### 10.6.1 禁用模糊词
@@ -633,7 +633,7 @@
 3. 代码改动后执行该 story 对应的最小测试切片；只改 Markdown/JSON/PowerShell 时至少完成 JSON parse 与编辑器诊断。  
 4. 不引入 501、空壳接口、伪数据、伪 citation、伪成功 HTTP 200。  
 5. 不修改 `scripts/`、`data/`、`output/`，不在根目录写临时文件。  
-6. 成功后只把当前 story 的 `passes` 改为 `true`，并追加 `progress.txt`。  
+6. 成功后只把当前 story 的 `passes` 改为 `true`，并追加 `progress.txt`；未获用户明确授权时禁止自动提交 git commit。  
 
 ### 10.8 推荐实施阶段
 
@@ -658,7 +658,7 @@
 - 命名副本固定为 `.claude/ralph/prd/yanbao-platform-enhancement.json`，必须与 runtime 文件内容一致。  
 - 更新 story 数量、优先级或验收标准后，必须做 JSON 解析校验，并确认两个 JSON 文件同步。  
 - 不在 `prd.json` 内加入 Ralph 官方 schema 之外的自定义字段，避免 loop 脚本或后续工具解析歧义。  
-- `description` 必须显式说明缺失 28/29 文档时的替代规则已经内联到当前 JSON。  
+- `description` 必须显式说明 28/29 规则与关键执行语义已经沉淀到当前 JSON。  
 - `notes` 不能为空字符串；若某条 story 无额外局部元数据，也必须提供最小基线 JSON 键，并把细节回指到 `acceptanceCriteria`。  
 - pytest 命令只能引用工作区内真实存在的测试文件；禁止发明 `tests/test_xxx.py`。  
 - 修改 `branchName`、story 数量、优先级、测试命令或 `notes` 结构时，两个 JSON 文件必须做同内容更新。  

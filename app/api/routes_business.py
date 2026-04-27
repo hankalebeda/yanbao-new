@@ -763,8 +763,8 @@ async def platform_config():
     except Exception:
         pass
     if not tiers:
-        tiers = {"1w": {"label": "1 万档", "amount": 10000}, "10w": {"label": "10 万档", "amount": 100000}, "50w": {"label": "50 万档", "amount": 500000}}
-    default_tier = "10w" if "10w" in tiers else (list(tiers.keys())[0] if tiers else "10w")
+        tiers = {"10k": {"label": "1 万档", "amount": 10000}, "100k": {"label": "10 万档", "amount": 100000}, "500k": {"label": "50 万档", "amount": 500000}}
+    default_tier = "100k" if "100k" in tiers else (list(tiers.keys())[0] if tiers else "100k")
     return envelope(data={
         "api_base": settings.api_prefix,
         "capital_tiers": tiers,

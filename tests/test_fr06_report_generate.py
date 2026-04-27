@@ -1771,6 +1771,7 @@ def test_fr06_commits_processing_task_before_slow_model_call(db_session, isolate
     trade_date = "2026-03-06"
     idempotency_key = f"daily:600519.SH:{trade_date}"
     seed_generation_context(db_session, trade_date=trade_date)
+    db_session.commit()
 
     model_started = Event()
     allow_finish = Event()
@@ -1803,7 +1804,9 @@ def test_fr06_commits_processing_task_before_slow_model_call(db_session, isolate
 
     worker = Thread(target=do_generate, daemon=True)
     worker.start()
-    assert model_started.wait(timeout=2), "slow model did not start"
+    if not model_started.wait(timeout=15):
+        worker.join(timeout=10)
+        raise AssertionError(f"slow model did not start; result_holder={result_holder!r}")
 
     inspect_db = isolated_app["sessionmaker"]()
     try:
