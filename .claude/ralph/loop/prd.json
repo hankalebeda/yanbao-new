@@ -1583,7 +1583,7 @@
         "Typecheck passes"
       ],
       "priority": 102,
-      "passes": false,
+      "passes": true,
       "notes": "{\"group\":\"FR04_RUNTIME\",\"dependsOn\":[\"US-026\",\"US-027\",\"US-028\",\"US-029\",\"US-030\",\"US-031\",\"US-101\"],\"endpoints\":[\"POST /api/v1/internal/stocks/{stock_code}/non-report-data/collect?trade_date={trade_date}\",\"GET /api/v1/stocks/{stock_code}/snapshot\"],\"models\":[\"report_data_usage\",\"data_batch\",\"stock_profile\",\"hotspot_top50\",\"market_state_cache\"],\"permissions\":[\"internal\",\"admin\",\"system\"],\"errorCodes\":[\"DEPENDENCY_NOT_READY\",\"DATA_SOURCE_UNAVAILABLE\",\"QUALITY_GATE_BLOCKED\"],\"idempotency\":\"stock_code+trade_date+dataset_name usage rows must be reused on rerun\",\"enums\":[\"ok\",\"stale_ok\",\"missing\",\"degraded\"],\"thresholds\":\"requiredDatasets=kline_daily|market_state_input|stock_profile,externalEvidenceMin=1\",\"degradation\":\"bad datasets remain explicit in report_data_usage and never get rewritten to ok without new evidence\",\"exampleAssert\":\"assert {'kline_daily','market_state_input','stock_profile'} <= dataset_names and external_ok_count>=1\",\"pytest\":\"python -m pytest tests/test_fr04_multisource_ingest.py tests/test_usage_lineage.py tests/test_runtime_anchor_consistency.py -q --tb=short\"}"
     },
     {

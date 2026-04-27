@@ -20,3 +20,17 @@ Started: 2026-04-27 17:02:08
 ---
 
 
+## 2026-04-27 19:16 - US-102
+- Verified FR-04 runtime truth-layer closure on core stock 688525.SH / 	rade_date=2026-04-24 using the real internal collect endpoint and the live data/app.db.
+- Validation evidence:
+  - python -m pytest tests/test_fr04_multisource_ingest.py tests/test_usage_lineage.py tests/test_runtime_anchor_consistency.py -q --tb=short → 24 passed in 32.17s.
+  - POST /api/v1/internal/stocks/688525.SH/non-report-data/collect?trade_date=2026-04-24 with X-Internal-Token returned HTTP 200 and real market_state_input, 
+orthbound_summary, etf_flow_summary, stock_profile data.
+  - Re-running the same internal collect call kept the tracked eport_data_usage row count flat (efore=5, fter=5) for the required dataset set, proving idempotent reuse instead of duplicate inserts.
+- Files changed: .claude/ralph/loop/prd.json, .claude/ralph/prd/yanbao-platform-enhancement.json, .claude/ralph/loop/progress.txt.
+- Git commit: pending in current run.
+- **Learnings for future iterations:**
+  - The internal non-report collect route is a good runtime proof point because it exercises the real truth-layer writers against data/app.db without relying on seed helpers.
+  - 
+orthbound_summary can recover to ok through the runtime collect route even when older persisted rows were degraded or missing, so runtime evidence should prefer a fresh endpoint hit over stale row snapshots alone.
+---
