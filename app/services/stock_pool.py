@@ -562,6 +562,12 @@ def refresh_stock_pool(
     try:
         task_t = Base.metadata.tables["stock_pool_refresh_task"]
         snapshot_t = Base.metadata.tables["stock_pool_snapshot"]
+        score_t = Base.metadata.tables.get("stock_score")
+        exact_task_row = db.execute(
+            task_t.select()
+            .where(task_t.c.trade_date == td)
+            .order_by(task_t.c.updated_at.desc(), task_t.c.created_at.desc())
+        ).mappings().first()
 
         if not force_rebuild:
             existing = get_exact_pool_view(db, td, allow_fallback_as_runtime_anchor=True)
@@ -656,8 +662,12 @@ def refresh_stock_pool(
                 ]
 
         latest_version = db.execute(text("SELECT COALESCE(MAX(pool_version), 0) FROM stock_pool_refresh_task")).scalar() or 0
-        pool_version = int(latest_version) + 1
-        task_id = str(uuid4())
+        if exact_task_row is not None:
+            pool_version = int(exact_task_row.get("pool_version") or (int(latest_version) + 1))
+            task_id = str(exact_task_row["task_id"])
+        else:
+            pool_version = int(latest_version) + 1
+            task_id = str(uuid4())
         now = _now_utc()
 
         prev_view = get_effective_pool_view(db, td)
@@ -666,25 +676,48 @@ def refresh_stock_pool(
         evicted_stocks = sorted(prev_core - new_core)
         status_reason = fallback_reason or build_failed_reason
 
-        db.execute(
-            task_t.insert().values(
-                task_id=task_id,
-                trade_date=td,
-                status=status,
-                pool_version=pool_version,
-                fallback_from=fallback_from,
-                filter_params_json=json.dumps(params, ensure_ascii=False),
-                core_pool_size=len(core),
-                standby_pool_size=len(standby),
-                evicted_stocks_json=json.dumps(evicted_stocks, ensure_ascii=False),
-                status_reason=status_reason,
-                request_id=request_id,
-                started_at=now,
-                finished_at=now,
-                updated_at=now,
-                created_at=now,
+        if exact_task_row is not None:
+            db.execute(snapshot_t.delete().where(snapshot_t.c.refresh_task_id == task_id))
+            if score_t is not None:
+                db.execute(score_t.delete().where(score_t.c.pool_date == td.isoformat()))
+            db.execute(
+                task_t.update()
+                .where(task_t.c.task_id == task_id)
+                .values(
+                    status=status,
+                    pool_version=pool_version,
+                    fallback_from=fallback_from,
+                    filter_params_json=json.dumps(params, ensure_ascii=False),
+                    core_pool_size=len(core),
+                    standby_pool_size=len(standby),
+                    evicted_stocks_json=json.dumps(evicted_stocks, ensure_ascii=False),
+                    status_reason=status_reason,
+                    request_id=request_id,
+                    started_at=now,
+                    finished_at=now,
+                    updated_at=now,
+                )
             )
-        )
+        else:
+            db.execute(
+                task_t.insert().values(
+                    task_id=task_id,
+                    trade_date=td,
+                    status=status,
+                    pool_version=pool_version,
+                    fallback_from=fallback_from,
+                    filter_params_json=json.dumps(params, ensure_ascii=False),
+                    core_pool_size=len(core),
+                    standby_pool_size=len(standby),
+                    evicted_stocks_json=json.dumps(evicted_stocks, ensure_ascii=False),
+                    status_reason=status_reason,
+                    request_id=request_id,
+                    started_at=now,
+                    finished_at=now,
+                    updated_at=now,
+                    created_at=now,
+                )
+            )
 
         for rank, candidate in enumerate(core, start=1):
             db.execute(
@@ -717,7 +750,6 @@ def refresh_stock_pool(
                 )
             )
 
-        score_t = Base.metadata.tables.get("stock_score")
         if score_t is not None:
             for candidate in core + standby[:STANDBY_POOL_SIZE]:
                 fv = candidate.factor_values

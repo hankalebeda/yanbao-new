@@ -104,7 +104,7 @@ ENUM_CHECKS: dict[tuple[str, str], tuple[str, ...]] = {
     ("report_feedback", "feedback_type"): ("positive", "negative"),
     # FR-12
     ("admin_operation", "status"): ("PENDING", "EXECUTING", "COMPLETED", "REJECTED", "FAILED"),
-    ("admin_operation", "action_type"): ("PATCH_USER", "PATCH_REPORT", "FORCE_REGENERATE", "RECONCILE_ORDER", "RUN_SETTLEMENT", "UPSERT_COOKIE_SESSION"),
+    ("admin_operation", "action_type"): ("PATCH_USER", "PATCH_REPORT", "FORCE_REGENERATE", "RECONCILE_ORDER", "RUN_SETTLEMENT", "UPSERT_COOKIE_SESSION", "POOL_REFRESH"),
     # FR-13
     ("business_event", "event_status"): ("CREATED", "DEDUP_SKIPPED", "ENQUEUED"),
     ("business_event", "event_type"): ("POSITION_CLOSED", "BUY_SIGNAL_DAILY", "DRAWDOWN_ALERT", "REPORT_PENDING_REVIEW"),

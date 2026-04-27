@@ -727,3 +727,62 @@ def test_fr01_concurrent_conflict_409(client, db_session, create_user, isolated_
 
     assert response.status_code == 409
     assert response.json()["error_code"] == "CONCURRENT_CONFLICT"
+
+
+def test_fr01_force_rebuild_same_trade_date_reuses_single_task_row(client, db_session, create_user):
+    trade_date = "2026-03-09"
+    _seed_universe(db_session, trade_date=trade_date)
+    headers = _auth_headers(client, create_user)
+
+    first = client.post(
+        "/api/v1/admin/pool/refresh",
+        headers=headers | {"X-Request-ID": "req-fr01-force-first"},
+        json={"trade_date": trade_date, "force_rebuild": False},
+    )
+    assert first.status_code == 200
+    first_task_id = first.json()["data"]["task_id"]
+
+    second = client.post(
+        "/api/v1/admin/pool/refresh",
+        headers=headers | {"X-Request-ID": "req-fr01-force-second"},
+        json={"trade_date": trade_date, "force_rebuild": True},
+    )
+
+    assert second.status_code == 200
+    body = second.json()
+    assert body["data"]["task_id"] == first_task_id
+    assert body["data"]["status"] == "COMPLETED"
+
+    refresh_task = Base.metadata.tables["stock_pool_refresh_task"]
+    snapshot = Base.metadata.tables["stock_pool_snapshot"]
+    admin_operation = Base.metadata.tables["admin_operation"]
+    audit_log = Base.metadata.tables["audit_log"]
+
+    task_rows = db_session.execute(
+        refresh_task.select().where(refresh_task.c.trade_date == date.fromisoformat(trade_date))
+    ).fetchall()
+    assert len(task_rows) == 1
+    assert task_rows[0].task_id == first_task_id
+    assert task_rows[0].request_id == "req-fr01-force-second"
+
+    snapshot_rows = db_session.execute(
+        snapshot.select().where(snapshot.c.refresh_task_id == first_task_id)
+    ).fetchall()
+    assert len([row for row in snapshot_rows if row.pool_role == "core"]) == 200
+    assert len([row for row in snapshot_rows if row.pool_role == "standby"]) >= 1
+
+    op_rows = db_session.execute(
+        admin_operation.select().where(
+            admin_operation.c.action_type == "POOL_REFRESH",
+            admin_operation.c.target_pk == trade_date,
+        )
+    ).fetchall()
+    assert op_rows
+
+    audit_rows = db_session.execute(
+        audit_log.select().where(
+            audit_log.c.action_type == "POOL_REFRESH",
+            audit_log.c.target_pk == trade_date,
+        )
+    ).fetchall()
+    assert audit_rows

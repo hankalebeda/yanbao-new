@@ -7,12 +7,83 @@ from uuid import uuid4
 from app.core.request_context import resolve_record_request_id
 from app.models import AdminOperation, AuditLog
 from app.services.notification import dispatch_nfr13_alert
+from sqlalchemy import text
 
 logger = logging.getLogger(__name__)
+
+_ADMIN_OPERATION_ACTION_TYPES = (
+    "PATCH_USER",
+    "PATCH_REPORT",
+    "FORCE_REGENERATE",
+    "RECONCILE_ORDER",
+    "RUN_SETTLEMENT",
+    "UPSERT_COOKIE_SESSION",
+    "POOL_REFRESH",
+)
 
 
 def utc_now() -> datetime:
     return datetime.now(timezone.utc)
+
+
+def _ensure_admin_operation_action_type_support(db) -> None:
+    if db.bind.dialect.name != "sqlite":
+        return
+
+    create_sql = db.execute(
+        text("SELECT sql FROM sqlite_master WHERE type='table' AND name='admin_operation'")
+    ).scalar()
+    if not create_sql:
+        return
+    create_sql = str(create_sql)
+    if "POOL_REFRESH" in create_sql:
+        return
+    if "ck_admin_operation_action_type_enum" not in create_sql:
+        return
+
+    index_rows = db.execute(
+        text(
+            """
+            SELECT name, sql
+            FROM sqlite_master
+            WHERE type = 'index'
+              AND tbl_name = 'admin_operation'
+              AND sql IS NOT NULL
+            ORDER BY name ASC
+            """
+        )
+    ).mappings().all()
+    column_rows = db.execute(text("PRAGMA table_info(admin_operation)")).mappings().all()
+    column_names = [str(row.get("name") or "") for row in column_rows if str(row.get("name") or "")]
+    if not column_names:
+        return
+
+    old_constraint = (
+        "CONSTRAINT ck_admin_operation_action_type_enum CHECK "
+        "(action_type IN ('PATCH_USER', 'PATCH_REPORT', 'FORCE_REGENERATE', 'RECONCILE_ORDER', 'RUN_SETTLEMENT', 'UPSERT_COOKIE_SESSION'))"
+    )
+    new_constraint = (
+        "CONSTRAINT ck_admin_operation_action_type_enum CHECK "
+        "(action_type IN ('PATCH_USER', 'PATCH_REPORT', 'FORCE_REGENERATE', 'RECONCILE_ORDER', 'RUN_SETTLEMENT', 'UPSERT_COOKIE_SESSION', 'POOL_REFRESH'))"
+    )
+    temp_name = f"admin_operation_repair_{uuid4().hex[:8]}"
+    quoted_cols = ", ".join(f'"{name}"' for name in column_names)
+    repaired_sql = create_sql.replace('CREATE TABLE admin_operation', f'CREATE TABLE "{temp_name}"', 1)
+    repaired_sql = repaired_sql.replace('CREATE TABLE "admin_operation"', f'CREATE TABLE "{temp_name}"', 1)
+    repaired_sql = repaired_sql.replace(old_constraint, new_constraint, 1)
+
+    db.commit()
+    db.execute(text("PRAGMA foreign_keys=OFF"))
+    db.execute(text(repaired_sql))
+    db.execute(text(f'INSERT INTO "{temp_name}" ({quoted_cols}) SELECT {quoted_cols} FROM admin_operation'))
+    db.execute(text("DROP TABLE admin_operation"))
+    db.execute(text(f'ALTER TABLE "{temp_name}" RENAME TO admin_operation'))
+    for row in index_rows:
+        sql = str(row.get("sql") or "").strip()
+        if sql:
+            db.execute(text(sql))
+    db.execute(text("PRAGMA foreign_keys=ON"))
+    db.commit()
 
 
 def _admin_operation_alert_type(*, action_type: str, status: str) -> str:
@@ -91,6 +162,7 @@ def create_admin_operation(
     started_at: datetime | None = None,
     finished_at: datetime | None = None,
 ):
+    _ensure_admin_operation_action_type_support(db)
     resolved_request_id = resolve_record_request_id(request_id)
     operation = AdminOperation(
         operation_id=str(uuid4()),
