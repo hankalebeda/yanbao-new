@@ -38,6 +38,62 @@ def _query_one(db: Session, sql_text: str, params: dict[str, Any]) -> dict[str, 
     return dict(row) if row else None
 
 
+def _repair_sim_position_report_fk_if_needed(db: Session) -> bool:
+    fk_rows = db.execute(text("PRAGMA foreign_key_list(sim_position)")).mappings().all()
+    bad_parent = next(
+        (
+            str(row.get("table") or "")
+            for row in fk_rows
+            if str(row.get("from") or "") == "report_id" and str(row.get("table") or "").startswith("__tmp_report_")
+        ),
+        "",
+    )
+    if not bad_parent:
+        return False
+
+    create_sql = db.execute(
+        text("SELECT sql FROM sqlite_master WHERE type='table' AND name='sim_position'")
+    ).scalar()
+    if not create_sql or bad_parent not in str(create_sql):
+        return False
+
+    index_rows = db.execute(
+        text(
+            """
+            SELECT name, sql
+            FROM sqlite_master
+            WHERE type = 'index'
+              AND tbl_name = 'sim_position'
+              AND sql IS NOT NULL
+            ORDER BY name ASC
+            """
+        )
+    ).mappings().all()
+    column_rows = db.execute(text("PRAGMA table_info(sim_position)")).mappings().all()
+    column_names = [str(row.get("name") or "") for row in column_rows if str(row.get("name") or "")]
+    if not column_names:
+        raise RuntimeError("sim_position_repair_failed:no_columns")
+
+    temp_name = f"sim_position_fk_repair_{uuid4().hex[:8]}"
+    quoted_cols = ", ".join(f'"{name}"' for name in column_names)
+    repaired_sql = str(create_sql).replace("CREATE TABLE sim_position", f"CREATE TABLE {temp_name}", 1)
+    repaired_sql = repaired_sql.replace(f'REFERENCES "{bad_parent}"', "REFERENCES report", 1)
+
+    db.commit()
+    db.execute(text("PRAGMA foreign_keys=OFF"))
+    db.execute(text(repaired_sql))
+    db.execute(text(f'INSERT INTO "{temp_name}" ({quoted_cols}) SELECT {quoted_cols} FROM sim_position'))
+    db.execute(text("DROP TABLE sim_position"))
+    db.execute(text(f'ALTER TABLE "{temp_name}" RENAME TO sim_position'))
+    for row in index_rows:
+        sql = str(row.get("sql") or "").strip()
+        if sql:
+            db.execute(text(sql))
+    db.execute(text("PRAGMA foreign_keys=ON"))
+    db.commit()
+    return True
+
+
 def _buy_cost(open_price: float, shares: int) -> tuple[float, float, float]:
     amount = open_price * shares
     commission = max(amount * 0.00025, 5.0)
@@ -528,6 +584,7 @@ def _reconcile_accounts(db: Session, *, trade_day: date, accounts: dict[str, dic
 
 def process_trade_date(db: Session, trade_date: str) -> None:
     trade_day = date.fromisoformat(trade_date)
+    _repair_sim_position_report_fk_if_needed(db)
     ensure_sim_accounts(db)
     accounts = _load_accounts(db)
     if not accounts:

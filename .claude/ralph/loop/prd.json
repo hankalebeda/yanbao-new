@@ -1645,7 +1645,7 @@
         "Typecheck passes"
       ],
       "priority": 106,
-      "passes": false,
+      "passes": true,
       "notes": "{\"group\":\"FR08_RUNTIME\",\"dependsOn\":[\"US-075\",\"US-076\",\"US-077\",\"US-078\",\"US-079\",\"US-080\",\"US-081\",\"US-082\",\"US-104\"],\"endpoints\":[\"GET /api/v1/portfolio/sim-dashboard?capital_tier=100k\",\"GET /api/v1/sim/positions/by-report/{report_id}\"],\"models\":[\"sim_position\",\"sim_account_snapshot\",\"notification\",\"report\"],\"permissions\":[\"system\",\"paid_read\",\"admin\",\"public_read\"],\"errorCodes\":[\"INSUFFICIENT_FUNDS_AFTER_ROUNDING\",\"DRAWDOWN_HALT_ACTIVE\",\"TIER_NOT_AVAILABLE\"],\"idempotency\":\"report_id+capital_tier position uniqueness and same-day snapshot upsert must hold during runtime replay\",\"enums\":[\"10k\",\"100k\",\"500k\",\"OPEN\",\"CLOSED\",\"SKIPPED\",\"NORMAL\",\"REDUCE\",\"HALT\"],\"thresholds\":\"defaultTier=100k,lotSize=100,buyExecuteMinConfidence=0.65\",\"degradation\":\"sim dashboard may return explicit data_status/display_hint, but never empty success when runtime positions or snapshots are missing\",\"exampleAssert\":\"assert snapshot_rows>0 and dashboard_payload['capital_tier']=='100k'\",\"pytest\":\"python -m pytest tests/test_fr08_sim_positioning.py tests/test_fr08_position_lifecycle_e2e.py tests/test_fr10_site_dashboard.py -q --tb=short\"}"
     },
     {
