@@ -1675,7 +1675,7 @@
         "Typecheck passes"
       ],
       "priority": 108,
-      "passes": false,
+      "passes": true,
       "notes": "{\"group\":\"FR12_RUNTIME\",\"dependsOn\":[\"US-046\",\"US-074\",\"US-094\",\"US-101\",\"US-103\",\"US-104\",\"US-105\",\"US-107\"],\"endpoints\":[\"GET /api/v1/admin/overview\",\"POST /api/v1/admin/pool/refresh\",\"POST /api/v1/admin/settlement/replay\"],\"models\":[\"audit_log\",\"stock_pool_refresh_task\",\"report_generation_task\",\"report\",\"settlement_result\"],\"permissions\":[\"admin\",\"super_admin\"],\"errorCodes\":[\"FORBIDDEN\",\"UNAUTHORIZED\",\"CONCURRENT_CONFLICT\",\"VALIDATION_FAILED\"],\"idempotency\":\"admin replay and refresh actions must stay idempotent or auditable-versioned on the same runtime anchor\",\"enums\":[\"pending\",\"running\",\"completed\",\"failed\",\"sent\",\"skipped\"],\"thresholds\":\"overviewMustReflectRuntimeDb=true,auditRecordsMin=1\",\"degradation\":\"overview may show explicit degraded freshness, but cannot drift away from check_state.py or manual sqlite evidence\",\"exampleAssert\":\"assert overview_counts['published_reports']>=published_count_from_check_state and audit_rows>=1\",\"pytest\":\"python -m pytest tests/test_fr12_admin.py tests/test_admin_dashboard_frontend_contract.py tests/test_runtime_anchor_consistency.py -q --tb=short\"}"
     }
   ]
