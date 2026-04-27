@@ -1630,7 +1630,7 @@
         "Typecheck passes"
       ],
       "priority": 105,
-      "passes": false,
+      "passes": true,
       "notes": "{\"group\":\"FR07_RUNTIME\",\"dependsOn\":[\"US-067\",\"US-068\",\"US-069\",\"US-070\",\"US-071\",\"US-072\",\"US-073\",\"US-074\",\"US-104\"],\"endpoints\":[\"POST /api/v1/admin/settlement/replay\",\"GET /api/v1/dashboard/stats?window_days={window_days}\"],\"models\":[\"settlement_result\",\"strategy_metric_snapshot\",\"baseline_random\",\"baseline_ma_cross\",\"report\"],\"permissions\":[\"admin\",\"system\",\"public_read\"],\"errorCodes\":[\"METRIC_NOT_READY\",\"INSUFFICIENT_SAMPLES\",\"CONCURRENT_CONFLICT\",\"VALIDATION_FAILED\"],\"idempotency\":\"replay on the same report/window must be idempotent or versioned without duplicate current facts\",\"enums\":[\"settled\",\"pending\",\"skipped\",\"A\",\"B\",\"C\"],\"thresholds\":\"maturedWindowMustExist=true,minSamplesForCoreMetrics=30\",\"degradation\":\"small samples may keep null metrics with display_hint, but dashboard cannot return fabricated zeros or hide missing runtime data\",\"exampleAssert\":\"assert settled_rows>0 and dashboard_payload['total_reports']>=dashboard_payload['total_settled']>=1\",\"pytest\":\"python -m pytest tests/test_fr07_settlement_run.py tests/test_fr07_baseline_truth.py tests/test_fr10_site_dashboard.py -q --tb=short\"}"
     },
     {
