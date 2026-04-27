@@ -37,4 +37,12 @@
 - 商业底线：真实胜率≥55%、盈亏比≥1.5、年化Alpha≥10%；方向命中率仅作监控；统计带样本数、覆盖率。
 - 高级区：中文展示「所用数据」与「生成全过程」；缺失/降级显式说明。
 
+## Ralph 双步自举闭环补充约束
+
+- Step 1（`python -m codex.ralph_compile ...`）负责重写 `docs/core/27`、`docs/core/28`、`docs/core/29` 与双份 `prd.json`，不得改业务代码。
+- Step 2（现有 Ralph runner）只允许改当前 story 的 `writeScope`、双份 `prd.json`、`progress.txt` 及对应代码/测试文件，不得改 `docs/core/27/28/29`。
+- `US-101` 到 `US-108` 固定作为运行态闭环 baseline stories；新增 runtime gap 只能追加为 `US-109+`。
+- `notes` 现在要求 18 个固定键：`group`、`dependsOn`、`endpoints`、`models`、`permissions`、`errorCodes`、`idempotency`、`enums`、`thresholds`、`degradation`、`exampleAssert`、`pytest`、`writeScope`、`readScope`、`runtimeChecks`、`dbTables`、`envDeps`、`hardBlockers`。
+- `docs/core/08_AI接入策略.md` 当前缺失，所有自动化与文档生成都只能显式保留 missing，不能发明其内容。
+
 更多角色（预测与回灌、运维与可观测、产品与范围）及多 Agent 编排见 `.cursor/rules/` 下各角色规则文件。
