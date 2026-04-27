@@ -34,3 +34,15 @@ orthbound_summary, etf_flow_summary, stock_profile data.
   - 
 orthbound_summary can recover to ok through the runtime collect route even when older persisted rows were degraded or missing, so runtime evidence should prefer a fresh endpoint hit over stale row snapshots alone.
 ---
+## 2026-04-27 19:24 - US-103
+- Fixed /api/v1/market/state so a same-day degraded placeholder row no longer overrides the older stable runtime anchor. The route now falls back to RuntimeAnchorService.runtime_market_state_row() when the current-day cache row is a market_state_degraded=true placeholder with no eference_date.
+- Validation evidence:
+  - python -m pytest tests/test_fr05_market_state.py tests/test_runtime_anchor_consistency.py -q --tb=short → 18 passed in 31.07s.
+  - Runtime verification with FastAPI TestClient (Host: 127.0.0.1) now returns GET /api/v1/market/state → 	rade_date=2026-03-13, market_state=NEUTRAL, eference_date=2026-03-13, matching GET /api/v1/home → 	rade_date=2026-03-13, market_state=NEUTRAL.
+  - RuntimeAnchorService(db).runtime_trade_date() remains 2026-03-13, so the public read path and market-state route now share the same runtime anchor instead of drifting to the synthetic 2026-04-27 degraded row.
+- Files changed: pp/api/routes_sim.py, pp/services/runtime_anchor_service.py, 	ests/test_runtime_anchor_consistency.py, .claude/ralph/loop/prd.json, .claude/ralph/prd/yanbao-platform-enhancement.json, .claude/ralph/loop/progress.txt.
+- Git commit: pending in current run.
+- **Learnings for future iterations:**
+  - untime_market_state_row() needs eference_date in its projection when it is reused by HTTP routes; otherwise fallback code loses the ability to emit a stable reference window.
+  - The real failure mode was not missing market_state rows, but a newer degraded placeholder row outranking the stable runtime anchor. Future runtime stories should distinguish latest row from uthoritative runtime anchor.
+---

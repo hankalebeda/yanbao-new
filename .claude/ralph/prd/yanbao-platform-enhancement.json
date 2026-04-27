@@ -1598,7 +1598,7 @@
         "Typecheck passes"
       ],
       "priority": 103,
-      "passes": false,
+      "passes": true,
       "notes": "{\"group\":\"FR05_RUNTIME\",\"dependsOn\":[\"US-039\",\"US-040\",\"US-041\",\"US-101\",\"US-102\"],\"endpoints\":[\"GET /api/v1/market/state\",\"GET /api/v1/home\"],\"models\":[\"market_state_cache\",\"report_data_usage\",\"data_batch\"],\"permissions\":[\"system\",\"public_read\",\"admin\"],\"errorCodes\":[\"INSUFFICIENT_KLINE_DATA\",\"MARKET_STATE_DEGRADED\",\"VALIDATION_ERROR\"],\"idempotency\":\"market_state_cache is keyed by trade_date and should upsert in place for the same runtime anchor\",\"enums\":[\"BULL\",\"BEAR\",\"NEUTRAL\"],\"thresholds\":\"latestRuntimeAnchorMustCoverTargetTradeDate=true\",\"degradation\":\"market_state_degraded must stay explicit in DB, API and home payload; never silent neutral fallback\",\"exampleAssert\":\"assert state_row and state_row['trade_date']>=target_trade_date and api_state==home_state\",\"pytest\":\"python -m pytest tests/test_fr05_market_state.py tests/test_runtime_anchor_consistency.py -q --tb=short\"}"
     },
     {

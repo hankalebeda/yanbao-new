@@ -47,7 +47,7 @@ class RuntimeAnchorService:
             return shared._execute_mappings(
                 self.db,
                 """
-                SELECT trade_date, market_state, cache_status, state_reason, market_state_degraded, computed_at
+                SELECT trade_date, reference_date, market_state, cache_status, state_reason, market_state_degraded, computed_at
                 FROM market_state_cache
                 WHERE trade_date <= :anchor_ceiling
                 ORDER BY trade_date DESC, computed_at DESC
@@ -66,7 +66,7 @@ class RuntimeAnchorService:
             return shared._execute_mappings(
                 self.db,
                 """
-                SELECT trade_date, market_state, cache_status, state_reason, market_state_degraded, computed_at
+                SELECT trade_date, reference_date, market_state, cache_status, state_reason, market_state_degraded, computed_at
                 FROM market_state_cache
                 WHERE trade_date = :trade_date
                 ORDER BY computed_at DESC

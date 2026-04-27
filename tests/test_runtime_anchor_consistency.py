@@ -1,10 +1,12 @@
 from __future__ import annotations
 
-from datetime import date
+from datetime import date, datetime
 from pathlib import Path
 from uuid import uuid4
 
-from app.models import Base, StockPoolRefreshTask
+from zoneinfo import ZoneInfo
+
+from app.models import Base, MarketStateCache, StockPoolRefreshTask
 from app.services.dashboard_query import get_public_performance_payload_ssot
 from app.services.observability import runtime_metrics_summary
 from app.services.runtime_anchor_service import RuntimeAnchorService
@@ -353,6 +355,46 @@ def test_home_market_state_stays_on_runtime_anchor_when_latest_attempt_is_bad(cl
     assert str(runtime_market_row["trade_date"])[:10] == "2026-03-06"
     assert home["trade_date"] == "2026-03-06"
     assert home["market_state"] == "BULL"
+
+
+def test_market_state_route_stays_on_runtime_anchor_when_current_day_row_is_bad(
+    client,
+    db_session,
+    monkeypatch,
+):
+    import app.services.market_state as market_state
+
+    _seed_stable_public_anchor(db_session)
+    db_session.add(
+        MarketStateCache(
+            trade_date=date(2026, 3, 7),
+            market_state="NEUTRAL",
+            cache_status="DEGRADED_NEUTRAL",
+            state_reason="computed_from_reference_date=none;market_state_degraded=true",
+            reference_date=None,
+            market_state_degraded=True,
+            computed_at=datetime(2026, 3, 7, 12, 0, tzinfo=ZoneInfo("Asia/Shanghai")),
+            created_at=datetime(2026, 3, 7, 12, 0, tzinfo=ZoneInfo("Asia/Shanghai")),
+        )
+    )
+    db_session.commit()
+
+    monkeypatch.setattr(
+        market_state,
+        "_now_cn",
+        lambda: datetime(2026, 3, 7, 12, 0, tzinfo=ZoneInfo("Asia/Shanghai")),
+    )
+    monkeypatch.setattr(market_state, "is_trade_day", lambda dt=None: True)
+
+    response = client.get("/api/v1/market/state")
+
+    assert response.status_code == 200
+    payload = response.json()["data"]
+    assert payload["trade_date"] == "2026-03-06"
+    assert payload["market_state_date"] == "2026-03-06"
+    assert payload["market_state"] == "BULL"
+    assert payload["reference_date"] == "2026-03-06"
+    assert payload["state_reason"] == "market ok"
 
 
 def test_runtime_metrics_summary_keeps_public_runtime_reason_and_missing_pipeline_truth(db_session):

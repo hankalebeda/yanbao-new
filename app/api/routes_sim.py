@@ -1,6 +1,6 @@
 """模拟实盘追踪 API（07 契约 §2.10，17 §4.2 需付费用户）"""
 import math
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
 from pathlib import Path
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
@@ -411,11 +411,14 @@ async def market_hot_stocks(db: Session = Depends(get_db), limit: int = Query(5,
 async def market_state(db: Session = Depends(get_db)):
     """GET /api/v1/market/state 当日市场状态（07 §2.10）"""
     import app.services.market_state as market_state_service
+    from app.services.runtime_anchor_service import RuntimeAnchorService
 
     now_cn = market_state_service._now_cn()
     service_date = now_cn.date()
     today = service_date.isoformat()
     row = db.get(MarketStateCache, service_date)
+    anchor_service = RuntimeAnchorService(db)
+    runtime_row = anchor_service.runtime_market_state_row() or {}
     response_trade_date = today
 
     state = "NEUTRAL"
@@ -430,6 +433,23 @@ async def market_state(db: Session = Depends(get_db)):
         cache_status = str(row.cache_status or "FRESH").upper()
         market_state_degraded = bool(row.market_state_degraded)
         state_reason = row.state_reason
+        runtime_trade_date = str(runtime_row.get("trade_date") or "")[:10]
+        if (
+            response_trade_date == today
+            and market_state_degraded
+            and reference_date is None
+            and runtime_trade_date
+            and runtime_trade_date < today
+        ):
+            state = str(runtime_row.get("market_state") or "NEUTRAL")
+            reference_date = runtime_row.get("reference_date")
+            if isinstance(reference_date, str):
+                reference_date = date.fromisoformat(reference_date[:10])
+            cache_status = str(runtime_row.get("cache_status") or "FRESH").upper()
+            market_state_degraded = bool(runtime_row.get("market_state_degraded"))
+            state_reason = str(runtime_row.get("state_reason") or state_reason or "")
+            response_trade_date = runtime_trade_date
+            row = None
     elif now_cn.hour < 9:
         fallback_row = market_state_service._latest_cache_before(db, today)
         if fallback_row is not None:
