@@ -1614,7 +1614,7 @@
         "Typecheck passes"
       ],
       "priority": 104,
-      "passes": false,
+      "passes": true,
       "notes": "{\"group\":\"FR06_RUNTIME\",\"dependsOn\":[\"US-049\",\"US-053\",\"US-054\",\"US-055\",\"US-056\",\"US-060\",\"US-065\",\"US-103\"],\"endpoints\":[\"POST /api/v1/reports/generate\",\"POST /api/v1/internal/reports/generate-batch\",\"GET /api/v1/reports\",\"GET /api/v1/reports/{report_id}\"],\"models\":[\"report\",\"report_generation_task\",\"report_citation\",\"report_data_usage_link\",\"instruction_card\"],\"permissions\":[\"system\",\"internal\",\"admin\",\"public_read\"],\"errorCodes\":[\"DEPENDENCY_NOT_READY\",\"QUALITY_GATE_BLOCKED\",\"LLM_PROVIDER_UNAVAILABLE\",\"PUBLISH_GATE_FAILED\"],\"idempotency\":\"idempotency_key and batch resume must still dedupe report generation while allowing one real published report to emerge\",\"enums\":[\"BUY\",\"SELL\",\"HOLD\",\"ok\",\"degraded\",\"UNPUBLISHED\",\"PUBLISHED\"],\"thresholds\":\"publishedReportsMin=1,checkStateTotalPublishedGt=0\",\"degradation\":\"manual DB flips are forbidden; provider fallback must stay explicit until at least one real report publishes or the story blocks fail-close\",\"exampleAssert\":\"assert published_count>0 and any(row['published']==1 for row in reports_api_items)\",\"pytest\":\"python -m pytest tests/test_fr06_report_generate.py tests/test_fr06_quality_pipeline.py tests/test_internal_reports_api.py -q --tb=short\"}"
     },
     {

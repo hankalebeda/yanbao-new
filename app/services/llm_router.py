@@ -15,9 +15,11 @@ import asyncio
 import logging
 import math
 import re
+import shutil
 import time
 from dataclasses import dataclass, field
 from enum import Enum
+from pathlib import Path
 from typing import Any
 
 from app.core.config import settings
@@ -411,6 +413,9 @@ async def _call_model(
     if model_name == "gemini_api":
         return await _call_gemini_api(prompt, temperature, use_cot, timeout_sec=timeout_sec)
 
+    if model_name == "claude_cli":
+        return await _call_claude_cli(prompt, temperature, use_cot, timeout_sec=timeout_sec)
+
     if model_name == "ollama":
         return await _call_ollama(prompt, temperature, timeout_sec=timeout_sec)
 
@@ -462,6 +467,72 @@ async def _call_gemini_api(
         }
     except ImportError:
         raise RuntimeError("google-generativeai not installed. Run: pip install google-generativeai")
+
+
+def _resolve_claude_cli_command() -> str:
+    repo_root = Path(__file__).resolve().parents[2]
+    repo_cmd = repo_root / "claude.cmd"
+    if repo_cmd.exists():
+        return str(repo_cmd)
+    discovered = shutil.which("claude.cmd") or shutil.which("claude")
+    if discovered:
+        return discovered
+    raise RuntimeError("claude_cli_unavailable: no claude.cmd/claude command found")
+
+
+async def _call_claude_cli(
+    prompt: str,
+    temperature: float,
+    use_cot: bool,
+    timeout_sec: float | None = None,
+) -> dict[str, Any]:
+    del temperature, use_cot
+
+    started = time.time()
+    command = _resolve_claude_cli_command()
+    effective_timeout = max(30.0, float(timeout_sec or 120.0))
+    proc = await asyncio.create_subprocess_exec(
+        "cmd.exe",
+        "/d",
+        "/c",
+        command,
+        "--bare",
+        "--print",
+        stdin=asyncio.subprocess.PIPE,
+        stdout=asyncio.subprocess.PIPE,
+        stderr=asyncio.subprocess.PIPE,
+    )
+    try:
+        stdout, stderr = await asyncio.wait_for(
+            proc.communicate(prompt.encode("utf-8")),
+            timeout=effective_timeout,
+        )
+    except asyncio.TimeoutError as exc:
+        proc.kill()
+        await proc.wait()
+        raise RuntimeError(f"claude_cli_timeout_after_{int(effective_timeout)}s") from exc
+
+    output = stdout.decode("utf-8", errors="replace").strip()
+    err_output = stderr.decode("utf-8", errors="replace").strip()
+    if proc.returncode != 0:
+        detail = err_output or output or f"exit={proc.returncode}"
+        raise RuntimeError(f"claude_cli_failed:{detail[:300]}")
+    if not output:
+        raise RuntimeError("claude_cli_empty_response")
+
+    elapsed = round(time.time() - started, 2)
+    logger.info("claude_cli | ok elapsed=%.1fs", elapsed)
+    return {
+        "response": output,
+        "elapsed_s": elapsed,
+        "has_citation": False,
+        "model": "claude-cli",
+        "source": "claude_cli",
+        "usage": {},
+        "pool_level": "primary",
+        "provider_name": "claude_cli",
+        "endpoint": command,
+    }
 
 
 async def _call_ollama(
@@ -779,6 +850,14 @@ def get_primary_status() -> str:
         specs = discover_codex_provider_specs()
         if specs:
             return "ok"
+    except Exception:
+        pass
+
+    try:
+        _resolve_claude_cli_command()
+        if str(getattr(_settings, "router_primary", "") or "").strip() == "claude_cli":
+            return "ok"
+        return "degraded"
     except Exception:
         pass
 

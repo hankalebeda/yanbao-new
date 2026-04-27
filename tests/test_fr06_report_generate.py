@@ -944,6 +944,36 @@ def test_fr06_route_and_call_passes_dedicated_timeout_to_ollama(monkeypatch):
 
 
 @pytest.mark.feature('FR06-LLM-02')
+def test_fr06_route_and_call_supports_claude_cli(monkeypatch):
+    from app.services.llm_router import LLMScene, route_and_call
+
+    captured: dict[str, int | None] = {}
+
+    async def _fake_claude_cli(prompt: str, temperature: float, use_cot: bool, timeout_sec: int | None = None):
+        captured["timeout_sec"] = timeout_sec
+        return {
+            "response": '{"recommendation":"BUY","confidence":0.66,"reasoning_chain":["ok"],"analysis_steps":["ok"],"evidence_items":[],"risk_factors":[],"plain_report":"这是一段满足长度要求的结构化文本，用于验证 claude_cli 路由已正确接入，并且可以作为运行态 CLI 输出来源。为了满足长度要求，这里继续补充说明，确保正文超过一百二十字。"}',
+            "source": "claude_cli",
+            "model": "claude-cli",
+            "usage": {},
+        }
+
+    monkeypatch.setattr("app.services.llm_router._call_claude_cli", _fake_claude_cli)
+
+    result = asyncio.run(
+        route_and_call(
+            "测试 prompt",
+            scene=LLMScene.GENERAL,
+            force_model="claude_cli",
+            timeout_sec=180,
+        )
+    )
+
+    assert captured["timeout_sec"] == 180
+    assert result.model_used == "claude_cli"
+
+
+@pytest.mark.feature('FR06-LLM-02')
 def test_fr06_route_and_call_opens_global_circuit_breaker_after_three_failures(monkeypatch):
     from app.services import llm_router
 
@@ -2506,6 +2536,55 @@ def test_fr06_local_fallback_never_sets_published_true(client, db_session, monke
     assert data["review_flag"] == "PENDING_REVIEW"
     assert report_row["published"] is False
     assert report_row["publish_status"] == "UNPUBLISHED"
+
+
+@pytest.mark.feature('FR06-LLM-05')
+def test_fr06_cli_fallback_can_publish_when_payload_grounded(client, db_session, monkeypatch):
+    trade_date = "2026-03-06"
+    seed_generation_context(
+        db_session,
+        trade_date=trade_date,
+        market_state="BULL",
+        atr_pct=0.03,
+        ma20=116.0,
+        close_price=120.0,
+        volatility_20d=0.02,
+    )
+    monkeypatch.setattr("app.services.report_generation_ssot.settings.mock_llm", False, raising=False)
+    monkeypatch.setattr("app.services.report_generation_ssot.settings.llm_audit_enabled", False, raising=False)
+
+    class _FakeResult:
+        response = _build_grounded_llm_response(
+            confidence=0.66,
+            close_price=120.0,
+            ma5=118.8,
+            ma20=116.0,
+            atr_pct_percent=3.0,
+        )
+        model_used = "claude_cli"
+        elapsed_s = 0.2
+        degraded = True
+        extra = {}
+
+    monkeypatch.setattr("app.services.report_generation_ssot._run_llm_coro", lambda *args, **kwargs: _FakeResult())
+
+    response = client.post(
+        "/api/v1/reports/generate",
+        json={"stock_code": "600519.SH", "trade_date": trade_date, "source": "test"},
+    )
+
+    assert response.status_code == 200
+    data = response.json()["data"]
+    report_table = Base.metadata.tables["report"]
+    report_row = db_session.execute(
+        report_table.select().where(report_table.c.report_id == data["report_id"])
+    ).mappings().one()
+
+    assert data["llm_fallback_level"] == "cli"
+    assert data["published"] is True
+    assert data["publish_status"] == "PUBLISHED"
+    assert report_row["published"] is True
+    assert report_row["publish_status"] == "PUBLISHED"
 
 
 @pytest.mark.feature('FR06-LLM-05')

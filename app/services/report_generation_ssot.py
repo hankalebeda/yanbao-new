@@ -1471,6 +1471,7 @@ def run_generation_model(
             "codex_api": "primary",
             "deepseek_api": "backup",
             "gemini_api": "cli",
+            "claude_cli": "cli",
             "ollama": "local",
         }
         if result.model_used == "codex_api":
@@ -3621,7 +3622,7 @@ def generate_report_ssot(
             )
             # Only publish if LLM produced a real result (not rule-based fallback)
             _llm_level = model_result.get("llm_fallback_level", "failed")
-            published = (_llm_level == "primary")
+            published = _llm_level in {"primary", "backup", "cli"}
             publish_status = "PUBLISHED" if published else "UNPUBLISHED"
             status_reason = quality_reason if published else "LLM_FALLBACK"
             # Fix N07: quality_flag must reflect LLM failure — data-ok + llm-failed = degraded
