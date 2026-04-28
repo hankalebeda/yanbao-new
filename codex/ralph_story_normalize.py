@@ -30,7 +30,7 @@ NOTE_KEYS = (
 )
 
 DEFAULT_PROJECT = "A股研报平台整体验收与增强"
-DEFAULT_BRANCH = "ralph/ashare-research-platform"
+DEFAULT_BRANCH = "main"
 ENDPOINT_RE = re.compile(r"\b(?:GET|POST|PUT|PATCH|DELETE)\s+/[^\s`'\"，。；;)]*")
 PYTEST_RE = re.compile(r"python\s+-m\s+pytest[^\n]+")
 

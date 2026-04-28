@@ -1,6 +1,6 @@
 {
   "project": "A股研报平台整体验收与增强",
-  "branchName": "ralph/ashare-research-platform",
+  "branchName": "main",
   "description": "A股研报平台整体验收与增强 108 条 Ralph 原子故事（v6，2026-04-27）。前 100 条故事保留代码、契约与测试闭环结果，新增 US-101–US-108 运行态闭环故事，专门消除 `python .\\check_state.py` 仍为 `Total published: 0` 的假绿状态。docs/core/28/29 的规则已内联到 runtime prd.json；Step 2 只能把本文件作为直接任务入口。每条 story 都显式写明入口、权限、HTTP 状态码、error_code、幂等键、枚举值、阈值、降级语义、示例断言与 focused pytest 映射；其中运行态 story 还必须追加 check_state、sqlite、endpoint 或 browser 证据。 docs/core/08_AI接入策略.md is currently missing and must stay explicitly marked missing.",
   "userStories": [
     {

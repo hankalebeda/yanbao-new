@@ -2,7 +2,7 @@
 
 > 更新日期：2026-04-27
 > 目标：以最小改动方式，让 Ralph 按仓库既有实现持续自动迭代，直到进入 **COMPLETE** 或 **BLOCKED** 终态。
-> 生成注意：Step 1 当前会通过 `codex.ralph_templates.render_doc30()` 刷新本文；若要长期保留本文修订，需要同步更新该模板，否则下一次 `rebuild` 可能覆盖本文。
+> 维护注意：本文不属于 Step 1 compiler-owned 输出；Step 1 只负责 docs 27/28/29 与双份 `prd.json`，本文按运行手册手工维护。
 
 ## 1. 结论与适用边界
 
@@ -24,7 +24,6 @@
   - 重写 `docs/core/27_PRD_研报平台增强与整体验收基线.md`
   - 重写 `docs/core/28_严格验收与上线门禁.md`
   - 重写 `docs/core/29_Ralph_PRD字段映射说明.md`
-  - 当前实现还会同步刷新 `docs/core/30_Ralph双步自举运行手册.md`
   - 同步双份 PRD：
     - `.claude/ralph/loop/prd.json`
     - `.claude/ralph/prd/yanbao-platform-enhancement.json`
@@ -57,7 +56,7 @@
 
 ### 4.1 Git 前提
 
-- 当前工作分支必须切到：`ralph/ashare-research-platform`
+- 当前工作分支必须与 `.claude/ralph/config.json` 的 `branchNamePolicy.currentValue` 一致；当前基线为 `main`
 - Step 2 启动前，工作树不应存在无关脏改动
 - 如有无关改动，必须先 stash 或单独处理
 
@@ -113,11 +112,11 @@ git status --short
 
 如果 `git status --short` 显示 `docs/core/30_Ralph双步自举运行手册.md`、`docs/core/plan.md` 或其他手工改动，必须先确认这些改动是本轮允许提交的文档改动，或先 stash / commit / 放弃；否则 Step 2 可能因无法创建单 story commit 而进入 `BLOCKED`。
 
-### 5.3 切换到 Ralph 运行分支
+### 5.3 确认当前在 Ralph 运行分支
 
 ```powershell
 Set-Location "D:\yanbao-new"
-git switch "ralph/ashare-research-platform"
+git switch "main"
 git branch --show-current
 ```
 
@@ -227,7 +226,7 @@ raise SystemExit(1)
 ### 8.4 小时级监控前置状态
 
 - `python -m codex.ralph_cycle run --tool claude --max-cycles 5` 在进入 Outer Loop 前，必须先完成 branch gate + 只读预检。
-- 若当前分支不是 `ralph/ashare-research-platform`，或 `.claude/ralph/loop/.last-branch` / 目标分支 tip 不一致，必须直接返回 `final_status=branch_drift`，不得继续执行 Step 1 / Step 2。
+- 若当前分支不是 `.claude/ralph/config.json` 的 `branchNamePolicy.currentValue`（当前基线为 `main`），或 `.claude/ralph/loop/.last-branch` / 目标分支 tip 不一致，必须直接返回 `final_status=branch_drift`，不得继续执行 Step 1 / Step 2。
 - 若存在 tracked git 脏改动，必须直接返回 `final_status=workspace_dirty`；`_archive/case_*` 这类权限告警只算环境噪音，不算 tracked 脏改动。
 - 若 `check_state.py`、`python -m codex.ralph_compile verify`、runner `-DryRun`、或 `tests/test_ralph_compile.py` + `tests/test_ralph_cycle.py` 的定向 pytest 失败，必须直接返回 `final_status=preflight_failed`。
 
@@ -275,7 +274,7 @@ raise SystemExit(1)
   - `git rebase`
   - `git reset --hard`
   - `git clean -fd`
-  - `git checkout main`
+  - `git checkout` / `git switch` 到其他分支
   - 删除分支
 
 ## 12. 禁区

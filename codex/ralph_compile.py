@@ -6,6 +6,7 @@ import os
 import re
 import shutil
 import subprocess
+import sys
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -18,7 +19,7 @@ from codex.ralph_story_normalize import (
     parse_notes_payload,
     prd_story_set_hash,
 )
-from codex.ralph_templates import render_doc27, render_doc28, render_doc29, render_doc30
+from codex.ralph_templates import render_doc27, render_doc28, render_doc29
 from codex.ralph_truth import TruthSnapshot, collect_truth_snapshot
 
 
@@ -63,6 +64,17 @@ class CompileSummary:
             "baseline_commit_created": self.baseline_commit_created,
             "baseline_commit": self.baseline_commit,
         }
+
+
+def _configure_stdio_utf8() -> None:
+    for stream_name in ("stdout", "stderr"):
+        stream = getattr(sys, stream_name, None)
+        reconfigure = getattr(stream, "reconfigure", None)
+        if callable(reconfigure):
+            try:
+                reconfigure(encoding="utf-8", errors="replace")
+            except OSError:
+                pass
 
 
 def _read_text(path: Path) -> str:
@@ -124,12 +136,34 @@ def _resolve_claude_executable(repo_root: Path) -> str:
     raise RuntimeError("claude_cli_not_found")
 
 
+def _normalized_subprocess_env() -> dict[str, str]:
+    env = dict(os.environ)
+    if os.name != "nt":
+        return env
+
+    deduped: dict[str, tuple[str, str]] = {}
+    for key, value in env.items():
+        normalized = key.lower()
+        preferred_key = "PATH" if normalized == "path" else key
+        if normalized not in deduped:
+            deduped[normalized] = (preferred_key, value)
+            continue
+        if preferred_key == "PATH" and deduped[normalized][0] != "PATH":
+            deduped[normalized] = (preferred_key, value)
+
+    normalized_env = {key: value for key, value in deduped.values()}
+    normalized_env.setdefault("PYTHONIOENCODING", "utf-8")
+    normalized_env.setdefault("PYTHONUTF8", "1")
+    return normalized_env
+
+
 def _run_claude(prompt: str, *, repo_root: Path, timeout_sec: int = 300) -> str:
     executable = _resolve_claude_executable(repo_root)
     result = subprocess.run(
         [executable, "--dangerously-skip-permissions", "--print"],
         cwd=str(repo_root),
         input=prompt.encode("utf-8"),
+        env=_normalized_subprocess_env(),
         capture_output=True,
         check=False,
         timeout=timeout_sec,
@@ -222,8 +256,6 @@ def rebuild_repo(*, repo_root: Path = REPO_ROOT, tool: str = "claude") -> Compil
         changed_docs.append("docs/core/28_严格验收与上线门禁.md")
     if _write_if_changed(repo_root / "docs" / "core" / "29_Ralph_PRD字段映射说明.md", render_doc29()):
         changed_docs.append("docs/core/29_Ralph_PRD字段映射说明.md")
-    if _write_if_changed(repo_root / "docs" / "core" / "30_Ralph双步自举运行手册.md", render_doc30()):
-        changed_docs.append("docs/core/30_Ralph双步自举运行手册.md")
     if _write_json_if_changed(repo_root / ".claude" / "ralph" / "loop" / "prd.json", adjudicated_prd):
         changed_prd.append(".claude/ralph/loop/prd.json")
     if _write_json_if_changed(repo_root / ".claude" / "ralph" / "prd" / "yanbao-platform-enhancement.json", adjudicated_prd):
@@ -383,6 +415,7 @@ def build_parser() -> argparse.ArgumentParser:
 
 
 def main(argv: list[str] | None = None) -> int:
+    _configure_stdio_utf8()
     parser = build_parser()
     args = parser.parse_args(argv)
     repo_root = args.repo_root.resolve()

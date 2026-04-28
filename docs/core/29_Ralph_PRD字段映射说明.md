@@ -12,7 +12,7 @@
 ## 2. 顶层字段
 
 - `project`：项目名
-- `branchName`：固定 `ralph/ashare-research-platform`
+- `branchName`：必须与 `.claude/ralph/config.json` 的 `branchNamePolicy.currentValue` 一致；当前基线为 `main`
 - `description`：执行描述
 - `userStories`：原子 story 列表
 
@@ -60,4 +60,3 @@
 - 两份 `prd.json` 必须完全一致。
 - 修改 story 边界、验收、`notes`、priority 或 description 后，必须同步双文件。
 - 禁止在 `prd.json` 中加入 Ralph 最小 schema 之外的顶层或 story 扩展字段。
-

@@ -38,6 +38,12 @@ def load_skill_text(path: Path) -> str:
     return _read_text(path)
 
 
+def _resolve_skill_path(repo_root: Path, default_path: Path) -> Path:
+    relative = default_path.relative_to(REPO_ROOT)
+    candidate = repo_root / relative
+    return candidate if candidate.exists() else default_path
+
+
 def collect_source_snippets(repo_root: Path = REPO_ROOT, *, max_chars: int = 2500) -> dict[str, str]:
     snippets: dict[str, str] = {}
     for rel in DOC_SOURCE_PATHS:
@@ -55,7 +61,7 @@ def _json_block(payload: Any) -> str:
 
 
 def build_round1_prompt(inputs: PromptInputs, *, repo_root: Path = REPO_ROOT) -> str:
-    skill_text = load_skill_text(PRD_SKILL_PATH)
+    skill_text = load_skill_text(_resolve_skill_path(repo_root, PRD_SKILL_PATH))
     return f"""You are a PRD compiler worker for the repository at {repo_root}.
 
 Non-interactive constraints:
@@ -104,7 +110,7 @@ def build_round2_prompt(
     round1_markdown: str,
     repo_root: Path = REPO_ROOT,
 ) -> str:
-    skill_text = load_skill_text(RALPH_SKILL_PATH)
+    skill_text = load_skill_text(_resolve_skill_path(repo_root, RALPH_SKILL_PATH))
     return f"""You are a Ralph story compiler worker for the repository at {repo_root}.
 
 Non-interactive constraints:
@@ -145,4 +151,3 @@ Task:
 - Preserve US-101 to US-108 as pinned runtime closure baseline stories.
 - Append any new runtime closure work as US-109+.
 """
-

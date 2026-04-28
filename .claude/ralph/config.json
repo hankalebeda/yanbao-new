@@ -16,7 +16,7 @@
   "runner": ".claude/ralph/run-ralph.ps1",
   "loopDir": ".claude/ralph/loop",
   "branchNamePolicy": {
-    "currentValue": "ralph/ashare-research-platform",
+    "currentValue": "main",
     "workspaceHasGit": true,
     "executionMode": "git-present-local-commit-only",
     "replaceOnlyWhenGitAvailable": false

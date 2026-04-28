@@ -101,7 +101,7 @@ def render_doc29() -> str:
 
 ## 2. 顶层字段
 - `project`：项目名
-- `branchName`：固定 `ralph/ashare-research-platform`
+- `branchName`：必须与当前 Ralph 运行分支一致；当前基线为 `main`
 - `description`：执行描述
 - `userStories`：原子 story 列表
 
@@ -145,8 +145,8 @@ def render_doc30() -> str:
 - 运行态：`check_state.py`、SQLite、TestClient、`RuntimeAnchorService`
 
 ## 3. 小时级预检
-- 当前分支必须是 `ralph/ashare-research-platform`，且 `.claude/ralph/loop/.last-branch` 必须与之相同。
-- `HEAD...ralph/ashare-research-platform` 不得有落后或分叉。
+- 当前分支必须与 `.claude/ralph/config.json` 的 `branchNamePolicy.currentValue` 一致；当前基线为 `main`，且 `.claude/ralph/loop/.last-branch` 必须与之相同。
+- `HEAD...main` 不得有落后或分叉。
 - tracked git diff 必须干净；`_archive/case_*` 这类权限告警只算环境噪音，不算 tracked 脏改动。
 - 进入 Outer Loop 前必须通过：`check_state.py`、`python -m codex.ralph_compile verify`、runner `-DryRun`、以及 `tests/test_ralph_compile.py` + `tests/test_ralph_cycle.py` 的定向 pytest。
 - 任一预检失败都必须先返回状态，不得直接跑 Step 1 / Step 2。

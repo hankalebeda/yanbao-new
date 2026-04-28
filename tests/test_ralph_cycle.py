@@ -32,9 +32,9 @@ def _story_summary(*, stories_total: int = 2, stories_passed: int = 1, stories_f
 
 def _branch_state(
     *,
-    expected_branch: str = "ralph/ashare-research-platform",
-    last_branch: str = "ralph/ashare-research-platform",
-    current_branch: str = "ralph/ashare-research-platform",
+    expected_branch: str = "main",
+    last_branch: str = "main",
+    current_branch: str = "main",
     head_only_count: int = 0,
     expected_branch_only_count: int = 0,
     tracked_changes: list[str] | None = None,
@@ -169,12 +169,12 @@ def test_run_cycles_core_short_circuits_with_verify_and_adjudicate(monkeypatch, 
 
 
 def test_run_cycles_stops_on_branch_drift_before_core_runner(monkeypatch, tmp_path):
-    branch_state = _branch_state(current_branch="main", expected_branch_only_count=3)
+    branch_state = _branch_state(current_branch="feature/runtime-drift", expected_branch_only_count=3)
     preflight = [
         ralph_cycle.PreflightCheck(
             "branch_policy",
             "fail",
-            "branch drift detected; expected=ralph/ashare-research-platform; current=main",
+            "branch drift detected; expected=main; current=feature/runtime-drift",
             data=branch_state,
         )
     ]
@@ -195,9 +195,9 @@ def test_run_cycles_stops_on_branch_drift_before_core_runner(monkeypatch, tmp_pa
     assert summary.final_status == "branch_drift"
     assert summary.cycles_run == 0
     assert summary.status_reason == preflight[0].detail
-    assert summary.expected_branch == "ralph/ashare-research-platform"
-    assert summary.last_branch == "ralph/ashare-research-platform"
-    assert summary.current_branch == "main"
+    assert summary.expected_branch == "main"
+    assert summary.last_branch == "main"
+    assert summary.current_branch == "feature/runtime-drift"
     assert summary.branch_distance == {"head_only_count": 0, "expected_branch_only_count": 3}
     assert summary.preflight == preflight
 
@@ -278,9 +278,9 @@ def test_run_cycles_successful_preflight_delegates_to_core_and_preserves_metadat
 
     assert summary is core_summary
     assert captured == {"repo_root": tmp_path, "tool": "claude", "max_cycles": 7}
-    assert summary.expected_branch == "ralph/ashare-research-platform"
-    assert summary.last_branch == "ralph/ashare-research-platform"
-    assert summary.current_branch == "ralph/ashare-research-platform"
+    assert summary.expected_branch == "main"
+    assert summary.last_branch == "main"
+    assert summary.current_branch == "main"
     assert summary.branch_distance == {"head_only_count": 0, "expected_branch_only_count": 0}
     assert summary.tracked_changes == []
     assert summary.preflight == preflight

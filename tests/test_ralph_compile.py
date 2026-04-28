@@ -7,6 +7,7 @@ from types import SimpleNamespace
 import pytest
 
 from codex import ralph_compile
+from codex import ralph_prompts
 from codex.ralph_truth import ProbeSummary, RuntimeSentinelState, TruthSnapshot
 
 
@@ -99,7 +100,7 @@ def _write_min_repo(root: Path) -> None:
     }
     existing_prd = {
         "project": "demo",
-        "branchName": "ralph/ashare-research-platform",
+        "branchName": "main",
         "description": "demo",
         "userStories": [
             {
@@ -205,3 +206,79 @@ def test_run_claude_writes_utf8_prompt_bytes(monkeypatch, tmp_path):
     assert seen["args"][0] == str(wrapper.resolve())
     assert seen["input"] == "含有¥符号".encode("utf-8")
     assert result == "完成"
+
+
+def test_run_claude_normalizes_windows_path_env(monkeypatch, tmp_path):
+    wrapper = tmp_path / "claude.cmd"
+    wrapper.write_text("@echo off\r\n", encoding="utf-8")
+    monkeypatch.setattr(ralph_compile.os, "name", "nt", raising=False)
+    monkeypatch.setattr(
+        ralph_compile.os,
+        "environ",
+        {"PATH": "upper-path", "Path": "lower-path", "FOO": "bar"},
+        raising=False,
+    )
+    seen: dict[str, object] = {}
+
+    def fake_run(args, **kwargs):
+        seen["env"] = kwargs["env"]
+        return SimpleNamespace(returncode=0, stdout=b"ok", stderr=b"")
+
+    monkeypatch.setattr(ralph_compile.subprocess, "run", fake_run)
+
+    result = ralph_compile._run_claude("prompt", repo_root=tmp_path)
+
+    env = seen["env"]
+    assert "Path" not in env
+    assert env["PATH"] == "upper-path"
+    assert env["PYTHONIOENCODING"] == "utf-8"
+    assert env["PYTHONUTF8"] == "1"
+    assert result == "ok"
+
+
+def test_build_round1_prompt_falls_back_to_workspace_skill_when_repo_root_missing(tmp_path):
+    inputs = ralph_prompts.PromptInputs(
+        truth_snapshot={"status": "ok"},
+        current_doc27="doc27",
+        current_prd={"userStories": []},
+        source_snippets={},
+    )
+
+    prompt = ralph_prompts.build_round1_prompt(inputs, repo_root=tmp_path)
+
+    assert f"repository at {tmp_path}" in prompt
+    assert "Source skill instructions:" in prompt
+    assert "Task:" in prompt
+
+
+def test_rebuild_repo_does_not_rewrite_doc30(monkeypatch, tmp_path):
+    _write_min_repo(tmp_path)
+    doc30_path = tmp_path / "docs" / "core" / "30_Ralph双步自举运行手册.md"
+    doc30_path.write_text("manual doc30\n", encoding="utf-8")
+    original = doc30_path.read_text(encoding="utf-8")
+
+    monkeypatch.setattr(ralph_compile, "collect_truth_snapshot", lambda **_: _fake_truth_snapshot())
+    outputs = iter(
+        [
+            "## Introduction\n\nGenerated doc 27 narrative",
+            json.dumps(
+                [
+                    {
+                        "id": "US-101",
+                        "title": "existing story",
+                        "description": "existing story",
+                        "acceptanceCriteria": ["GET /api/v1/home returns 200"],
+                        "priority": 101,
+                    }
+                ],
+                ensure_ascii=False,
+            ),
+        ]
+    )
+    monkeypatch.setattr(ralph_compile, "_run_claude", lambda *args, **kwargs: next(outputs))
+    monkeypatch.setattr(ralph_compile, "_git_commit", lambda *args, **kwargs: None)
+
+    summary = ralph_compile.rebuild_repo(repo_root=tmp_path)
+
+    assert not any(path.startswith("docs/core/30_") for path in summary.changed_docs)
+    assert doc30_path.read_text(encoding="utf-8") == original

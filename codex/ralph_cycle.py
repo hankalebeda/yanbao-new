@@ -12,7 +12,7 @@ from codex import ralph_compile
 
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
-DEFAULT_BRANCH = "ralph/ashare-research-platform"
+DEFAULT_BRANCH = "main"
 CONFIG_PATH = Path(".claude/ralph/config.json")
 LAST_BRANCH_PATH = Path(".claude/ralph/loop/.last-branch")
 LOOP_PRD_PATH = Path(".claude/ralph/loop/prd.json")
@@ -26,6 +26,17 @@ TARGETED_PYTEST_ARGS = [
     "--tb=short",
 ]
 MAX_OUTPUT_CHARS = 4000
+
+
+def _configure_stdio_utf8() -> None:
+    for stream_name in ("stdout", "stderr"):
+        stream = getattr(sys, stream_name, None)
+        reconfigure = getattr(stream, "reconfigure", None)
+        if callable(reconfigure):
+            try:
+                reconfigure(encoding="utf-8", errors="replace")
+            except OSError:
+                pass
 
 
 @dataclass(slots=True)
@@ -514,6 +525,7 @@ def build_parser() -> argparse.ArgumentParser:
 
 
 def main(argv: list[str] | None = None) -> int:
+    _configure_stdio_utf8()
     parser = build_parser()
     args = parser.parse_args(argv)
     if args.command != "run":

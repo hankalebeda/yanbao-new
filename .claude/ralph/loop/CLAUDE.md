@@ -6,7 +6,7 @@ You are an autonomous coding agent working on a software project.
 
 1. Read the PRD at `D:/yanbao-new/.claude/ralph/loop/prd.json`.
 2. Read the progress log at `D:/yanbao-new/.claude/ralph/loop/progress.txt` and check `## Codebase Patterns` first.
-3. Confirm the workspace is already on branch `ralph/ashare-research-platform`; stay on this branch for the whole run.
+3. Confirm the workspace is already on branch `main`; stay on this branch for the whole run.
 4. Pick the **highest priority** user story where `passes: false`.
 5. Implement that single user story truthfully.
 6. Run the story-specific quality checks required by its acceptance criteria: focused `pytest`, JSON parse, sqlite checks, endpoint verification, browser/HTML verification, `check_state.py`, etc.
@@ -40,7 +40,7 @@ Forbidden:
 - `git rebase`
 - `git reset --hard`
 - `git clean -fd`
-- `git checkout main`
+- `git checkout` / `git switch` to other branches
 - branch deletion
 
 Additional git rules:

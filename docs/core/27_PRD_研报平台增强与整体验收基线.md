@@ -582,7 +582,7 @@
 - 每条 story 的 `acceptanceCriteria` 至少覆盖 5 类信息：入口与权限、状态码与错误码、幂等键或唯一键、枚举或阈值与降级、示例断言与 pytest 命令。  
 - 每条 story 必须包含 `Typecheck passes`；涉及业务逻辑、API、持久化、权限或统计时必须包含 `Tests pass`；涉及 HTML/UI 时必须包含 `Verify in browser using dev-browser skill`。  
 - `passes` 初始值统一为 `false`。`notes` 不能再留空，必须是紧凑 JSON 字符串，至少包含 `group`、`dependsOn`、`endpoints`、`models`、`permissions`、`errorCodes`、`idempotency`、`enums`、`thresholds`、`degradation`、`exampleAssert`、`pytest`。  
-- `branchName` 以 `.claude/ralph/config.json` 与 `.claude/ralph/loop/prd.json` 为准，固定为 `ralph/ashare-research-platform`；当前仓库存在 `.git`，但 Ralph 不得自动 checkout、commit 或改写分支，除非用户在当轮明确授权。  
+- `branchName` 以 `.claude/ralph/config.json` 与 `.claude/ralph/loop/prd.json` 为准，必须与 `branchNamePolicy.currentValue` 一致；当前基线为 `main`。当前仓库存在 `.git`，但 Ralph 不得自动 checkout、commit 或改写分支，除非用户在当轮明确授权。  
 - `docs/core/28_严格验收与上线门禁.md` 与 `docs/core/29_Ralph_PRD字段映射说明.md` 是 Ralph 的规则补充来源；runtime 版 `prd.json` 仍必须内联 story 选择、依赖、验收、降级、blocked/fail-close 与 `passes` 变更规则，不能把关键执行语义外包给隐藏上下文。  
 - `prd.json` 顶层与 story 级字段只能使用 Ralph 官方最小 schema：`project`、`branchName`、`description`、`userStories`，以及 story 的 `id`、`title`、`description`、`acceptanceCriteria`、`priority`、`passes`、`notes`。禁止自定义 `tags`、`deps`、`owner`、`component` 等扩展字段。  
 
@@ -635,7 +635,7 @@
 4. 若 story 目标包含运行态闭环，额外执行 `python .\check_state.py`、必要的 sqlite `COUNT(*)`、真实 endpoint/browser 验证，并把非零事实或显式降级证据写入 `progress.txt`。  
 5. 不引入 501、空壳接口、伪数据、伪 citation、伪成功 HTTP 200。  
 6. 不修改 `scripts/`、`data/`、`output/`，不在根目录写临时文件。  
-7. 成功后只把当前 story 的 `passes` 改为 `true`、同步两份 `prd.json`、追加 `progress.txt`，并在 `ralph/ashare-research-platform` 上创建单 story 本地 commit；禁止 `git push` / `git pull` / `git rebase` / `git reset --hard` / `git checkout main`。  
+7. 成功后只把当前 story 的 `passes` 改为 `true`、同步两份 `prd.json`、追加 `progress.txt`，并在当前运行分支 `main` 上创建单 story 本地 commit；禁止 `git push` / `git pull` / `git rebase` / `git reset --hard` / `git checkout` 或 `git switch` 到其他分支。  
 
 ### 10.8 推荐实施阶段
 
@@ -707,7 +707,7 @@
 - `EXT-03`：真实 OAuth / Billing SaaS 接入参数可能仍未到位，若用 Mock 必须是**全真闭环 Mock**。  
 - `EXT-04`：live LLM provider 可能不可达；provider 故障不能被包装成“研报已完成”。  
 - `EXT-05`：真实 SQLite 写锁争用仍可能阻断 live 补数与批量落库。  
-- `EXT-06`: `docs/core/08_AI????.md` is missing in the current worktree; Ralph runtime artifacts must preserve this as missing and must not invent the file contents.  
+- `EXT-06`: `docs/core/08_AI接入策略.md` is missing in the current worktree; Ralph runtime artifacts must preserve this as missing and must not invent the file contents.  
 
 ### 12.2 仍需明确但不允许靠猜的事项
 
