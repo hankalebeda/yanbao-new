@@ -224,6 +224,13 @@ raise SystemExit(1)
   - `1`：达到外层轮数上限，或仍为 `incomplete`
 - 直接运行 `python -m codex.ralph_cycle run --tool claude --max-cycles 5` 时，当前 CLI 只对 `complete` 返回 `0`；`blocked` 与 `incomplete` 都返回 `1`，必须读取 JSON 输出中的 `final_status` 区分。
 
+### 8.4 小时级监控前置状态
+
+- `python -m codex.ralph_cycle run --tool claude --max-cycles 5` 在进入 Outer Loop 前，必须先完成 branch gate + 只读预检。
+- 若当前分支不是 `ralph/ashare-research-platform`，或 `.claude/ralph/loop/.last-branch` / 目标分支 tip 不一致，必须直接返回 `final_status=branch_drift`，不得继续执行 Step 1 / Step 2。
+- 若存在 tracked git 脏改动，必须直接返回 `final_status=workspace_dirty`；`_archive/case_*` 这类权限告警只算环境噪音，不算 tracked 脏改动。
+- 若 `check_state.py`、`python -m codex.ralph_compile verify`、runner `-DryRun`、或 `tests/test_ralph_compile.py` + `tests/test_ralph_cycle.py` 的定向 pytest 失败，必须直接返回 `final_status=preflight_failed`。
+
 ## 9. COMPLETE / BLOCKED 的判定标准
 
 ### 9.1 COMPLETE
