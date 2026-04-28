@@ -166,6 +166,8 @@ def test_rebuild_repo_enriches_notes_and_appends_new_story(monkeypatch, tmp_path
     for story in payload["userStories"]:
         notes = json.loads(story["notes"])
         assert set(notes.keys()) == set(ralph_compile.NOTE_KEYS)
+    compile_manifest = json.loads((tmp_path / ".claude" / "ralph" / "loop" / "compile_manifest.json").read_text(encoding="utf-8"))
+    assert compile_manifest["story_set_hash"] == summary.story_set_hash
     compile_report = json.loads((tmp_path / ".claude" / "ralph" / "loop" / "compile_report.json").read_text(encoding="utf-8"))
     assert compile_report["mode"] == "rebuild"
 
@@ -282,3 +284,40 @@ def test_rebuild_repo_does_not_rewrite_doc30(monkeypatch, tmp_path):
 
     assert not any(path.startswith("docs/core/30_") for path in summary.changed_docs)
     assert doc30_path.read_text(encoding="utf-8") == original
+
+
+def test_adjudicate_repo_bootstraps_existing_true_when_manifest_story_set_hash_is_stale(monkeypatch, tmp_path):
+    _write_min_repo(tmp_path)
+    (tmp_path / ".claude" / "ralph" / "loop" / "compile_manifest.json").write_text(
+        json.dumps(
+            {
+                "baseline_commit": "old-baseline",
+                "stories": {
+                    "US-108": {
+                        "fingerprint": "stale",
+                        "write_scope_hash": "stale",
+                        "runtime_sentinel_hash": "stale",
+                        "last_decision": "keep_true",
+                        "passes": True,
+                    }
+                },
+            },
+            ensure_ascii=False,
+            indent=2,
+        ),
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(ralph_compile, "collect_truth_snapshot", lambda **_: _fake_truth_snapshot())
+
+    summary = ralph_compile.adjudicate_repo(repo_root=tmp_path)
+
+    assert summary.stories_total == 1
+    assert summary.stories_passed == 1
+    assert summary.regressed_story_ids == []
+    payload = json.loads((tmp_path / ".claude" / "ralph" / "loop" / "prd.json").read_text(encoding="utf-8"))
+    assert payload["userStories"][0]["passes"] is True
+    refreshed_manifest = json.loads((tmp_path / ".claude" / "ralph" / "loop" / "compile_manifest.json").read_text(encoding="utf-8"))
+    assert refreshed_manifest["story_set_hash"] == summary.story_set_hash
+    assert refreshed_manifest["stories"]["US-108"]["passes"] is True
+    compile_report = json.loads((tmp_path / ".claude" / "ralph" / "loop" / "compile_report.json").read_text(encoding="utf-8"))
+    assert compile_report["adjudication"]["decisions"][0]["decision"] == "keep_true"

@@ -366,6 +366,10 @@ def adjudicate_repo(*, repo_root: Path = REPO_ROOT) -> CompileSummary:
         description=str(current_prd.get("description") or ""),
     )
     previous_manifest = load_manifest(repo_root / ".claude" / "ralph" / "loop" / "compile_manifest.json")
+    current_story_set_hash = prd_story_set_hash(normalized_prd)
+    manifest_stale = previous_manifest.get("story_set_hash") != current_story_set_hash
+    if manifest_stale:
+        previous_manifest = {}
     adjudicated_prd, adjudication = adjudicate_prd(
         normalized_prd,
         truth_snapshot=truth,
@@ -380,6 +384,16 @@ def adjudicate_repo(*, repo_root: Path = REPO_ROOT) -> CompileSummary:
         changed_prd.append(".claude/ralph/prd/yanbao-platform-enhancement.json")
     stories_total = len(adjudicated_prd.get("userStories") or [])
     stories_passed = sum(1 for story in adjudicated_prd.get("userStories") or [] if story.get("passes"))
+    if manifest_stale:
+        manifest_payload = build_manifest(
+            prd_payload=adjudicated_prd,
+            decisions=adjudication.decisions,
+            repo_root=repo_root,
+        )
+        (repo_root / ".claude" / "ralph" / "loop" / "compile_manifest.json").write_text(
+            json.dumps(manifest_payload, ensure_ascii=False, indent=2) + "\n",
+            encoding="utf-8",
+        )
     (repo_root / ".claude" / "ralph" / "loop" / "compile_report.json").write_text(
         json.dumps({"mode": "adjudicate", "adjudication": adjudication.to_dict()}, ensure_ascii=False, indent=2) + "\n",
         encoding="utf-8",

@@ -6,7 +6,12 @@ from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Any, Mapping
 
-from codex.ralph_story_normalize import parse_notes_payload, story_fingerprint, story_write_scope_hash
+from codex.ralph_story_normalize import (
+    parse_notes_payload,
+    prd_story_set_hash,
+    story_fingerprint,
+    story_write_scope_hash,
+)
 from codex.ralph_truth import TruthSnapshot
 
 
@@ -101,6 +106,7 @@ def build_manifest(
         }
     return {
         "baseline_commit": baseline_commit,
+        "story_set_hash": prd_story_set_hash(prd_payload),
         "stories": stories,
     }
 
@@ -171,4 +177,3 @@ def adjudicate_prd(
         )
 
     return prd_payload, AdjudicationResult(generated_at=generated_at, decisions=decisions)
-
