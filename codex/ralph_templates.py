@@ -136,6 +136,7 @@ def render_doc30() -> str:
 - Step 1：`python -m codex.ralph_compile rebuild --tool claude`
 - Step 2：`powershell -ExecutionPolicy Bypass -File .claude/ralph/run-ralph.ps1 -Tool claude`
 - Outer Loop：`python -m codex.ralph_cycle run --tool claude --max-cycles 5`
+- 小时级监控必须先做 branch gate + 只读预检，再决定是否进入 Outer Loop。
 
 ## 2. 真相源
 - SSOT：01 / 02 / 05 / 06
@@ -143,11 +144,26 @@ def render_doc30() -> str:
 - 代码与测试：`app/**`、`tests/**`
 - 运行态：`check_state.py`、SQLite、TestClient、`RuntimeAnchorService`
 
-## 3. Git 规则
+## 3. 小时级预检
+- 当前分支必须是 `ralph/ashare-research-platform`，且 `.claude/ralph/loop/.last-branch` 必须与之相同。
+- `HEAD...ralph/ashare-research-platform` 不得有落后或分叉。
+- tracked git diff 必须干净；`_archive/case_*` 这类权限告警只算环境噪音，不算 tracked 脏改动。
+- 进入 Outer Loop 前必须通过：`check_state.py`、`python -m codex.ralph_compile verify`、runner `-DryRun`、以及 `tests/test_ralph_compile.py` + `tests/test_ralph_cycle.py` 的定向 pytest。
+- 任一预检失败都必须先返回状态，不得直接跑 Step 1 / Step 2。
+
+## 4. 小时级状态
+- `complete`：预检通过，且 Outer Loop / fast path 判断当前已收敛。
+- `blocked`：进入 Outer Loop 后遇到真实硬阻塞。
+- `incomplete`：达到轮数上限，仍未收敛。
+- `branch_drift`：当前 checkout 不是 Ralph 运行分支，或与 `.last-branch` / 目标分支 tip 不一致。
+- `workspace_dirty`：存在 tracked 脏改动，不能 truthfully 启动 runtime 闭环。
+- `preflight_failed`：`check_state.py`、`verify`、runner dry-run、或定向 pytest 未通过。
+
+## 5. Git 规则
 - Step 1 如变更正式产物，创建 baseline commit：`ralph(prd): rebuild compile baseline`
 - Step 2 每条 story 单独 commit：`ralph(US-XXX): <title>`
 
-## 4. 禁区
+## 6. 禁区
 - 不修改 `.claude/ralph/vendor/**`
 - 不修改 `.claude/ralph/run-ralph.ps1`
 - 不修改 `.claude/ralph/loop/ralph.sh`
@@ -160,4 +176,3 @@ def render_doc27(round1_markdown: str) -> str:
     if not body.startswith("#"):
         body = "# 27_PRD_研报平台增强与整体验收基线\n\n" + body
     return body.rstrip() + "\n\n---\n\n" + render_doc27_compiler_appendix().strip() + "\n"
-
