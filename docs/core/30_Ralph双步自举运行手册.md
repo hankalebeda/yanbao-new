@@ -1,8 +1,8 @@
 # 30_Ralph双步自举运行手册
 
-> 更新日期：2026-04-27
+> 更新日期：2026-04-28
 > 目标：以最小改动方式，让 Ralph 按仓库既有实现持续自动迭代，直到进入 **COMPLETE** 或 **BLOCKED** 终态。
-> 生成注意：Step 1 当前会通过 `codex.ralph_templates.render_doc30()` 刷新本文；若要长期保留本文修订，需要同步更新该模板，否则下一次 `rebuild` 可能覆盖本文。
+> 维护注意：本文不属于 Step 1 compiler-owned 输出；Step 1 只负责 docs 27/28/29 与双份 `prd.json`，本文按运行手册手工维护。
 
 ## 1. 结论与适用边界
 
@@ -24,7 +24,6 @@
   - 重写 `docs/core/27_PRD_研报平台增强与整体验收基线.md`
   - 重写 `docs/core/28_严格验收与上线门禁.md`
   - 重写 `docs/core/29_Ralph_PRD字段映射说明.md`
-  - 当前实现还会同步刷新 `docs/core/30_Ralph双步自举运行手册.md`
   - 同步双份 PRD：
     - `.claude/ralph/loop/prd.json`
     - `.claude/ralph/prd/yanbao-platform-enhancement.json`
@@ -152,7 +151,7 @@ python -m codex.ralph_compile verify
 - 补齐 `notes` 的 18 个固定键
 - 同步双 PRD JSON
 - 依据真实 runtime truth 保留或回退 `passes`
-- 同步 27 / 28 / 29 / 30 文档
+- 同步 27 / 28 / 29 文档
 
 ### 6.3 何时算通过
 

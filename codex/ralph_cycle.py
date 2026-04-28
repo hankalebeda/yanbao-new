@@ -13,6 +13,7 @@ from codex import ralph_compile
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_BRANCH = "ralph/ashare-research-platform"
+SUPPORTED_TOOL = "claude"
 CONFIG_PATH = Path(".claude/ralph/config.json")
 LAST_BRANCH_PATH = Path(".claude/ralph/loop/.last-branch")
 LOOP_PRD_PATH = Path(".claude/ralph/loop/prd.json")
@@ -182,6 +183,24 @@ def _tracked_changes(repo_root: Path) -> list[str]:
     return sorted(tracked)
 
 
+def _tool_policy_check(tool: str) -> PreflightCheck:
+    normalized = str(tool or "").strip()
+    detail = f"tool={normalized or '<missing>'}; supported={SUPPORTED_TOOL}"
+    if normalized != SUPPORTED_TOOL:
+        return PreflightCheck(
+            "tool_policy",
+            "fail",
+            f"unsupported tool; {detail}",
+            data={"tool": normalized, "supported_tool": SUPPORTED_TOOL},
+        )
+    return PreflightCheck(
+        "tool_policy",
+        "pass",
+        detail,
+        data={"tool": normalized, "supported_tool": SUPPORTED_TOOL},
+    )
+
+
 def _branch_check(branch_state: dict[str, Any]) -> PreflightCheck:
     expected_branch = str(branch_state.get("expected_branch") or "").strip()
     last_branch = str(branch_state.get("last_branch") or "").strip()
@@ -241,7 +260,7 @@ def _run_check_state(repo_root: Path) -> PreflightCheck:
 def _run_verify(repo_root: Path) -> tuple[dict[str, Any] | None, PreflightCheck]:
     try:
         summary = ralph_compile.verify_repo(repo_root=repo_root)
-    except Exception as exc:  # pragma: no cover - exercised by unit tests via monkeypatch
+    except Exception as exc:
         return None, PreflightCheck("verify", "fail", f"verify_repo failed: {exc}", output=str(exc))
     payload = summary.to_dict()
     detail = (
@@ -303,18 +322,28 @@ def _collect_branch_state(repo_root: Path) -> dict[str, Any]:
     }
 
 
+def _preflight_branch_state(repo_root: Path) -> dict[str, Any]:
+    return {
+        "expected_branch": _expected_branch(repo_root),
+        "last_branch": _read_last_branch(repo_root),
+        "current_branch": None,
+        "branch_distance": None,
+        "tracked_changes": [],
+    }
+
+
 def _run_preflight_checks(*, repo_root: Path, tool: str) -> tuple[dict[str, Any], list[PreflightCheck], str | None, str | None]:
     checks: list[PreflightCheck] = []
+
+    tool_check = _tool_policy_check(tool)
+    checks.append(tool_check)
+    if tool_check.status != "pass":
+        return _preflight_branch_state(repo_root), checks, "preflight_failed", tool_check.detail
+
     try:
         branch_state = _collect_branch_state(repo_root)
     except Exception as exc:
-        fallback_state = {
-            "expected_branch": _expected_branch(repo_root),
-            "last_branch": _read_last_branch(repo_root),
-            "current_branch": None,
-            "branch_distance": None,
-            "tracked_changes": [],
-        }
+        fallback_state = _preflight_branch_state(repo_root)
         message = f"branch policy check failed: {exc}"
         checks.append(PreflightCheck("branch_policy", "fail", message, output=str(exc)))
         return fallback_state, checks, "branch_drift", message
@@ -378,66 +407,90 @@ def run_ralph_step2(*, repo_root: Path = REPO_ROOT, tool: str = "claude") -> dic
         check=False,
     )
     output = "\n".join(part for part in [(result.stdout or "").strip(), (result.stderr or "").strip()] if part)
-    status = "complete" if result.returncode == 0 else ("blocked" if result.returncode == 2 else "failed")
     return {
-        "status": status,
+        "status": "complete" if result.returncode == 0 else "blocked",
         "returncode": result.returncode,
         "output": output[:MAX_OUTPUT_CHARS],
     }
 
 
-def _pre_step1_summary(*, repo_root: Path, tool: str) -> tuple[dict[str, Any], str]:
-    try:
-        verified = ralph_compile.verify_repo(repo_root=repo_root)
-    except Exception:
-        rebuilt = ralph_compile.rebuild_repo(repo_root=repo_root, tool=tool).to_dict()
-        return rebuilt, "rebuild"
-    if verified.stories_failed == 0:
-        adjudicated = ralph_compile.adjudicate_repo(repo_root=repo_root).to_dict()
-        return adjudicated, "adjudicate"
-    rebuilt = ralph_compile.rebuild_repo(repo_root=repo_root, tool=tool).to_dict()
-    return rebuilt, "rebuild"
-
-
-def _run_cycles_core(*, repo_root: Path = REPO_ROOT, tool: str = "claude", max_cycles: int = 5) -> CycleSummary:
-    history: list[CycleDecision] = []
-    final_status = "incomplete"
-    latest_summary: dict[str, Any] = {
+def _empty_story_summary() -> dict[str, Any]:
+    return {
+        "mode": "none",
+        "changed_docs": [],
+        "changed_prd": [],
         "stories_total": 0,
         "stories_passed": 0,
         "stories_failed": 0,
         "new_story_ids": [],
         "regressed_story_ids": [],
+        "blocked_external_ids": [],
+        "story_set_hash": "",
+        "baseline_commit_created": False,
+        "baseline_commit": None,
     }
+
+
+def _error_payload(stage: str, exc: Exception) -> dict[str, Any]:
+    payload = _empty_story_summary()
+    payload.update({"mode": "error", "stage": stage, "error": str(exc)})
+    return payload
+
+
+def _run_cycles_core(*, repo_root: Path = REPO_ROOT, tool: str = "claude", max_cycles: int = 5) -> CycleSummary:
+    history: list[CycleDecision] = []
+    final_status = "incomplete"
+    status_reason: str | None = None
+    latest_summary = _empty_story_summary()
+
     for cycle_index in range(1, max_cycles + 1):
-        rebuild_before, pre_mode = _pre_step1_summary(repo_root=repo_root, tool=tool)
+        try:
+            rebuild_before = ralph_compile.rebuild_repo(repo_root=repo_root, tool=tool).to_dict()
+        except Exception as exc:
+            final_status = "blocked"
+            status_reason = f"step1_rebuild_failed:{exc}"
+            history.append(CycleDecision(cycle_index, "blocked", _error_payload("step1_rebuild", exc), None, None))
+            break
+
+        latest_summary = rebuild_before
         if rebuild_before["stories_failed"] == 0:
-            ralph_compile.verify_repo(repo_root=repo_root)
+            try:
+                ralph_compile.verify_repo(repo_root=repo_root)
+            except Exception as exc:
+                final_status = "blocked"
+                status_reason = f"verify_after_rebuild_failed:{exc}"
+                history.append(CycleDecision(cycle_index, "blocked", rebuild_before, None, None))
+                break
             final_status = "complete"
             history.append(CycleDecision(cycle_index, "complete", rebuild_before, None, None))
-            latest_summary = rebuild_before
             break
 
         step2 = run_ralph_step2(repo_root=repo_root, tool=tool)
-        if pre_mode == "adjudicate":
-            rebuild_after = ralph_compile.adjudicate_repo(repo_root=repo_root).to_dict()
-        else:
+        try:
             rebuild_after = ralph_compile.rebuild_repo(repo_root=repo_root, tool=tool).to_dict()
-        latest_summary = rebuild_after
-
-        if rebuild_after["stories_failed"] == 0:
-            ralph_compile.verify_repo(repo_root=repo_root)
-            final_status = "complete"
-            history.append(CycleDecision(cycle_index, "complete", rebuild_before, step2, rebuild_after))
+        except Exception as exc:
+            final_status = "blocked"
+            status_reason = f"post_rebuild_failed:{exc}"
+            history.append(CycleDecision(cycle_index, "blocked", rebuild_before, step2, _error_payload("post_rebuild", exc)))
             break
 
-        if (
-            step2["status"] == "blocked"
-            and rebuild_after["story_set_hash"] == rebuild_before["story_set_hash"]
-            and not rebuild_after["new_story_ids"]
-        ):
+        latest_summary = rebuild_after
+        if step2["returncode"] != 0:
             final_status = "blocked"
+            status_reason = f"step2_failed:returncode={step2['returncode']}"
             history.append(CycleDecision(cycle_index, "blocked", rebuild_before, step2, rebuild_after))
+            break
+
+        if rebuild_after["stories_failed"] == 0:
+            try:
+                ralph_compile.verify_repo(repo_root=repo_root)
+            except Exception as exc:
+                final_status = "blocked"
+                status_reason = f"verify_after_post_rebuild_failed:{exc}"
+                history.append(CycleDecision(cycle_index, "blocked", rebuild_before, step2, rebuild_after))
+                break
+            final_status = "complete"
+            history.append(CycleDecision(cycle_index, "complete", rebuild_before, step2, rebuild_after))
             break
 
         history.append(CycleDecision(cycle_index, "continue", rebuild_before, step2, rebuild_after))
@@ -453,6 +506,7 @@ def _run_cycles_core(*, repo_root: Path = REPO_ROOT, tool: str = "claude", max_c
         new_story_ids_last_cycle=list(latest_summary.get("new_story_ids") or []),
         regressed_story_ids_last_cycle=list(latest_summary.get("regressed_story_ids") or []),
         history=history,
+        status_reason=status_reason,
     )
 
 

@@ -130,7 +130,12 @@ def render_doc29() -> str:
 
 
 def render_doc30() -> str:
+    doc30_path = REPO_ROOT / "docs" / "core" / "30_Ralph双步自举运行手册.md"
+    if doc30_path.exists():
+        return doc30_path.read_text(encoding="utf-8")
     return """# 30_Ralph双步自举运行手册
+
+> 维护说明：本文为手工维护运行手册，不属于 Step 1 compiler-owned 输出。
 
 ## 1. 模式
 - Step 1：`python -m codex.ralph_compile rebuild --tool claude`
@@ -138,36 +143,10 @@ def render_doc30() -> str:
 - Outer Loop：`python -m codex.ralph_cycle run --tool claude --max-cycles 5`
 - 小时级监控必须先做 branch gate + 只读预检，再决定是否进入 Outer Loop。
 
-## 2. 真相源
-- SSOT：01 / 02 / 05 / 06
-- 问题与进度：22 / 25 / 26
-- 代码与测试：`app/**`、`tests/**`
-- 运行态：`check_state.py`、SQLite、TestClient、`RuntimeAnchorService`
-
-## 3. 小时级预检
-- 当前分支必须是 `ralph/ashare-research-platform`，且 `.claude/ralph/loop/.last-branch` 必须与之相同。
-- `HEAD...ralph/ashare-research-platform` 不得有落后或分叉。
-- tracked git diff 必须干净；`_archive/case_*` 这类权限告警只算环境噪音，不算 tracked 脏改动。
-- 进入 Outer Loop 前必须通过：`check_state.py`、`python -m codex.ralph_compile verify`、runner `-DryRun`、以及 `tests/test_ralph_compile.py` + `tests/test_ralph_cycle.py` 的定向 pytest。
-- 任一预检失败都必须先返回状态，不得直接跑 Step 1 / Step 2。
-
-## 4. 小时级状态
-- `complete`：预检通过，且 Outer Loop / fast path 判断当前已收敛。
-- `blocked`：进入 Outer Loop 后遇到真实硬阻塞。
-- `incomplete`：达到轮数上限，仍未收敛。
-- `branch_drift`：当前 checkout 不是 Ralph 运行分支，或与 `.last-branch` / 目标分支 tip 不一致。
-- `workspace_dirty`：存在 tracked 脏改动，不能 truthfully 启动 runtime 闭环。
-- `preflight_failed`：`check_state.py`、`verify`、runner dry-run、或定向 pytest 未通过。
-
-## 5. Git 规则
-- Step 1 如变更正式产物，创建 baseline commit：`ralph(prd): rebuild compile baseline`
-- Step 2 每条 story 单独 commit：`ralph(US-XXX): <title>`
-
-## 6. 禁区
-- 不修改 `.claude/ralph/vendor/**`
-- 不修改 `.claude/ralph/run-ralph.ps1`
-- 不修改 `.claude/ralph/loop/ralph.sh`
-- 不写 `scripts/`、`data/`、`output/`
+## 2. Step 1 / Step 2 边界
+- Step 1 只重写 `docs/core/27`、`docs/core/28`、`docs/core/29` 与双份 `prd.json`。
+- Step 2 只执行 runtime `prd.json`，并在当前 story 范围内落盘代码、测试、`progress.txt` 与双份 `prd.json`。
+- Step 2 不得改 `docs/core/27/28/29`。
 """
 
 

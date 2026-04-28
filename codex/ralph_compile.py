@@ -18,7 +18,7 @@ from codex.ralph_story_normalize import (
     parse_notes_payload,
     prd_story_set_hash,
 )
-from codex.ralph_templates import render_doc27, render_doc28, render_doc29, render_doc30
+from codex.ralph_templates import render_doc27, render_doc28, render_doc29
 from codex.ralph_truth import TruthSnapshot, collect_truth_snapshot
 
 
@@ -26,7 +26,6 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 DOC27_PATH = REPO_ROOT / "docs" / "core" / "27_PRD_研报平台增强与整体验收基线.md"
 DOC28_PATH = REPO_ROOT / "docs" / "core" / "28_严格验收与上线门禁.md"
 DOC29_PATH = REPO_ROOT / "docs" / "core" / "29_Ralph_PRD字段映射说明.md"
-DOC30_PATH = REPO_ROOT / "docs" / "core" / "30_Ralph双步自举运行手册.md"
 LOOP_PRD_PATH = REPO_ROOT / ".claude" / "ralph" / "loop" / "prd.json"
 NAMED_PRD_PATH = REPO_ROOT / ".claude" / "ralph" / "prd" / "yanbao-platform-enhancement.json"
 COMPILE_MANIFEST_PATH = REPO_ROOT / ".claude" / "ralph" / "loop" / "compile_manifest.json"
@@ -222,8 +221,6 @@ def rebuild_repo(*, repo_root: Path = REPO_ROOT, tool: str = "claude") -> Compil
         changed_docs.append("docs/core/28_严格验收与上线门禁.md")
     if _write_if_changed(repo_root / "docs" / "core" / "29_Ralph_PRD字段映射说明.md", render_doc29()):
         changed_docs.append("docs/core/29_Ralph_PRD字段映射说明.md")
-    if _write_if_changed(repo_root / "docs" / "core" / "30_Ralph双步自举运行手册.md", render_doc30()):
-        changed_docs.append("docs/core/30_Ralph双步自举运行手册.md")
     if _write_json_if_changed(repo_root / ".claude" / "ralph" / "loop" / "prd.json", adjudicated_prd):
         changed_prd.append(".claude/ralph/loop/prd.json")
     if _write_json_if_changed(repo_root / ".claude" / "ralph" / "prd" / "yanbao-platform-enhancement.json", adjudicated_prd):

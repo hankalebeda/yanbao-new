@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import subprocess
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -55,6 +56,29 @@ def _fake_truth_snapshot() -> TruthSnapshot:
     )
 
 
+def _full_note_payload() -> dict[str, object]:
+    payload: dict[str, object] = {key: "" for key in ralph_compile.NOTE_KEYS}
+    payload.update(
+        {
+            "group": "G10",
+            "dependsOn": [],
+            "endpoints": ["GET /api/v1/admin/overview"],
+            "models": ["admin_overview"],
+            "permissions": ["admin"],
+            "errorCodes": [],
+            "enums": [],
+            "writeScope": ["app/admin.py"],
+            "readScope": ["app/admin.py"],
+            "runtimeChecks": [r"python .\check_state.py"],
+            "dbTables": ["report"],
+            "envDeps": [],
+            "hardBlockers": [],
+            "pytest": "python -m pytest tests/test_fr12_admin.py -q --tb=short",
+        }
+    )
+    return payload
+
+
 def _write_min_repo(root: Path) -> None:
     (root / "docs" / "core").mkdir(parents=True, exist_ok=True)
     (root / ".claude" / "ralph" / "loop").mkdir(parents=True, exist_ok=True)
@@ -66,14 +90,15 @@ def _write_min_repo(root: Path) -> None:
     for rel in [
         "AGENTS.md",
         ".claude/CLAUDE.md",
-        "docs/core/01_需求基线.md",
-        "docs/core/02_系统架构.md",
-        "docs/core/05_API与数据契约.md",
-        "docs/core/06_全量数据需求说明.md",
-        "docs/core/22_全量功能进度总表_v12.md",
-        "docs/core/25_系统问题分析角度清单.md",
-        "docs/core/26_自动化执行记忆.md",
-        "docs/core/27_PRD_研报平台增强与整体验收基线.md",
+        "docs/core/01_\u9700\u6c42\u57fa\u7ebf.md",
+        "docs/core/02_\u7cfb\u7edf\u67b6\u6784.md",
+        "docs/core/05_API\u4e0e\u6570\u636e\u5951\u7ea6.md",
+        "docs/core/06_\u5168\u91cf\u6570\u636e\u9700\u6c42\u8bf4\u660e.md",
+        "docs/core/22_\u5168\u91cf\u529f\u80fd\u8fdb\u5ea6\u603b\u8868_v12.md",
+        "docs/core/25_\u7cfb\u7edf\u95ee\u9898\u5206\u6790\u89d2\u5ea6\u6e05\u5355.md",
+        "docs/core/26_\u81ea\u52a8\u5316\u6267\u884c\u8bb0\u5fc6.md",
+        "docs/core/27_PRD_\u7814\u62a5\u5e73\u53f0\u589e\u5f3a\u4e0e\u6574\u4f53\u9a8c\u6536\u57fa\u7ebf.md",
+        "docs/core/30_Ralph\u53cc\u6b65\u81ea\u4e3e\u8fd0\u884c\u624b\u518c.md",
         ".claude/skills/prd/SKILL.md",
         ".claude/skills/ralph/SKILL.md",
         "app/governance/feature_registry.json",
@@ -83,20 +108,6 @@ def _write_min_repo(root: Path) -> None:
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(f"{rel}\n", encoding="utf-8")
 
-    existing_note_payload = {
-        "group": "G10",
-        "dependsOn": [],
-        "endpoints": ["GET /api/v1/admin/overview"],
-        "models": ["admin_overview"],
-        "permissions": ["admin"],
-        "errorCodes": [],
-        "idempotency": "",
-        "enums": [],
-        "thresholds": "",
-        "degradation": "",
-        "exampleAssert": "",
-        "pytest": "python -m pytest tests/test_fr12_admin.py -q --tb=short",
-    }
     existing_prd = {
         "project": "demo",
         "branchName": "ralph/ashare-research-platform",
@@ -104,7 +115,7 @@ def _write_min_repo(root: Path) -> None:
         "userStories": [
             {
                 "id": "US-108",
-                "title": "恢复 FR-12 管理入口与运行态修复闭环",
+                "title": "restore FR-12 runtime closure",
                 "description": "existing runtime admin story",
                 "acceptanceCriteria": [
                     "GET /api/v1/admin/overview returns 200",
@@ -113,7 +124,7 @@ def _write_min_repo(root: Path) -> None:
                 ],
                 "priority": 108,
                 "passes": True,
-                "notes": json.dumps(existing_note_payload, ensure_ascii=False),
+                "notes": json.dumps(_full_note_payload(), ensure_ascii=False),
             }
         ],
     }
@@ -121,8 +132,10 @@ def _write_min_repo(root: Path) -> None:
     (root / ".claude" / "ralph" / "prd" / "yanbao-platform-enhancement.json").write_text(json.dumps(existing_prd, ensure_ascii=False, indent=2), encoding="utf-8")
 
 
-def test_rebuild_repo_enriches_notes_and_appends_new_story(monkeypatch, tmp_path):
+def test_rebuild_repo_enriches_notes_and_appends_new_story_without_touching_doc30(monkeypatch, tmp_path):
     _write_min_repo(tmp_path)
+    doc30_path = next((tmp_path / "docs" / "core").glob("30_*.md"))
+    doc30_original = doc30_path.read_text(encoding="utf-8")
     monkeypatch.setattr(ralph_compile, "collect_truth_snapshot", lambda **_: _fake_truth_snapshot())
     outputs = iter(
         [
@@ -130,7 +143,7 @@ def test_rebuild_repo_enriches_notes_and_appends_new_story(monkeypatch, tmp_path
             json.dumps(
                 [
                     {
-                        "title": "恢复 FR-12 管理入口与运行态修复闭环",
+                        "title": "restore FR-12 runtime closure",
                         "description": "existing runtime admin story",
                         "acceptanceCriteria": [
                             "GET /api/v1/admin/overview returns 200",
@@ -139,7 +152,7 @@ def test_rebuild_repo_enriches_notes_and_appends_new_story(monkeypatch, tmp_path
                         "priority": 108,
                     },
                     {
-                        "title": "新增运行态收口故事",
+                        "title": "add runtime closure story",
                         "description": "new story",
                         "acceptanceCriteria": [
                             "GET /api/v1/home returns 200",
@@ -159,6 +172,8 @@ def test_rebuild_repo_enriches_notes_and_appends_new_story(monkeypatch, tmp_path
 
     assert summary.new_story_ids == ["US-109"]
     assert summary.stories_total == 2
+    assert not any(path.startswith("docs/core/30_") for path in summary.changed_docs)
+    assert doc30_path.read_text(encoding="utf-8") == doc30_original
     payload = json.loads((tmp_path / ".claude" / "ralph" / "loop" / "prd.json").read_text(encoding="utf-8"))
     assert payload == json.loads((tmp_path / ".claude" / "ralph" / "prd" / "yanbao-platform-enhancement.json").read_text(encoding="utf-8"))
     assert {story["id"] for story in payload["userStories"]} == {"US-108", "US-109"}
@@ -167,6 +182,41 @@ def test_rebuild_repo_enriches_notes_and_appends_new_story(monkeypatch, tmp_path
         assert set(notes.keys()) == set(ralph_compile.NOTE_KEYS)
     compile_report = json.loads((tmp_path / ".claude" / "ralph" / "loop" / "compile_report.json").read_text(encoding="utf-8"))
     assert compile_report["mode"] == "rebuild"
+
+
+def test_verify_repo_raises_when_dual_prd_mismatches(tmp_path):
+    _write_min_repo(tmp_path)
+    named_prd_path = tmp_path / ".claude" / "ralph" / "prd" / "yanbao-platform-enhancement.json"
+    payload = json.loads(named_prd_path.read_text(encoding="utf-8"))
+    payload["description"] = "different"
+    named_prd_path.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
+
+    with pytest.raises(RuntimeError, match="dual_prd_mismatch"):
+        ralph_compile.verify_repo(repo_root=tmp_path)
+
+
+def test_verify_repo_raises_when_note_keys_are_missing(tmp_path):
+    _write_min_repo(tmp_path)
+    loop_prd_path = tmp_path / ".claude" / "ralph" / "loop" / "prd.json"
+    payload = json.loads(loop_prd_path.read_text(encoding="utf-8"))
+    payload["userStories"][0]["notes"] = json.dumps({"group": "G10"}, ensure_ascii=False)
+    loop_prd_path.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
+    (tmp_path / ".claude" / "ralph" / "prd" / "yanbao-platform-enhancement.json").write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
+
+    with pytest.raises(RuntimeError, match=r"missing_note_keys:US-108:"):
+        ralph_compile.verify_repo(repo_root=tmp_path)
+
+
+def test_verify_repo_raises_when_runner_dry_run_fails(monkeypatch, tmp_path):
+    _write_min_repo(tmp_path)
+
+    def fake_run(*args, **kwargs):
+        raise subprocess.CalledProcessError(1, args[0], output="", stderr="runner boom")
+
+    monkeypatch.setattr(ralph_compile.subprocess, "run", fake_run)
+
+    with pytest.raises(subprocess.CalledProcessError):
+        ralph_compile.verify_repo(repo_root=tmp_path)
 
 
 def test_resolve_claude_executable_prefers_repo_wrapper_on_windows(monkeypatch, tmp_path):
@@ -196,12 +246,12 @@ def test_run_claude_writes_utf8_prompt_bytes(monkeypatch, tmp_path):
     def fake_run(args, **kwargs):
         seen["args"] = args
         seen["input"] = kwargs["input"]
-        return SimpleNamespace(returncode=0, stdout="完成".encode("utf-8"), stderr=b"")
+        return SimpleNamespace(returncode=0, stdout="??".encode("utf-8"), stderr=b"")
 
     monkeypatch.setattr(ralph_compile.subprocess, "run", fake_run)
 
-    result = ralph_compile._run_claude("含有¥符号", repo_root=tmp_path)
+    result = ralph_compile._run_claude("?????", repo_root=tmp_path)
 
     assert seen["args"][0] == str(wrapper.resolve())
-    assert seen["input"] == "含有¥符号".encode("utf-8")
-    assert result == "完成"
+    assert seen["input"] == "?????".encode("utf-8")
+    assert result == "??"
