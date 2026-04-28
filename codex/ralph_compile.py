@@ -2,7 +2,9 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import re
+import shutil
 import subprocess
 from dataclasses import dataclass
 from pathlib import Path
@@ -105,19 +107,38 @@ def _extract_json_array(text: str) -> list[dict[str, Any]]:
     return [dict(item) for item in payload if isinstance(item, dict)]
 
 
+def _resolve_claude_executable(repo_root: Path) -> str:
+    candidates = ["claude"]
+    if os.name == "nt":
+        candidates = ["claude.cmd", "claude.exe", "claude.bat", "claude"]
+    search_dirs = [repo_root, *[Path(part) for part in os.environ.get("PATH", "").split(os.pathsep) if part]]
+    for directory in search_dirs:
+        for candidate in candidates:
+            resolved = directory / candidate
+            if resolved.is_file():
+                return str(resolved.resolve())
+    for candidate in candidates:
+        resolved = shutil.which(candidate)
+        if resolved:
+            return str(Path(resolved).resolve())
+    raise RuntimeError("claude_cli_not_found")
+
+
 def _run_claude(prompt: str, *, repo_root: Path, timeout_sec: int = 300) -> str:
+    executable = _resolve_claude_executable(repo_root)
     result = subprocess.run(
-        ["claude", "--dangerously-skip-permissions", "--print"],
+        [executable, "--dangerously-skip-permissions", "--print"],
         cwd=str(repo_root),
-        input=prompt,
-        text=True,
+        input=prompt.encode("utf-8"),
         capture_output=True,
         check=False,
         timeout=timeout_sec,
     )
+    stdout = (result.stdout or b"").decode("utf-8", errors="replace")
+    stderr = (result.stderr or b"").decode("utf-8", errors="replace")
     if result.returncode != 0:
-        raise RuntimeError(f"claude_cli_failed:{result.returncode}:{(result.stderr or '').strip()}")
-    return (result.stdout or "").strip()
+        raise RuntimeError(f"claude_cli_failed:{result.returncode}:{stderr.strip()}")
+    return stdout.strip()
 
 
 def _current_inputs(repo_root: Path, truth_snapshot: TruthSnapshot) -> PromptInputs:
@@ -387,4 +408,3 @@ def main(argv: list[str] | None = None) -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-

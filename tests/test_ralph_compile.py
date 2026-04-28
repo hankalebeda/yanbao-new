@@ -2,6 +2,9 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+from types import SimpleNamespace
+
+import pytest
 
 from codex import ralph_compile
 from codex.ralph_truth import ProbeSummary, RuntimeSentinelState, TruthSnapshot
@@ -165,3 +168,40 @@ def test_rebuild_repo_enriches_notes_and_appends_new_story(monkeypatch, tmp_path
     compile_report = json.loads((tmp_path / ".claude" / "ralph" / "loop" / "compile_report.json").read_text(encoding="utf-8"))
     assert compile_report["mode"] == "rebuild"
 
+
+def test_resolve_claude_executable_prefers_repo_wrapper_on_windows(monkeypatch, tmp_path):
+    wrapper = tmp_path / "claude.cmd"
+    wrapper.write_text("@echo off\r\necho wrapper\r\n", encoding="utf-8")
+    monkeypatch.setattr(ralph_compile.os, "name", "nt", raising=False)
+    monkeypatch.setenv("PATH", "")
+
+    assert ralph_compile._resolve_claude_executable(tmp_path) == str(wrapper)
+
+
+def test_resolve_claude_executable_raises_when_missing(monkeypatch, tmp_path):
+    monkeypatch.setenv("PATH", "")
+    monkeypatch.setattr(ralph_compile.os, "name", "posix", raising=False)
+
+    with pytest.raises(RuntimeError, match="claude_cli_not_found"):
+        ralph_compile._resolve_claude_executable(tmp_path)
+
+
+def test_run_claude_writes_utf8_prompt_bytes(monkeypatch, tmp_path):
+    wrapper = tmp_path / "claude.cmd"
+    wrapper.write_text("@echo off\r\n", encoding="utf-8")
+    monkeypatch.setattr(ralph_compile.os, "name", "nt", raising=False)
+    monkeypatch.setenv("PATH", "")
+    seen: dict[str, object] = {}
+
+    def fake_run(args, **kwargs):
+        seen["args"] = args
+        seen["input"] = kwargs["input"]
+        return SimpleNamespace(returncode=0, stdout="完成".encode("utf-8"), stderr=b"")
+
+    monkeypatch.setattr(ralph_compile.subprocess, "run", fake_run)
+
+    result = ralph_compile._run_claude("含有¥符号", repo_root=tmp_path)
+
+    assert seen["args"][0] == str(wrapper.resolve())
+    assert seen["input"] == "含有¥符号".encode("utf-8")
+    assert result == "完成"

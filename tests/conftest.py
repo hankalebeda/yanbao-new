@@ -15,12 +15,13 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 
 
 def _candidate_pytest_temp_roots() -> list[Path]:
-    candidates: list[Path] = [PROJECT_ROOT / "_archive"]
+    candidates: list[Path] = []
     code_home = os.environ.get("CODEX_HOME", "").strip()
     if code_home:
         candidates.append(Path(code_home) / "automations" / "automation" / "_pytest_tmp")
     candidates.append(Path.home() / ".codex" / "automations" / "automation" / "_pytest_tmp")
     candidates.append(Path(tempfile.gettempdir()) / "yanbao-new-pytest")
+    candidates.append(PROJECT_ROOT / "_archive")
 
     deduped: list[Path] = []
     seen: set[str] = set()
@@ -34,10 +35,19 @@ def _candidate_pytest_temp_roots() -> list[Path]:
 
 
 def _sqlite_writable(path: Path) -> bool:
-    probe_dir = path / ".sqlite_probe"
-    probe_db = probe_dir / "probe.db"
+    import shutil
+
+    probe_case: Path | None = None
     try:
+        path.mkdir(parents=True, exist_ok=True)
+        probe_case = path / f"probe_{uuid4().hex}"
+        probe_case.mkdir(parents=True, exist_ok=True)
+        probe_dir = probe_case / ".sqlite_probe"
+        probe_db = probe_dir / "probe.db"
+        probe_file = probe_case / "probe.txt"
+
         probe_dir.mkdir(parents=True, exist_ok=True)
+        probe_file.write_text("ok", encoding="utf-8")
         with sqlite3.connect(str(probe_db)) as conn:
             conn.execute("CREATE TABLE IF NOT EXISTS t(x INTEGER)")
             conn.commit()
@@ -45,14 +55,8 @@ def _sqlite_writable(path: Path) -> bool:
     except Exception:
         return False
     finally:
-        try:
-            probe_db.unlink(missing_ok=True)
-        except Exception:
-            pass
-        try:
-            probe_dir.rmdir()
-        except Exception:
-            pass
+        if probe_case is not None:
+            shutil.rmtree(probe_case, ignore_errors=True)
 
 
 def _resolve_pytest_temp_root() -> Path:
@@ -67,7 +71,8 @@ def tmp_path():
     import shutil
 
     base = _resolve_pytest_temp_root()
-    path = Path(tempfile.mkdtemp(prefix="case_", dir=str(base)))
+    path = base / f"case_{uuid4().hex}"
+    path.mkdir(parents=True, exist_ok=False)
     try:
         yield path
     finally:
