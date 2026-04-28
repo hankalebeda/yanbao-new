@@ -71,6 +71,19 @@ def run_ralph_step2(*, repo_root: Path = REPO_ROOT, tool: str = "claude") -> dic
     }
 
 
+def _pre_step1_summary(*, repo_root: Path, tool: str) -> tuple[dict[str, Any], str]:
+    try:
+        verified = ralph_compile.verify_repo(repo_root=repo_root)
+    except Exception:
+        rebuilt = ralph_compile.rebuild_repo(repo_root=repo_root, tool=tool).to_dict()
+        return rebuilt, "rebuild"
+    if verified.stories_failed == 0:
+        adjudicated = ralph_compile.adjudicate_repo(repo_root=repo_root).to_dict()
+        return adjudicated, "adjudicate"
+    rebuilt = ralph_compile.rebuild_repo(repo_root=repo_root, tool=tool).to_dict()
+    return rebuilt, "rebuild"
+
+
 def run_cycles(*, repo_root: Path = REPO_ROOT, tool: str = "claude", max_cycles: int = 5) -> CycleSummary:
     history: list[CycleDecision] = []
     final_status = "incomplete"
@@ -82,7 +95,7 @@ def run_cycles(*, repo_root: Path = REPO_ROOT, tool: str = "claude", max_cycles:
         "regressed_story_ids": [],
     }
     for cycle_index in range(1, max_cycles + 1):
-        rebuild_before = ralph_compile.rebuild_repo(repo_root=repo_root, tool=tool).to_dict()
+        rebuild_before, pre_mode = _pre_step1_summary(repo_root=repo_root, tool=tool)
         if rebuild_before["stories_failed"] == 0:
             ralph_compile.verify_repo(repo_root=repo_root)
             final_status = "complete"
@@ -91,7 +104,10 @@ def run_cycles(*, repo_root: Path = REPO_ROOT, tool: str = "claude", max_cycles:
             break
 
         step2 = run_ralph_step2(repo_root=repo_root, tool=tool)
-        rebuild_after = ralph_compile.rebuild_repo(repo_root=repo_root, tool=tool).to_dict()
+        if pre_mode == "adjudicate":
+            rebuild_after = ralph_compile.adjudicate_repo(repo_root=repo_root).to_dict()
+        else:
+            rebuild_after = ralph_compile.rebuild_repo(repo_root=repo_root, tool=tool).to_dict()
         latest_summary = rebuild_after
 
         if rebuild_after["stories_failed"] == 0:
