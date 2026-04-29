@@ -3411,62 +3411,50 @@ def _distinct_date_values(
 
 
 def _has_complete_public_batch_trace(db: Session, *, trade_date: str) -> bool:
-    from app.services.stock_pool import get_exact_pool_view
-
-    if get_exact_pool_view(db, trade_date=trade_date) is None:
+    pool_view = get_exact_pool_view(db, trade_date=trade_date)
+    if pool_view is None:
         return False
-    pool_row = _execute_mappings(
-        db,
-        """
-        SELECT status, core_pool_size
-        FROM stock_pool_refresh_task
-        WHERE trade_date = :trade_date
-          AND status IN ('COMPLETED', 'FALLBACK')
-        ORDER BY
-          CASE WHEN status = 'COMPLETED' THEN 0 ELSE 1 END,
-          updated_at DESC,
-          finished_at DESC,
-          created_at DESC
-        LIMIT 1
-        """,
-        {"trade_date": trade_date},
-    ).first()
+    core_stock_codes = sorted({str(row.stock_code) for row in pool_view.core_rows if row.stock_code})
+    expected_pool_size = len(core_stock_codes)
+    if expected_pool_size <= 0:
+        return False
+
     task_row = _execute_mappings(
         db,
         """
         SELECT
-            COUNT(*) AS total_tasks,
-            SUM(CASE WHEN status IN ('Completed', 'Failed', 'Expired') THEN 1 ELSE 0 END) AS terminal_tasks,
-            SUM(CASE WHEN status = 'Completed' THEN 1 ELSE 0 END) AS completed_tasks,
-            SUM(CASE WHEN status IN ('Pending', 'Processing', 'Suspended') THEN 1 ELSE 0 END) AS nonterminal_tasks
+            COUNT(DISTINCT stock_code) AS total_task_stock_count,
+            COUNT(DISTINCT CASE WHEN status IN ('Completed', 'Failed', 'Expired') THEN stock_code END) AS terminal_task_stock_count,
+            COUNT(DISTINCT CASE WHEN status = 'Completed' THEN stock_code END) AS completed_task_stock_count,
+            COUNT(DISTINCT CASE WHEN status IN ('Pending', 'Processing', 'Suspended') THEN stock_code END) AS nonterminal_task_stock_count
         FROM report_generation_task
         WHERE trade_date = :trade_date
+          AND stock_code IN :core_stock_codes
         """,
-        {"trade_date": trade_date},
+        {"trade_date": trade_date, "core_stock_codes": core_stock_codes},
+        expanding=("core_stock_codes",),
     ).first()
-    published_report_count = _to_int(
-        _scalar(
-            db,
-            """
-            SELECT COUNT(*)
-            FROM report
-            WHERE trade_date = :trade_date
-              AND published = 1
-              AND is_deleted = 0
-              AND COALESCE(LOWER(quality_flag), 'ok') = 'ok'
-            """,
-            {"trade_date": trade_date},
-        )
-    ) or 0
-    total_tasks = _to_int(task_row.get("total_tasks")) or 0 if task_row else 0
-    terminal_tasks = _to_int(task_row.get("terminal_tasks")) or 0 if task_row else 0
-    completed_tasks = _to_int(task_row.get("completed_tasks")) or 0 if task_row else 0
-    nonterminal_tasks = _to_int(task_row.get("nonterminal_tasks")) or 0 if task_row else 0
-    expected_pool_size = _to_int(pool_row.get("core_pool_size")) if pool_row else None
+    published_row = _execute_mappings(
+        db,
+        """
+        SELECT COUNT(DISTINCT stock_code) AS c
+        FROM report
+        WHERE trade_date = :trade_date
+          AND published = 1
+          AND is_deleted = 0
+          AND COALESCE(LOWER(quality_flag), 'ok') = 'ok'
+          AND stock_code IN :core_stock_codes
+        """,
+        {"trade_date": trade_date, "core_stock_codes": core_stock_codes},
+        expanding=("core_stock_codes",),
+    ).first()
+    published_report_count = _to_int((published_row or {}).get("c")) or 0
+    total_tasks = _to_int(task_row.get("total_task_stock_count")) or 0 if task_row else 0
+    terminal_tasks = _to_int(task_row.get("terminal_task_stock_count")) or 0 if task_row else 0
+    completed_tasks = _to_int(task_row.get("completed_task_stock_count")) or 0 if task_row else 0
+    nonterminal_tasks = _to_int(task_row.get("nonterminal_task_stock_count")) or 0 if task_row else 0
     if (
-        expected_pool_size is None
-        or expected_pool_size <= 0
-        or total_tasks <= 0
+        total_tasks <= 0
         or completed_tasks <= 0
         or nonterminal_tasks > 0
         or published_report_count <= 0

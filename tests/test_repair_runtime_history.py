@@ -455,6 +455,51 @@ def test_complete_public_batch_trace_requires_published_ok_reports(db_session):
     assert read_model._latest_complete_public_batch_trade_date(db_session) == trade_date_value
 
 
+def test_complete_public_batch_trace_requires_distinct_core_stock_coverage(db_session):
+    import app.services.ssot_read_model as read_model
+    from app.services.runtime_anchor_service import RuntimeAnchorService
+
+    trade_date_value = "2026-03-22"
+    insert_pool_snapshot(
+        db_session,
+        trade_date=trade_date_value,
+        stock_codes=["600519.SH", "000001.SZ"],
+    )
+    insert_report_bundle_ssot(
+        db_session,
+        stock_code="600519.SH",
+        stock_name="贵州茅台",
+        trade_date=trade_date_value,
+        report_id="dup-core-report-a",
+        ensure_pool_snapshot=False,
+    )
+    insert_report_bundle_ssot(
+        db_session,
+        stock_code="300750.SZ",
+        stock_name="宁德时代",
+        trade_date=trade_date_value,
+        report_id="out-of-pool-report-b",
+        strategy_type="B",
+        ensure_pool_snapshot=False,
+    )
+
+    assert read_model._has_complete_public_batch_trace(db_session, trade_date=trade_date_value) is False
+    assert RuntimeAnchorService(db_session).has_complete_public_batch_trace(trade_date=trade_date_value) is False
+    assert read_model._latest_complete_public_batch_trade_date(db_session) is None
+
+    insert_report_bundle_ssot(
+        db_session,
+        stock_code="000001.SZ",
+        stock_name="平安银行",
+        trade_date=trade_date_value,
+        ensure_pool_snapshot=False,
+    )
+
+    assert read_model._has_complete_public_batch_trace(db_session, trade_date=trade_date_value) is True
+    assert RuntimeAnchorService(db_session).has_complete_public_batch_trace(trade_date=trade_date_value) is True
+    assert read_model._latest_complete_public_batch_trade_date(db_session) == trade_date_value
+
+
 def test_repair_runtime_history_backfills_fallback_batch_lineage_and_usage(db_session):
     now = utc_now()
     insert_stock_master(db_session, stock_code="600519.SH", stock_name="贵州茅台")

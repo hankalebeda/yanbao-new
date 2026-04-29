@@ -107,7 +107,10 @@ def _sqlite_scalar(cursor: sqlite3.Cursor, sql: str) -> Any:
 
 
 def query_sqlite_truth(database_path: Path = DEFAULT_DB_PATH) -> dict[str, Any]:
-    conn = sqlite3.connect(str(database_path))
+    resolved_database_path = database_path.resolve()
+    if not resolved_database_path.exists():
+        raise RuntimeError(f"sqlite_database_missing:{resolved_database_path}")
+    conn = sqlite3.connect(f"{resolved_database_path.as_uri()}?mode=ro", uri=True)
     try:
         cur = conn.cursor()
         return {

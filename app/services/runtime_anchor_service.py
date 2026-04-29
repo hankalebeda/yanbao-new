@@ -10,7 +10,6 @@ from app.models import StockPoolRefreshTask
 from app.services import ssot_read_model as shared
 from app.services.stock_pool import (
     evaluate_public_task_eligibility,
-    get_exact_pool_view,
     get_public_pool_view,
     get_trade_date_kline_coverage_summary,
 )
@@ -131,70 +130,7 @@ class RuntimeAnchorService:
 
     def has_complete_public_batch_trace(self, *, trade_date: str) -> bool:
         def factory():
-            if get_exact_pool_view(self.db, trade_date=trade_date) is None:
-                return False
-            pool_row = shared._execute_mappings(
-                self.db,
-                """
-                SELECT status, core_pool_size
-                FROM stock_pool_refresh_task
-                WHERE trade_date = :trade_date
-                  AND status IN ('COMPLETED', 'FALLBACK')
-                ORDER BY
-                  CASE WHEN status = 'COMPLETED' THEN 0 ELSE 1 END,
-                  updated_at DESC,
-                  finished_at DESC,
-                  created_at DESC
-                LIMIT 1
-                """,
-                {"trade_date": trade_date},
-            ).first()
-            task_row = shared._execute_mappings(
-                self.db,
-                """
-                SELECT
-                    COUNT(*) AS total_tasks,
-                    SUM(CASE WHEN status IN ('Completed', 'Failed', 'Expired') THEN 1 ELSE 0 END) AS terminal_tasks,
-                    SUM(CASE WHEN status = 'Completed' THEN 1 ELSE 0 END) AS completed_tasks,
-                    SUM(CASE WHEN status IN ('Pending', 'Processing', 'Suspended') THEN 1 ELSE 0 END) AS nonterminal_tasks
-                FROM report_generation_task
-                WHERE trade_date = :trade_date
-                """,
-                {"trade_date": trade_date},
-            ).first()
-            published_report_count = shared._to_int(
-                shared._scalar(
-                    self.db,
-                    """
-                    SELECT COUNT(*)
-                    FROM report
-                    WHERE trade_date = :trade_date
-                      AND published = 1
-                      AND is_deleted = 0
-                      AND COALESCE(LOWER(quality_flag), 'ok') = 'ok'
-                    """,
-                    {"trade_date": trade_date},
-                )
-            ) or 0
-            total_tasks = shared._to_int(task_row.get("total_tasks")) or 0 if task_row else 0
-            terminal_tasks = shared._to_int(task_row.get("terminal_tasks")) or 0 if task_row else 0
-            completed_tasks = shared._to_int(task_row.get("completed_tasks")) or 0 if task_row else 0
-            nonterminal_tasks = shared._to_int(task_row.get("nonterminal_tasks")) or 0 if task_row else 0
-            expected_pool_size = shared._to_int(pool_row.get("core_pool_size")) if pool_row else None
-            if (
-                expected_pool_size is None
-                or expected_pool_size <= 0
-                or total_tasks <= 0
-                or completed_tasks <= 0
-                or nonterminal_tasks > 0
-                or published_report_count <= 0
-            ):
-                return False
-            return (
-                completed_tasks >= expected_pool_size
-                and terminal_tasks >= expected_pool_size
-                and published_report_count >= expected_pool_size
-            )
+            return shared._has_complete_public_batch_trace(self.db, trade_date=trade_date)
 
         return self._memoize(f"has_complete_public_batch_trace:{trade_date}", factory)
 

@@ -129,6 +129,39 @@ def _story_number(story_id: str) -> int:
     return int(match.group("number"))
 
 
+def _path_is_inside_repo(repo_root: Path, path: Path) -> bool:
+    try:
+        path.resolve().relative_to(repo_root.resolve())
+        return True
+    except (OSError, ValueError):
+        return False
+
+
+def _invalid_write_scope_entries(repo_root: Path, entries: list[Any]) -> list[str]:
+    invalid: list[str] = []
+    for raw_entry in entries:
+        entry = str(raw_entry or "").strip()
+        if not entry:
+            invalid.append("<empty>")
+            continue
+
+        if any(char in entry for char in ("*", "?", "[")):
+            try:
+                matches = [path for path in repo_root.glob(entry) if path.is_file()]
+            except (OSError, ValueError):
+                matches = []
+            if not matches or any(not _path_is_inside_repo(repo_root, path) for path in matches):
+                invalid.append(entry)
+            continue
+
+        candidate = Path(entry)
+        if not candidate.is_absolute():
+            candidate = repo_root / candidate
+        if not _path_is_inside_repo(repo_root, candidate) or not (candidate.is_file() or candidate.is_dir()):
+            invalid.append(entry)
+    return invalid
+
+
 def _verify_runtime_story_structure(stories: list[dict[str, Any]]) -> None:
     seen: set[str] = set()
     story_numbers: list[int] = []
@@ -354,6 +387,10 @@ def verify_repo(*, repo_root: Path = REPO_ROOT) -> CompileSummary:
             raise RuntimeError(f"missing_note_keys:{story.get('id')}:{','.join(missing)}")
         if story.get("passes") and not list(notes.get("writeScope") or []):
             raise RuntimeError(f"empty_write_scope:{story_id}")
+        if story.get("passes"):
+            invalid_write_scope = _invalid_write_scope_entries(repo_root, list(notes.get("writeScope") or []))
+            if invalid_write_scope:
+                raise RuntimeError(f"invalid_write_scope_path:{story_id}:{','.join(invalid_write_scope)}")
         story_number = _story_number(story_id)
         group = str(notes.get("group") or "")
         is_runtime_story = story_number >= 101 or group.endswith("_RUNTIME")

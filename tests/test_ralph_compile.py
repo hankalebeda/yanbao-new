@@ -9,7 +9,7 @@ import pytest
 from codex import ralph_compile
 from codex import ralph_prompts
 from codex.ralph_story_normalize import normalize_story_list, parse_notes_payload
-from codex.ralph_truth import ProbeSummary, RuntimeSentinelState, TruthSnapshot, derive_runtime_sentinels
+from codex.ralph_truth import ProbeSummary, RuntimeSentinelState, TruthSnapshot, derive_runtime_sentinels, query_sqlite_truth
 
 
 def _fake_truth_snapshot() -> TruthSnapshot:
@@ -176,6 +176,14 @@ def _verify_story(
 def _write_verify_prd_pair(root: Path, stories: list[dict[str, object]]) -> None:
     (root / ".claude" / "ralph" / "loop").mkdir(parents=True)
     (root / ".claude" / "ralph" / "prd").mkdir(parents=True)
+    for story in stories:
+        notes = parse_notes_payload(story.get("notes"))
+        for entry in notes.get("writeScope") or []:
+            if any(char in str(entry) for char in ("*", "?", "[")):
+                continue
+            path = root / str(entry)
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_text("# write scope fixture\n", encoding="utf-8")
     prd = {
         "project": "demo",
         "branchName": "main",
@@ -371,6 +379,8 @@ def test_verify_repo_rejects_passed_story_without_write_scope(monkeypatch, tmp_p
 def test_verify_repo_rejects_runtime_story_without_runtime_checks(monkeypatch, tmp_path):
     (tmp_path / ".claude" / "ralph" / "loop").mkdir(parents=True)
     (tmp_path / ".claude" / "ralph" / "prd").mkdir(parents=True)
+    (tmp_path / "tests").mkdir(parents=True)
+    (tmp_path / "tests" / "test_example.py").write_text("# write scope fixture\n", encoding="utf-8")
     notes = {
         "group": "RUNTIME_HISTORY_RUNTIME",
         "dependsOn": [],
@@ -416,6 +426,62 @@ def test_verify_repo_rejects_runtime_story_without_runtime_checks(monkeypatch, t
     monkeypatch.setattr(ralph_compile.subprocess, "run", lambda *args, **kwargs: None)
 
     with pytest.raises(RuntimeError, match="empty_runtime_checks:US-109"):
+        ralph_compile.verify_repo(repo_root=tmp_path)
+
+
+def test_verify_repo_rejects_passed_story_with_missing_write_scope_path(monkeypatch, tmp_path):
+    stories = [
+        *_pinned_runtime_stories(),
+        _verify_story(
+            "US-109",
+            group="RUNTIME_HISTORY_RUNTIME",
+            write_scope=["tests/missing_runtime_canary.py"],
+            runtime_checks=["runtime_history_repair_consistent"],
+        ),
+    ]
+    _write_verify_prd_pair(tmp_path, stories[:-1])
+    prd = {
+        "project": "demo",
+        "branchName": "main",
+        "description": "demo",
+        "userStories": stories,
+    }
+    for rel in [
+        ".claude/ralph/loop/prd.json",
+        ".claude/ralph/prd/yanbao-platform-enhancement.json",
+    ]:
+        (tmp_path / rel).write_text(json.dumps(prd, ensure_ascii=False, indent=2), encoding="utf-8")
+    monkeypatch.setattr(ralph_compile.subprocess, "run", lambda *args, **kwargs: None)
+
+    with pytest.raises(RuntimeError, match=r"invalid_write_scope_path:US-109:tests/missing_runtime_canary\.py"):
+        ralph_compile.verify_repo(repo_root=tmp_path)
+
+
+def test_verify_repo_rejects_passed_story_with_write_scope_outside_repo(monkeypatch, tmp_path):
+    stories = [
+        *_pinned_runtime_stories(),
+        _verify_story(
+            "US-109",
+            group="RUNTIME_HISTORY_RUNTIME",
+            write_scope=["../outside.py"],
+            runtime_checks=["runtime_history_repair_consistent"],
+        ),
+    ]
+    _write_verify_prd_pair(tmp_path, stories[:-1])
+    prd = {
+        "project": "demo",
+        "branchName": "main",
+        "description": "demo",
+        "userStories": stories,
+    }
+    for rel in [
+        ".claude/ralph/loop/prd.json",
+        ".claude/ralph/prd/yanbao-platform-enhancement.json",
+    ]:
+        (tmp_path / rel).write_text(json.dumps(prd, ensure_ascii=False, indent=2), encoding="utf-8")
+    monkeypatch.setattr(ralph_compile.subprocess, "run", lambda *args, **kwargs: None)
+
+    with pytest.raises(RuntimeError, match=r"invalid_write_scope_path:US-109:\.\./outside\.py"):
         ralph_compile.verify_repo(repo_root=tmp_path)
 
 
@@ -534,6 +600,15 @@ def test_runtime_history_repair_sentinel_warns_without_complete_batch_anchor():
     assert sentinel.details["latest_complete_public_batch_trade_date"] is None
     assert sentinel.details["missing_complete_public_batch_anchor"] is True
     assert sentinel.details["warnings"] == ["missing_complete_public_batch_anchor"]
+
+
+def test_query_sqlite_truth_missing_db_fails_without_creating_file(tmp_path):
+    missing_db = tmp_path / "missing-app.db"
+
+    with pytest.raises(RuntimeError, match="sqlite_database_missing:"):
+        query_sqlite_truth(missing_db)
+
+    assert not missing_db.exists()
 
 
 def test_resolve_claude_executable_prefers_repo_wrapper_on_windows(monkeypatch, tmp_path):
