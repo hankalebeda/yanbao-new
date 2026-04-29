@@ -119,3 +119,10 @@ report_citation=5, report_data_usage_link=13, instruction_card=1 for the publish
 - Evidence: python -m pytest tests/test_ralph_compile.py tests/test_ralph_adjudicate.py tests/test_ralph_cycle.py tests/test_history_guardian.py tests/test_repair_runtime_history.py tests/test_fr10_site_dashboard.py::test_fr10_complete_public_batch_ignores_low_coverage_completed_task -q --tb=short => 52 passed.
 - Evidence: python -m codex.ralph_compile adjudicate => 109/109 passes; python -m codex.ralph_compile verify => 109/109 passes.
 - Result: <promise>COMPLETE</promise>
+
+## 2026-04-29 19:32 +08:00 - US-110
+- Story: Handle empty walkforward backtest ranges.
+- Compliance: `.claude/ralph/config.json` lists `scripts/` under runner forbiddenWritePaths, so this manual worker records the narrow runtime gap explicitly in US-110 writeScope rather than treating it as a Step 2 runner edit. No docs/core/27/28/29 changes were made.
+- Files changed: scripts/walkforward_backtest.py, tests/test_walkforward_backtest.py, .claude/ralph/loop/prd.json, .claude/ralph/prd/yanbao-platform-enhancement.json, .claude/ralph/loop/progress.txt.
+- Evidence planned: python -m pytest tests/test_walkforward_backtest.py -q --runxfail; python -m pytest tests/test_walkforward_backtest.py -q; git diff --check; python -m codex.ralph_compile verify; runner dry-run.
+- Report generation: none.

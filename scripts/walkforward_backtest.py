@@ -132,6 +132,16 @@ def _build_kline_by_date(records: list[dict]) -> dict[str, dict]:
     return out
 
 
+def _empty_stats() -> dict:
+    return {
+        "closed_count": 0,
+        "win_rate": 0,
+        "pnl_ratio": None,
+        "total_pnl_net": 0,
+        "annualized_pct": 0,
+    }
+
+
 def run_backtest(
     start_date: str,
     end_date: str,
@@ -142,7 +152,7 @@ def run_backtest(
     trade_days = trade_days_in_range(start_date, end_date)
     if not trade_days:
         logger.warning("无交易日，请检查 start/end 或 TDX 数据")
-        return [], {}
+        return [], _empty_stats()
 
     # 预加载各股票 K 线（含 start 前 60 日以计算指标）
     d0 = trade_days[0]

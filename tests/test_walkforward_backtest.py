@@ -4,10 +4,8 @@ import json
 import subprocess
 from pathlib import Path
 
-import pytest
 
 
-@pytest.mark.xfail(reason="scripts/walkforward_backtest.py KeyError on empty trade range — scripts/ 禁止修改", strict=False)
 def test_walkforward_backtest_handles_empty_trade_range(tmp_path):
     root = Path(__file__).resolve().parents[1]
     script = root / "scripts" / "walkforward_backtest.py"
@@ -42,3 +40,5 @@ def test_walkforward_backtest_handles_empty_trade_range(tmp_path):
     assert payload["stats"]["closed_count"] == 0
     assert payload["stats"]["win_rate"] == 0
     assert payload["stats"]["total_pnl_net"] == 0
+    assert payload["stats"]["pnl_ratio"] is None
+    assert payload["stats"]["annualized_pct"] == 0

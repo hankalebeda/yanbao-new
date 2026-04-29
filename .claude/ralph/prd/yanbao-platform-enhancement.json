@@ -1,7 +1,7 @@
 {
   "project": "A股研报平台整体验收与增强",
   "branchName": "main",
-  "description": "A股研报平台整体验收与增强 109 条 Ralph 原子故事（v6，2026-04-27）。前 100 条故事保留代码、契约与测试闭环结果，新增 US-101–US-108 运行态闭环故事，专门消除 `python .\\check_state.py` 仍为 `Total published: 0` 的假绿状态。docs/core/28/29 的规则已内联到 runtime prd.json；Step 2 只能把本文件作为直接任务入口。每条 story 都显式写明入口、权限、HTTP 状态码、error_code、幂等键、枚举值、阈值、降级语义、示例断言与 focused pytest 映射；其中运行态 story 还必须追加 check_state、sqlite、endpoint 或 browser 证据。 docs/core/08_AI接入策略.md is currently missing and must stay explicitly marked missing. US-109 runtime-history strict-ok canary is appended as the current runtime gap story.",
+  "description": "A股研报平台整体验收与增强 109 条 Ralph 原子故事（v6，2026-04-27）。前 100 条故事保留代码、契约与测试闭环结果，新增 US-101–US-108 运行态闭环故事，专门消除 `python .\\check_state.py` 仍为 `Total published: 0` 的假绿状态。docs/core/28/29 的规则已内联到 runtime prd.json；Step 2 只能把本文件作为直接任务入口。每条 story 都显式写明入口、权限、HTTP 状态码、error_code、幂等键、枚举值、阈值、降级语义、示例断言与 focused pytest 映射；其中运行态 story 还必须追加 check_state、sqlite、endpoint 或 browser 证据。 docs/core/08_AI接入策略.md is currently missing and must stay explicitly marked missing. US-109 runtime-history strict-ok canary is appended as the current runtime gap story. US-110 walkforward empty-range canary is appended as the current runtime gap story.",
   "userStories": [
     {
       "id": "US-001",
@@ -1693,6 +1693,21 @@
       "priority": 109,
       "passes": true,
       "notes": "{\"group\":\"RUNTIME_HISTORY_RUNTIME\",\"dependsOn\":[\"US-101\",\"US-103\",\"US-104\",\"US-108\"],\"endpoints\":[],\"models\":[\"report\",\"report_generation_task\",\"stock_pool_refresh_task\",\"stock_pool_snapshot\"],\"permissions\":[],\"errorCodes\":[\"CONCURRENT_CONFLICT\"],\"idempotency\":\"runtime-history repair and stale-ok regeneration are repeatable on stock_code+trade_date without promoting stale_ok to ok\",\"enums\":[\"ok\",\"stale_ok\",\"Pending\",\"Processing\",\"Suspended\",\"Completed\",\"Expired\"],\"thresholds\":\"completePublicBatchRequiresPublishedOk=true,targetedCanaryFiles>=2,publishedOkBlockingTasks=0\",\"degradation\":\"stale_ok remains explicit degraded/missing input and must not be promoted to ok completion\",\"exampleAssert\":\"assert complete_public_batch is False when only published reports are stale_ok\",\"pytest\":\"python -m pytest tests/test_history_guardian.py tests/test_repair_runtime_history.py tests/test_ralph_cycle.py::test_targeted_pytest_args_cover_runtime_history_canaries -q --tb=short\",\"writeScope\":[\"app/services/history_guardian.py\",\"app/services/runtime_anchor_service.py\",\"app/services/ssot_read_model.py\",\"scripts/repair_runtime_history.py\",\"codex/ralph_cycle.py\",\"codex/ralph_compile.py\",\"codex/ralph_story_normalize.py\",\"codex/ralph_truth.py\",\"tests/test_history_guardian.py\",\"tests/test_repair_runtime_history.py\",\"tests/test_ralph_cycle.py\",\"tests/test_ralph_compile.py\"],\"readScope\":[\"docs/core/30_Ralph双步自举运行手册.md\",\".claude/ralph/loop/progress.txt\"],\"runtimeChecks\":[\"published_reports_nonzero\",\"runtime_history_repair_consistent\"],\"dbTables\":[\"report\",\"report_generation_task\",\"stock_pool_refresh_task\",\"stock_pool_snapshot\"],\"envDeps\":[\"MOCK_LLM=true\"],\"hardBlockers\":[]}"
+    },
+    {
+      "id": "US-110",
+      "title": "Handle empty walkforward backtest ranges",
+      "description": "The walkforward backtest CLI must return a truthful empty result with stable stats when the requested date range has no trading days, instead of raising KeyError or fabricating trades.",
+      "acceptanceCriteria": [
+        "run_backtest returns an empty trade list and stats containing closed_count, win_rate, pnl_ratio, total_pnl_net, and annualized_pct for empty trade-day ranges.",
+        "The CLI JSON output for an empty date range includes trades=[] and deterministic zero/null stats.",
+        "python -m pytest tests/test_walkforward_backtest.py -q --runxfail passes.",
+        "python -m pytest tests/test_walkforward_backtest.py -q passes.",
+        "No?? generation is required or performed."
+      ],
+      "priority": 110,
+      "passes": true,
+      "notes": "{\"group\":\"BACKTEST_RUNTIME\",\"dependsOn\":[\"US-109\"],\"endpoints\":[],\"models\":[\"walkforward_backtest_stats\"],\"permissions\":[\"local_cli\"],\"errorCodes\":[\"EMPTY_TRADE_RANGE\"],\"idempotency\":\"empty walkforward ranges return deterministic empty trades and zero/None stats without writing reports\",\"enums\":[\"closed_count\",\"win_rate\",\"pnl_ratio\",\"total_pnl_net\",\"annualized_pct\"],\"thresholds\":\"emptyRangeClosedCount=0,emptyRangeTotalPnlNet=0,emptyRangePnlRatio=null\",\"degradation\":\"no trade days is an explicit empty result, not an exception or fabricated trade record\",\"exampleAssert\":\"assert payload['trades'] == [] and payload['stats']['closed_count'] == 0\",\"pytest\":\"python -m pytest tests/test_walkforward_backtest.py -q --runxfail && python -m pytest tests/test_walkforward_backtest.py -q\",\"writeScope\":[\"scripts/walkforward_backtest.py\",\"tests/test_walkforward_backtest.py\"],\"readScope\":[\"docs/core/30_Ralph????????.md\",\".claude/ralph/config.json\",\".claude/ralph/loop/progress.txt\"],\"runtimeChecks\":[\"walkforward_empty_range_cli_returns_empty_stats\"],\"dbTables\":[],\"envDeps\":[\"TDX data may be absent for empty-range test\"],\"hardBlockers\":[]}"
     }
   ]
 }
