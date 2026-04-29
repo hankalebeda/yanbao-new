@@ -1622,7 +1622,95 @@ GET /api/v1/internal/metrics/summary
 
 返回 LLM 调用量、错误率、各数据源成功率等运行时监控指标。
 
-### §6.9 已废弃路由（410）
+### §6.9 内部控制平面：运行时门禁
+
+`GET /api/v1/internal/runtime/gates`
+
+**用途**：给自治修复、共享产物晋级与 Ralph/Issue Mesh 控制平面提供同一份运行态门禁事实。
+**认证**：`X-Internal-Token`；仅内部服务调用。
+
+**响应** `200 OK`：
+
+```json
+{
+  "success": true,
+  "data": {
+    "status": "ready | degraded | blocked",
+    "runtime_live_recovery": {
+      "allowed": true,
+      "blocking_flags": []
+    },
+    "shared_artifact_promote": {
+      "allowed": true,
+      "blind_spot_clean": true,
+      "continuous_audit_complete": true,
+      "artifacts_same_round": true
+    },
+    "llm_router": {
+      "ready": true,
+      "status": "ok | degraded | unconfigured"
+    },
+    "artifacts": {}
+  },
+  "degraded": false,
+  "degraded_reason": null
+}
+```
+
+**字段约束**：
+
+- `data.status: string`：`ready` 表示 runtime 与共享产物均可晋级；`degraded` 表示 runtime 可用但共享产物未完全满足；`blocked` 表示运行态恢复门禁阻塞。
+- `data.runtime_live_recovery` / `data.runtime_live_recovery: object`：运行态恢复门禁，`allowed=false` 时必须给出 `blocking_flags`。
+- `data.shared_artifact_promote` / `data.shared_artifact_promote: object`：共享产物晋级门禁，必须同时覆盖盲点审计、连续审计、同轮产物一致性与 runtime gate。
+- `data.llm_router` / `data.llm_router: object`：LLM 路由健康快照，`ready=true` 仅代表主路由状态为 `ok`。
+- `degraded_reason=runtime_live_recovery_blocked`：仅当 `data.status=blocked` 时出现。
+
+### §6.10 内部控制平面：审计上下文
+
+`GET /api/v1/internal/audit/context`
+
+**用途**：为自治审计与修复链路提供运行态门禁、文档锚点、Issue Mesh/Code Fix 最近运行快照。
+**认证**：`X-Internal-Token`；仅内部服务调用。
+
+**响应** `200 OK`：
+
+```json
+{
+  "success": true,
+  "data": {
+    "runtime_gates": {
+      "status": "ready | degraded | blocked",
+      "runtime_live_recovery": { "allowed": true, "blocking_flags": [] },
+      "shared_artifact_promote": { "allowed": true },
+      "llm_router": { "status": "ok | degraded | unconfigured" }
+    },
+    "latest_published_report_trade_date": "2026-04-22",
+    "public_runtime_status": "ok | degraded | unknown",
+    "docs": {
+      "progress_doc_path": "docs/core/22_全量功能进度总表_v7_精审.md",
+      "analysis_lens_doc_path": "docs/core/25_系统问题分析角度清单.md"
+    },
+    "automation": {
+      "loop_controller": {},
+      "latest_issue_mesh_run": null,
+      "latest_code_fix_wave": null,
+      "promote_readiness": { "status": "promote_ready | blocked" }
+    }
+  },
+  "degraded": false,
+  "degraded_reason": null
+}
+```
+
+**字段约束**：
+
+- `data.runtime_gates: object`：与 `GET /api/v1/internal/runtime/gates` 的核心门禁语义一致，但为审计上下文压缩形态。
+- `data.public_runtime_status: string|null`：公开运行态状态，来自 runtime metrics；不可用时允许为 `null` 或 `unknown`。
+- `progress_doc_path: string`：当前进度 SSOT 文档路径。
+- `analysis_lens_doc_path: string`：问题分析角度 SSOT 文档路径。
+- `data.automation.promote_readiness.status: string`：`ready` 门禁映射为 `promote_ready`，其他状态映射为 `blocked`。
+
+### §6.11 已废弃路由（410）
 
 ```
 POST /api/v1/internal/llm/generate         → 410 ROUTE_RETIRED
