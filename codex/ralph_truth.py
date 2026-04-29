@@ -338,6 +338,7 @@ def derive_runtime_sentinels(
         and int(sqlite_truth.get("published_ok_nonterminal_task_count") or 0) == 0,
         details={
             "latest_complete_public_batch_trade_date": anchors.get("latest_complete_public_batch_trade_date"),
+            "complete_public_batch_anchor_policy": "warning_only",
             "missing_complete_public_batch_anchor": missing_complete_public_batch_anchor,
             "warnings": runtime_history_warnings,
             "report_published": sqlite_truth.get("report_published"),

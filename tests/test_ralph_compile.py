@@ -572,6 +572,7 @@ def test_runtime_history_repair_sentinel_requires_strict_ok_clean_tasks():
     assert sentinels["runtime_history_repair_consistent"].ok is True
     assert sentinels["runtime_history_repair_consistent"].details == {
         "latest_complete_public_batch_trade_date": "2026-03-21",
+        "complete_public_batch_anchor_policy": "warning_only",
         "missing_complete_public_batch_anchor": False,
         "warnings": [],
         "report_published": 1,
@@ -583,7 +584,7 @@ def test_runtime_history_repair_sentinel_requires_strict_ok_clean_tasks():
     assert sentinels["runtime_history_repair_consistent"].ok is False
 
 
-def test_runtime_history_repair_sentinel_warns_without_complete_batch_anchor():
+def test_runtime_history_repair_sentinel_uses_warning_only_policy_without_complete_batch_anchor():
     probes = {
         "/api/v1/home": ProbeSummary("/api/v1/home", 200, True, payload={"data": {"pool_size": 1}}),
         "/api/v1/market/state": ProbeSummary(
@@ -619,6 +620,7 @@ def test_runtime_history_repair_sentinel_warns_without_complete_batch_anchor():
     sentinel = sentinels["runtime_history_repair_consistent"]
     assert sentinel.ok is True
     assert sentinel.details["latest_complete_public_batch_trade_date"] is None
+    assert sentinel.details["complete_public_batch_anchor_policy"] == "warning_only"
     assert sentinel.details["missing_complete_public_batch_anchor"] is True
     assert sentinel.details["warnings"] == ["missing_complete_public_batch_anchor"]
 
