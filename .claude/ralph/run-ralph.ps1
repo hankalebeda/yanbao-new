@@ -11,10 +11,21 @@ param(
 $ErrorActionPreference = 'Stop'
 
 $ralphRoot = Split-Path -Parent $MyInvocation.MyCommand.Path
+$repoRoot = Split-Path -Parent (Split-Path -Parent $ralphRoot)
 $loopDir = Join-Path $ralphRoot 'loop'
 $bashScript = Join-Path $loopDir 'ralph.sh'
 $jqPath = Join-Path $ralphRoot 'bin\jq.exe'
 $runtimePrd = Join-Path $loopDir 'prd.json'
+$permissionRepairScript = Join-Path $repoRoot 'scripts\repair_windows_permissions.ps1'
+
+if (Test-Path $permissionRepairScript) {
+    try {
+        & powershell -NoProfile -ExecutionPolicy Bypass -File $permissionRepairScript -Quiet | Out-Null
+    }
+    catch {
+        Write-Warning "Best-effort Windows permission repair failed: $($_.Exception.Message)"
+    }
+}
 
 if (-not (Test-Path $bashScript)) {
     throw "Missing Ralph loop script: $bashScript"
