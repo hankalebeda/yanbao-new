@@ -78,6 +78,10 @@ def issue_token_pair(user, db=None):
             expires_at=now + timedelta(days=refresh_days),
         )
         db.add(sess)
+        # SQLite runtime schema enforces refresh_token.session_id -> user_session.session_id,
+        # but SQLAlchemy has no relationship here to infer insert order. Flush the session
+        # row first so real login does not fail with a foreign-key violation.
+        db.flush()
 
         # RefreshToken
         import hashlib as _hl
