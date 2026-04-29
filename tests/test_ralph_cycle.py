@@ -39,6 +39,9 @@ def _branch_state(
     expected_branch_only_count: int = 0,
     tracked_changes: list[str] | None = None,
     verify_summary: dict | None = None,
+    initial_tracked_changes: list[str] | None = None,
+    rechecked_tracked_changes: list[str] | None = None,
+    transient_workspace_dirty_recovered: bool | None = None,
 ):
     payload = {
         "expected_branch": expected_branch,
@@ -52,6 +55,12 @@ def _branch_state(
     }
     if verify_summary is not None:
         payload["verify_summary"] = verify_summary
+    if initial_tracked_changes is not None:
+        payload["initial_tracked_changes"] = list(initial_tracked_changes)
+    if rechecked_tracked_changes is not None:
+        payload["rechecked_tracked_changes"] = list(rechecked_tracked_changes)
+    if transient_workspace_dirty_recovered is not None:
+        payload["transient_workspace_dirty_recovered"] = transient_workspace_dirty_recovered
     return payload
 
 
@@ -233,6 +242,112 @@ def test_run_cycles_stops_when_workspace_is_dirty(monkeypatch, tmp_path):
     assert summary.status_reason == preflight[1].detail
     assert summary.tracked_changes == tracked_changes
     assert [item.name for item in summary.preflight] == ["branch_policy", "workspace_clean"]
+
+
+def test_run_cycles_rechecks_transient_workspace_dirty_and_continues(monkeypatch, tmp_path):
+    tracked_calls = iter([["tests/test_fr06_report_generate.py"], []])
+    verify_summary = {
+        "stories_total": 108,
+        "stories_passed": 108,
+        "stories_failed": 0,
+    }
+    core_summary = ralph_cycle.CycleSummary(
+        cycles_run=1,
+        final_status="complete",
+        stories_total=108,
+        stories_passed=108,
+        stories_remaining=0,
+        new_story_ids_last_cycle=[],
+        regressed_story_ids_last_cycle=[],
+        history=[],
+    )
+    captured = {}
+
+    monkeypatch.setattr(ralph_cycle, "_tracked_changes", lambda repo_root: next(tracked_calls))
+    monkeypatch.setattr(ralph_cycle.time, "sleep", lambda _: None)
+    monkeypatch.setattr(ralph_cycle, "_collect_branch_state", lambda repo_root: _branch_state())
+    monkeypatch.setattr(
+        ralph_cycle,
+        "_run_check_state",
+        lambda repo_root: ralph_cycle.PreflightCheck("check_state", "pass", "Active tasks: 0; Total published: 116", returncode=0),
+    )
+    monkeypatch.setattr(
+        ralph_cycle,
+        "_run_verify",
+        lambda repo_root: (
+            verify_summary,
+            ralph_cycle.PreflightCheck(
+                "verify",
+                "pass",
+                "stories_total=108; stories_passed=108; stories_failed=0",
+                data=verify_summary,
+            ),
+        ),
+    )
+    monkeypatch.setattr(
+        ralph_cycle,
+        "_run_runner_dry_run",
+        lambda repo_root, tool: ralph_cycle.PreflightCheck("runner_dry_run", "pass", "runner dry-run passed", returncode=0),
+    )
+    monkeypatch.setattr(
+        ralph_cycle,
+        "_run_targeted_pytest",
+        lambda repo_root: ralph_cycle.PreflightCheck("targeted_pytest", "pass", "targeted Ralph pytest passed", returncode=0),
+    )
+
+    def fake_run_cycles_core(**kwargs):
+        captured.update(kwargs)
+        return core_summary
+
+    monkeypatch.setattr(ralph_cycle, "_run_cycles_core", fake_run_cycles_core)
+
+    summary = ralph_cycle.run_cycles(repo_root=tmp_path, tool="claude", max_cycles=5)
+
+    assert summary.final_status == "complete"
+    assert captured == {"repo_root": tmp_path, "tool": "claude", "max_cycles": 5}
+    assert summary.tracked_changes == []
+    assert summary.initial_tracked_changes == ["tests/test_fr06_report_generate.py"]
+    assert summary.rechecked_tracked_changes == []
+    assert summary.transient_workspace_dirty_recovered is True
+    assert summary.preflight[1].name == "workspace_clean"
+    assert summary.preflight[1].status == "pass"
+    assert summary.preflight[1].detail == "tracked git diff is clean after transient recheck"
+    assert summary.preflight[1].data == {
+        "tracked_changes": [],
+        "initial_tracked_changes": ["tests/test_fr06_report_generate.py"],
+        "rechecked_tracked_changes": [],
+        "transient_workspace_dirty_recovered": True,
+    }
+    assert summary.to_dict()["transient_workspace_dirty_recovered"] is True
+
+
+def test_run_cycles_blocks_when_workspace_stays_dirty_after_recheck(monkeypatch, tmp_path):
+    tracked_calls = iter([["docs/core/plan.md"], ["docs/core/plan.md"]])
+
+    monkeypatch.setattr(ralph_cycle, "_tracked_changes", lambda repo_root: next(tracked_calls))
+    monkeypatch.setattr(ralph_cycle.time, "sleep", lambda _: None)
+    monkeypatch.setattr(ralph_cycle, "_collect_branch_state", lambda repo_root: _branch_state())
+    monkeypatch.setattr(
+        ralph_cycle,
+        "_run_cycles_core",
+        lambda **kwargs: (_ for _ in ()).throw(AssertionError("core cycle runner must not execute")),
+    )
+
+    summary = ralph_cycle.run_cycles(repo_root=tmp_path, tool="claude", max_cycles=5)
+
+    assert summary.final_status == "workspace_dirty"
+    assert summary.cycles_run == 0
+    assert summary.status_reason == "tracked changes present after recheck: docs/core/plan.md"
+    assert summary.tracked_changes == ["docs/core/plan.md"]
+    assert summary.initial_tracked_changes == ["docs/core/plan.md"]
+    assert summary.rechecked_tracked_changes == ["docs/core/plan.md"]
+    assert summary.transient_workspace_dirty_recovered is False
+    assert summary.preflight[1].data == {
+        "tracked_changes": ["docs/core/plan.md"],
+        "initial_tracked_changes": ["docs/core/plan.md"],
+        "rechecked_tracked_changes": ["docs/core/plan.md"],
+        "transient_workspace_dirty_recovered": False,
+    }
 
 
 def test_run_cycles_successful_preflight_delegates_to_core_and_preserves_metadata(monkeypatch, tmp_path):

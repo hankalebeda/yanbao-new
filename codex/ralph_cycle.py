@@ -4,6 +4,7 @@ import argparse
 import json
 import subprocess
 import sys
+import time
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
 from typing import Any
@@ -26,6 +27,7 @@ TARGETED_PYTEST_ARGS = [
     "--tb=short",
 ]
 MAX_OUTPUT_CHARS = 4000
+TRANSIENT_WORKSPACE_RECHECK_DELAY_SEC = 0.35
 
 
 def _configure_stdio_utf8() -> None:
@@ -89,9 +91,12 @@ class CycleSummary:
     tracked_changes: list[str] = field(default_factory=list)
     status_reason: str | None = None
     preflight: list[PreflightCheck] = field(default_factory=list)
+    initial_tracked_changes: list[str] | None = None
+    rechecked_tracked_changes: list[str] | None = None
+    transient_workspace_dirty_recovered: bool | None = None
 
     def to_dict(self) -> dict[str, Any]:
-        return {
+        payload = {
             "cycles_run": self.cycles_run,
             "final_status": self.final_status,
             "stories_total": self.stories_total,
@@ -108,6 +113,13 @@ class CycleSummary:
             "status_reason": self.status_reason,
             "preflight": [item.to_dict() for item in self.preflight],
         }
+        if self.initial_tracked_changes is not None:
+            payload["initial_tracked_changes"] = self.initial_tracked_changes
+        if self.rechecked_tracked_changes is not None:
+            payload["rechecked_tracked_changes"] = self.rechecked_tracked_changes
+        if self.transient_workspace_dirty_recovered is not None:
+            payload["transient_workspace_dirty_recovered"] = self.transient_workspace_dirty_recovered
+        return payload
 
 
 def _trim_output(*parts: str | None) -> str:
@@ -193,6 +205,30 @@ def _tracked_changes(repo_root: Path) -> list[str]:
     return sorted(tracked)
 
 
+def _resolve_tracked_changes(repo_root: Path) -> dict[str, Any]:
+    initial_tracked_changes = _tracked_changes(repo_root)
+    if not initial_tracked_changes:
+        return {
+            "tracked_changes": [],
+            "initial_tracked_changes": None,
+            "rechecked_tracked_changes": None,
+            "transient_workspace_dirty_recovered": None,
+        }
+
+    workspace_state: dict[str, Any] = {
+        "tracked_changes": list(initial_tracked_changes),
+        "initial_tracked_changes": list(initial_tracked_changes),
+        "rechecked_tracked_changes": None,
+        "transient_workspace_dirty_recovered": None,
+    }
+    time.sleep(TRANSIENT_WORKSPACE_RECHECK_DELAY_SEC)
+    rechecked_tracked_changes = _tracked_changes(repo_root)
+    workspace_state["tracked_changes"] = list(rechecked_tracked_changes)
+    workspace_state["rechecked_tracked_changes"] = list(rechecked_tracked_changes)
+    workspace_state["transient_workspace_dirty_recovered"] = not rechecked_tracked_changes
+    return workspace_state
+
+
 def _branch_check(branch_state: dict[str, Any]) -> PreflightCheck:
     expected_branch = str(branch_state.get("expected_branch") or "").strip()
     last_branch = str(branch_state.get("last_branch") or "").strip()
@@ -215,7 +251,20 @@ def _branch_check(branch_state: dict[str, Any]) -> PreflightCheck:
     return PreflightCheck("branch_policy", "pass", detail, data=branch_state)
 
 
-def _workspace_check(tracked_changes: list[str]) -> PreflightCheck:
+def _workspace_check(workspace_state: dict[str, Any]) -> PreflightCheck:
+    tracked_changes = list(workspace_state.get("tracked_changes") or [])
+    initial_tracked_changes = workspace_state.get("initial_tracked_changes")
+    rechecked_tracked_changes = workspace_state.get("rechecked_tracked_changes")
+    recovered = workspace_state.get("transient_workspace_dirty_recovered")
+    data = {
+        "tracked_changes": tracked_changes,
+    }
+    if initial_tracked_changes is not None:
+        data["initial_tracked_changes"] = list(initial_tracked_changes)
+    if rechecked_tracked_changes is not None:
+        data["rechecked_tracked_changes"] = list(rechecked_tracked_changes)
+    if recovered is not None:
+        data["transient_workspace_dirty_recovered"] = bool(recovered)
     if tracked_changes:
         preview = ", ".join(tracked_changes[:10])
         if len(tracked_changes) > 10:
@@ -223,8 +272,15 @@ def _workspace_check(tracked_changes: list[str]) -> PreflightCheck:
         return PreflightCheck(
             "workspace_clean",
             "fail",
-            f"tracked changes present: {preview}",
-            data={"tracked_changes": tracked_changes},
+            f"tracked changes present after recheck: {preview}" if rechecked_tracked_changes is not None else f"tracked changes present: {preview}",
+            data=data,
+        )
+    if recovered:
+        return PreflightCheck(
+            "workspace_clean",
+            "pass",
+            "tracked git diff is clean after transient recheck",
+            data=data,
         )
     return PreflightCheck("workspace_clean", "pass", "tracked git diff is clean")
 
@@ -311,6 +367,9 @@ def _collect_branch_state(repo_root: Path) -> dict[str, Any]:
         "current_branch": _current_branch(repo_root),
         "branch_distance": _branch_distance(repo_root, expected_branch),
         "tracked_changes": [],
+        "initial_tracked_changes": None,
+        "rechecked_tracked_changes": None,
+        "transient_workspace_dirty_recovered": None,
     }
 
 
@@ -325,6 +384,9 @@ def _run_preflight_checks(*, repo_root: Path, tool: str) -> tuple[dict[str, Any]
             "current_branch": None,
             "branch_distance": None,
             "tracked_changes": [],
+            "initial_tracked_changes": None,
+            "rechecked_tracked_changes": None,
+            "transient_workspace_dirty_recovered": None,
         }
         message = f"branch policy check failed: {exc}"
         checks.append(PreflightCheck("branch_policy", "fail", message, output=str(exc)))
@@ -336,14 +398,17 @@ def _run_preflight_checks(*, repo_root: Path, tool: str) -> tuple[dict[str, Any]
         return branch_state, checks, "branch_drift", branch_check.detail
 
     try:
-        tracked_changes = _tracked_changes(repo_root)
+        workspace_state = _resolve_tracked_changes(repo_root)
     except Exception as exc:
         message = f"workspace check failed: {exc}"
         checks.append(PreflightCheck("workspace_clean", "fail", message, output=str(exc)))
         return branch_state, checks, "preflight_failed", message
 
-    branch_state["tracked_changes"] = tracked_changes
-    workspace_check = _workspace_check(tracked_changes)
+    branch_state["tracked_changes"] = list(workspace_state.get("tracked_changes") or [])
+    branch_state["initial_tracked_changes"] = workspace_state.get("initial_tracked_changes")
+    branch_state["rechecked_tracked_changes"] = workspace_state.get("rechecked_tracked_changes")
+    branch_state["transient_workspace_dirty_recovered"] = workspace_state.get("transient_workspace_dirty_recovered")
+    workspace_check = _workspace_check(workspace_state)
     checks.append(workspace_check)
     if workspace_check.status != "pass":
         return branch_state, checks, "workspace_dirty", workspace_check.detail
@@ -480,6 +545,9 @@ def run_cycles(
         "current_branch": None,
         "branch_distance": None,
         "tracked_changes": [],
+        "initial_tracked_changes": None,
+        "rechecked_tracked_changes": None,
+        "transient_workspace_dirty_recovered": None,
     }
     preflight: list[PreflightCheck] = []
     if enforce_preflight:
@@ -502,6 +570,17 @@ def run_cycles(
                 tracked_changes=list(branch_state.get("tracked_changes") or []),
                 status_reason=status_reason,
                 preflight=preflight,
+                initial_tracked_changes=(
+                    list(branch_state.get("initial_tracked_changes") or [])
+                    if branch_state.get("initial_tracked_changes") is not None
+                    else None
+                ),
+                rechecked_tracked_changes=(
+                    list(branch_state.get("rechecked_tracked_changes") or [])
+                    if branch_state.get("rechecked_tracked_changes") is not None
+                    else None
+                ),
+                transient_workspace_dirty_recovered=branch_state.get("transient_workspace_dirty_recovered"),
             )
 
     summary = _run_cycles_core(repo_root=repo_root, tool=tool, max_cycles=max_cycles)
@@ -511,6 +590,17 @@ def run_cycles(
     summary.branch_distance = branch_state.get("branch_distance")
     summary.tracked_changes = list(branch_state.get("tracked_changes") or [])
     summary.preflight = preflight
+    summary.initial_tracked_changes = (
+        list(branch_state.get("initial_tracked_changes") or [])
+        if branch_state.get("initial_tracked_changes") is not None
+        else None
+    )
+    summary.rechecked_tracked_changes = (
+        list(branch_state.get("rechecked_tracked_changes") or [])
+        if branch_state.get("rechecked_tracked_changes") is not None
+        else None
+    )
+    summary.transient_workspace_dirty_recovered = branch_state.get("transient_workspace_dirty_recovered")
     return summary
 
 

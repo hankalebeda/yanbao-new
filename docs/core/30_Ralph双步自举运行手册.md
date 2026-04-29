@@ -1,6 +1,6 @@
 # 30_Ralph双步自举运行手册
 
-> 更新日期：2026-04-28
+> 更新日期：2026-04-29
 > 目标：以最小改动方式，让 Ralph 按仓库既有实现持续自动迭代，直到进入 **COMPLETE** 或 **BLOCKED** 终态。
 > 维护注意：本文不属于 Step 1 compiler-owned 输出；Step 1 只负责 docs 27/28/29 与双份 `prd.json`，本文按运行手册手工维护。
 
@@ -60,6 +60,7 @@
 - 当前工作分支必须与 `.claude/ralph/config.json` 的 `branchNamePolicy.currentValue` 一致；当前基线为 `main`
 - Step 2 启动前，工作树不应存在无关脏改动
 - 如有无关改动，必须先 stash 或单独处理
+- `automation/acl_backup/**` 这类未跟踪备份文件不属于 tracked blocker；是否保留只影响环境整洁度，不影响 Ralph 预检结果
 
 ### 4.2 工具前提
 
@@ -111,7 +112,7 @@ git stash push -m "pre-ralph-unrelated" -- "D:\yanbao-new\docs\core\plan.md"
 git status --short
 ```
 
-如果 `git status --short` 显示 `docs/core/30_Ralph双步自举运行手册.md`、`docs/core/plan.md` 或其他手工改动，必须先确认这些改动是本轮允许提交的文档改动，或先 stash / commit / 放弃；否则 Step 2 可能因无法创建单 story commit 而进入 `BLOCKED`。
+如果 `git status --short` 显示 `docs/core/30_Ralph双步自举运行手册.md`、`docs/core/plan.md` 或其他手工改动，必须先确认这些改动是本轮允许提交的文档改动，或先 stash / commit / 放弃；否则 Step 2 可能因无法创建单 story commit 而进入 `BLOCKED`。`automation/acl_backup/**` 这类 untracked 噪音与 `_archive/case_*` 的权限告警不属于 tracked 脏改动，默认不视为本条阻塞。
 
 ### 5.3 确认当前在 Ralph 运行分支
 
@@ -232,7 +233,8 @@ raise SystemExit(1)
 
 - `python -m codex.ralph_cycle run --tool claude --max-cycles 5` 在进入 Outer Loop 前，必须先完成 branch gate + 只读预检。
 - 若当前分支不是 `.claude/ralph/config.json` 的 `branchNamePolicy.currentValue`（当前基线为 `main`），或 `.claude/ralph/loop/.last-branch` / 目标分支 tip 不一致，必须直接返回 `final_status=branch_drift`，不得继续执行 Step 1 / Step 2。
-- 若存在 tracked git 脏改动，必须直接返回 `final_status=workspace_dirty`；`_archive/case_*` 这类权限告警只算环境噪音，不算 tracked 脏改动。
+- 若首次检查到 tracked git 脏改动，控制器必须先做一次只读内部复核（固定短延迟后重跑 `git diff --name-only` 与 `git diff --cached --name-only`）；若第二次结果已清空，则按瞬时噪音处理并继续后续预检。
+- 若二次复核后仍存在 tracked git 脏改动，才返回 `final_status=workspace_dirty`；`automation/acl_backup/**`、`_archive/case_*` 这类未跟踪文件/权限告警只算环境噪音，不算 tracked 脏改动。
 - 若 `check_state.py`、`python -m codex.ralph_compile verify`、runner `-DryRun`、或 `tests/test_ralph_compile.py` + `tests/test_ralph_cycle.py` 的定向 pytest 失败，必须直接返回 `final_status=preflight_failed`。
 - 任何 `cycles_run=0` 的结果都只能记录为“未进入 Step 1 / Step 2”，必须先处理 `status_reason` 指向的原因后再重跑。
 
@@ -293,12 +295,15 @@ raise SystemExit(1)
 - 不写 `scripts/`、`data/`、`output/`
 - 不把缺失事实写成“已恢复”
 
-## 13. 当前基线说明（2026-04-27）
+## 13. 当前基线说明（2026-04-29）
 
-截至 2026-04-27，本仓库已观测到：
+截至 2026-04-29，本仓库当前稳态已观测到：
 
-- `check_state.py` 可返回真实运行态
-- 运行态存在已发布研报，不再是 `Total published: 0`
+- `.claude/ralph/config.json` 的 `branchNamePolicy.currentValue`、`.claude/ralph/loop/.last-branch` 与当前运行分支都对齐为 `main`
+- `python -m codex.ralph_compile verify` 为 108/108 passes
+- `powershell -ExecutionPolicy Bypass -File .\.claude\ralph\run-ralph.ps1 -Tool claude -MaxIterations 1 -DryRun` 可通过
+- `python .\check_state.py` 可返回真实运行态，且当前 `Active tasks: 0`、`Total published: 116`
+- `python -m codex.ralph_cycle run --tool claude --max-cycles 5` 在 clean `main` 上可进入真实 Outer Loop，并返回 `final_status=complete`、`cycles_run>=1`
 - runtime closure sentinels 可用于 Step 1 adjudication
 
-但是否继续保持 `COMPLETE`，仍以每轮实际运行结果为准；如果真实证据回退，系统必须允许自动回退到 `BLOCKED` 或重新进入待实现状态。
+但是否继续保持 `COMPLETE`，仍以每轮实际运行结果为准；如果真实证据回退，系统必须允许自动回退到 `BLOCKED` 或重新进入待实现状态。若小时线程再次出现单文件 `workspace_dirty`，应先依赖控制器内置的单次只读复核来区分瞬时噪音与真实 tracked blocker，而不是直接把一次性脏态记成持续阻塞。
