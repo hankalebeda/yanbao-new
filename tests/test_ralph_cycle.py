@@ -133,6 +133,28 @@ def test_run_cycles_core_blocks_when_step2_blocks_and_story_set_stable(monkeypat
     assert summary.stories_remaining == 1
 
 
+def test_run_cycles_core_blocks_when_step2_fails_without_story_progress(monkeypatch, tmp_path):
+    rebuilds = iter(
+        [
+            _story_summary(),
+            _story_summary(),
+        ]
+    )
+    monkeypatch.setattr(ralph_cycle.ralph_compile, "verify_repo", lambda **kwargs: (_ for _ in ()).throw(RuntimeError("needs rebuild")))
+    monkeypatch.setattr(ralph_cycle.ralph_compile, "rebuild_repo", lambda **kwargs: next(rebuilds))
+    monkeypatch.setattr(
+        ralph_cycle,
+        "run_ralph_step2",
+        lambda **kwargs: {"status": "failed", "returncode": 1, "output": "claude CLI crashed"},
+    )
+
+    summary = ralph_cycle.run_cycles(repo_root=tmp_path, max_cycles=1, enforce_preflight=False)
+
+    assert summary.final_status == "blocked"
+    assert summary.stories_remaining == 1
+    assert summary.history[0].step2["status"] == "failed"
+
+
 def test_run_cycles_core_short_circuits_with_verify_and_adjudicate(monkeypatch, tmp_path):
     monkeypatch.setattr(
         ralph_cycle.ralph_compile,

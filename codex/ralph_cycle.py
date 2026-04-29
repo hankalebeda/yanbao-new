@@ -508,7 +508,7 @@ def _run_cycles_core(*, repo_root: Path = REPO_ROOT, tool: str = "claude", max_c
             break
 
         if (
-            step2["status"] == "blocked"
+            step2["status"] in {"blocked", "failed"}
             and rebuild_after["story_set_hash"] == rebuild_before["story_set_hash"]
             and not rebuild_after["new_story_ids"]
         ):

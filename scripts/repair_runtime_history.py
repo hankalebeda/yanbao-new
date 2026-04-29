@@ -915,6 +915,7 @@ def _repair_trade_date(
                 WHERE trade_date = :trade_date
                   AND published = 1
                   AND is_deleted = 0
+                  AND LOWER(COALESCE(quality_flag, 'ok')) = 'ok'
                 """
             ),
             {"trade_date": trade_date_value},
@@ -979,6 +980,7 @@ def _repair_trade_date(
                       AND stock_code = :stock_code
                       AND published = 1
                       AND is_deleted = 0
+                      AND LOWER(COALESCE(quality_flag, 'ok')) = 'ok'
                     LIMIT 1
                     """
                 ),

@@ -805,3 +805,61 @@ def test_repair_runtime_history_caps_generation_to_three_reports_one_per_strateg
         (stock_codes[1], "B"),
         (stock_codes[2], "C"),
     ]
+
+
+def test_repair_runtime_history_treats_published_stale_ok_as_missing(db_session, monkeypatch):
+    stock_codes = [f"{600000 + idx:06d}.SH" for idx in range(200)]
+    stale_code = stock_codes[0]
+    captured: dict[str, list[str]] = {}
+
+    insert_report_bundle_ssot(
+        db_session,
+        stock_code=stale_code,
+        stock_name="示例旧报告",
+        trade_date="2026-03-19",
+        quality_flag="stale_ok",
+        published=True,
+    )
+
+    monkeypatch.setattr("scripts.rebuild_runtime_db.count_kline_coverage", lambda db, trade_date_value: 200)
+    monkeypatch.setattr(
+        "scripts.rebuild_runtime_db.ensure_bootstrap_market_state_ready",
+        lambda db, trade_date_value: None,
+    )
+    monkeypatch.setattr(
+        "scripts.rebuild_runtime_db.ensure_report_usage_rows",
+        lambda db, trade_date_value, stock_codes: None,
+    )
+    monkeypatch.setattr("app.services.stock_pool.refresh_stock_pool", lambda db, trade_date, force_rebuild=True: None)
+    monkeypatch.setattr(
+        "app.services.market_state.compute_and_persist_market_state",
+        lambda db, trade_date: None,
+    )
+    monkeypatch.setattr(
+        "scripts.repair_runtime_history._repair_exact_pool_codes",
+        lambda db, trade_date_value: stock_codes,
+    )
+    monkeypatch.setattr(
+        "scripts.repair_runtime_history._materialize_t_minus_1_klines",
+        lambda db, trade_date_value, stock_codes: set(stock_codes),
+    )
+    monkeypatch.setattr(
+        "scripts.repair_runtime_history._stabilize_complete_public_batch_trace",
+        lambda db, trade_date_value, max_attempts=3, sleep_seconds=0.2: False,
+    )
+
+    def _capture_generation_targets(*, trade_date_value: str, missing_codes: list[str]):
+        captured["missing_codes"] = list(missing_codes)
+        return [], {}
+
+    monkeypatch.setattr(
+        "scripts.repair_runtime_history._select_repair_generation_targets",
+        _capture_generation_targets,
+    )
+
+    summary = _repair_trade_date(db_session, trade_date_value="2026-03-19")
+
+    assert summary["requested_missing_reports"] == 200
+    assert summary["scheduled_reports"] == 0
+    assert summary["remaining_missing_reports"] == 200
+    assert stale_code in captured["missing_codes"]
