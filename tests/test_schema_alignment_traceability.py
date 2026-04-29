@@ -2,8 +2,6 @@ from __future__ import annotations
 
 from pathlib import Path
 
-import pytest
-
 from app.models import PaymentWebhookEvent
 from app.ssot_schema import INDEX_SPECS
 
@@ -57,10 +55,10 @@ def test_payment_webhook_event_ssot04_request_id_alignment_is_all_or_nothing():
     )
 
 
-def test_payment_webhook_event_request_id_overlay_stays_pending_until_ssot04_catches_up():
+def test_payment_webhook_event_request_id_ssot04_is_aligned_with_runtime_schema():
     has_request_id, has_request_index = _payment_webhook_doc_contract()
-    if not (has_request_id and has_request_index):
-        pytest.xfail("payment_webhook_event.request_id 仍属 overlay：runtime/schema 已补齐，04 原文待对齐，不应表述为 SSOT 已闭环。")
-
-    assert has_request_id
-    assert has_request_index
+    assert has_request_id, "docs/core/04_数据治理与血缘.md must document payment_webhook_event.request_id."
+    assert has_request_index, (
+        "docs/core/04_数据治理与血缘.md must document "
+        "idx_payment_webhook_event_request(request_id, received_at)."
+    )
