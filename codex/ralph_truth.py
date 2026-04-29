@@ -5,6 +5,7 @@ import re
 import sqlite3
 import subprocess
 import sys
+import tempfile
 from dataclasses import asdict, dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
@@ -345,7 +346,71 @@ def derive_runtime_sentinels(
             "published_ok_nonterminal_task_count": sqlite_truth.get("published_ok_nonterminal_task_count"),
         },
     )
+    sentinels["walkforward_empty_range_cli_returns_empty_stats"] = _walkforward_empty_range_sentinel()
     return sentinels
+
+
+def _walkforward_empty_range_sentinel() -> RuntimeSentinelState:
+    """Verify the walkforward CLI handles a no-trade-day range without fabricating rows."""
+    script_path = REPO_ROOT / "scripts" / "walkforward_backtest.py"
+    with tempfile.TemporaryDirectory(prefix="ralph-walkforward-") as tmpdir:
+        output_path = Path(tmpdir) / "empty-range.json"
+        result = subprocess.run(
+            [
+                sys.executable,
+                str(script_path),
+                "--start-date",
+                "2026-03-14",
+                "--end-date",
+                "2026-03-15",
+                "--stock-codes",
+                "600000.SH",
+                "--capital-tier",
+                "10w",
+                "--output-json",
+                str(output_path),
+            ],
+            cwd=str(REPO_ROOT),
+            capture_output=True,
+            text=True,
+            check=False,
+            timeout=90,
+        )
+        details: dict[str, Any] = {
+            "returncode": result.returncode,
+            "stdout_tail": (result.stdout or "")[-500:],
+            "stderr_tail": (result.stderr or "")[-500:],
+            "output_exists": output_path.exists(),
+        }
+        payload: dict[str, Any] = {}
+        if output_path.exists():
+            try:
+                payload = json.loads(output_path.read_text(encoding="utf-8"))
+            except json.JSONDecodeError as exc:
+                details["json_error"] = str(exc)
+        stats = payload.get("stats") if isinstance(payload, dict) else {}
+        records = payload.get("records") if isinstance(payload, dict) else None
+        ok = (
+            result.returncode == 0
+            and records == []
+            and isinstance(stats, dict)
+            and stats.get("closed_count") == 0
+            and stats.get("win_rate") == 0
+            and stats.get("total_pnl_net") == 0
+            and stats.get("pnl_ratio") is None
+            and stats.get("annualized_pct") == 0
+        )
+        details.update(
+            {
+                "records_count": len(records) if isinstance(records, list) else None,
+                "stats": stats if isinstance(stats, dict) else None,
+            }
+        )
+        return RuntimeSentinelState(
+            name="walkforward_empty_range_cli_returns_empty_stats",
+            ok=ok,
+            details=details,
+        )
 
 
 def collect_truth_snapshot(

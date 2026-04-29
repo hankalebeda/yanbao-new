@@ -1703,7 +1703,8 @@
         "The CLI JSON output for an empty date range includes trades=[] and deterministic zero/null stats.",
         "python -m pytest tests/test_walkforward_backtest.py -q --runxfail passes.",
         "python -m pytest tests/test_walkforward_backtest.py -q passes.",
-        "No?? generation is required or performed."
+        "No?? generation is required or performed.",
+        "Typecheck passes"
       ],
       "priority": 110,
       "passes": true,
