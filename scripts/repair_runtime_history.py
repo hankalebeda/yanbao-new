@@ -999,7 +999,25 @@ def _repair_trade_date(
     _expire_repair_blocking_tasks(db, trade_date_value=trade_date_value)
     _expire_published_report_nonterminal_tasks(db, trade_date_value=trade_date_value)
     db.commit()
-    remaining_missing_reports = max(requested_missing_reports - published_generated, 0)
+    final_existing_codes = {
+        str(row[0])
+        for row in db.execute(
+            text(
+                """
+                SELECT stock_code
+                FROM report
+                WHERE trade_date = :trade_date
+                  AND published = 1
+                  AND is_deleted = 0
+                  AND LOWER(COALESCE(quality_flag, 'ok')) = 'ok'
+                """
+            ),
+            {"trade_date": trade_date_value},
+        ).fetchall()
+    }
+    remaining_missing_reports = sum(
+        1 for stock_code in pool_codes if stock_code not in final_existing_codes
+    )
     complete_public_batch = _stabilize_complete_public_batch_trace(
         db,
         trade_date_value=trade_date_value,

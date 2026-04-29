@@ -23,6 +23,8 @@ TARGETED_PYTEST_ARGS = [
     "pytest",
     "tests/test_ralph_compile.py",
     "tests/test_ralph_cycle.py",
+    "tests/test_history_guardian.py",
+    "tests/test_repair_runtime_history.py",
     "-q",
     "--tb=short",
 ]

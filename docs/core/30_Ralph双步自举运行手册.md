@@ -235,7 +235,7 @@ raise SystemExit(1)
 - 若当前分支不是 `.claude/ralph/config.json` 的 `branchNamePolicy.currentValue`（当前基线为 `main`），或 `.claude/ralph/loop/.last-branch` / 目标分支 tip 不一致，必须直接返回 `final_status=branch_drift`，不得继续执行 Step 1 / Step 2。
 - 若首次检查到 tracked git 脏改动，控制器必须先做一次只读内部复核（固定短延迟后重跑 `git diff --name-only` 与 `git diff --cached --name-only`）；若第二次结果已清空，则按瞬时噪音处理并继续后续预检。
 - 若二次复核后仍存在 tracked git 脏改动，才返回 `final_status=workspace_dirty`；`automation/acl_backup/**`、`_archive/case_*` 这类未跟踪文件/权限告警只算环境噪音，不算 tracked 脏改动。
-- 若 `check_state.py`、`python -m codex.ralph_compile verify`、runner `-DryRun`、或 `tests/test_ralph_compile.py` + `tests/test_ralph_cycle.py` 的定向 pytest 失败，必须直接返回 `final_status=preflight_failed`。
+- 若 `check_state.py`、`python -m codex.ralph_compile verify`、runner `-DryRun`、或 `tests/test_ralph_compile.py` + `tests/test_ralph_cycle.py` + `tests/test_history_guardian.py` + `tests/test_repair_runtime_history.py` 的定向 pytest 失败，必须直接返回 `final_status=preflight_failed`。
 - 任何 `cycles_run=0` 的结果都只能记录为“未进入 Step 1 / Step 2”，必须先处理 `status_reason` 指向的原因后再重跑。
 
 ## 9. COMPLETE / BLOCKED 的判定标准

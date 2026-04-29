@@ -105,7 +105,8 @@ def _run_one_cycle(batch_size: int) -> dict[str, Any]:
     trade_date, complete_trade_date, trade_date_source = _resolve_target_trade_date()
     pool_codes = get_daily_stock_pool(trade_date=trade_date, exact_trade_date=True, allow_same_day_fallback=True)
     ok_codes = _ok_report_codes_for_trade_date(trade_date, pool_codes)
-    missing_codes = sorted(set(pool_codes) - set(ok_codes))
+    ok_code_set = set(ok_codes)
+    missing_codes = list(dict.fromkeys(code for code in pool_codes if code not in ok_code_set))
 
     # Only strictly ok reports are considered publicly acceptable.
     # stale_ok/degraded/missing must be cleaned and regenerated.

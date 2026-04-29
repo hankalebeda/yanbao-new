@@ -318,3 +318,84 @@ def test_history_guardian_run_one_cycle_preselects_from_full_missing_pool(monkey
         "B": ["000002.SZ"],
         "C": ["000005.SZ"],
     }
+
+
+def test_history_guardian_run_one_cycle_preserves_pool_rank_order_for_missing_codes(monkeypatch):
+    generated_batches: list[dict] = []
+
+    class DummySession:
+        def commit(self):
+            return None
+
+        def rollback(self):
+            return None
+
+        def close(self):
+            return None
+
+    monkeypatch.setattr(history_guardian, "SessionLocal", lambda: DummySession())
+    monkeypatch.setattr(history_guardian, "_resolve_target_trade_date", lambda: ("2026-03-06", "2026-03-06", "latest_complete_public_batch"))
+    monkeypatch.setattr(
+        history_guardian,
+        "get_daily_stock_pool",
+        lambda **kwargs: [
+            "600999.SH",
+            "000001.SZ",
+            "300001.SZ",
+            "002000.SZ",
+        ],
+    )
+    monkeypatch.setattr(history_guardian, "_ok_report_codes_for_trade_date", lambda trade_date, stock_codes: set())
+    monkeypatch.setattr(history_guardian, "cleanup_incomplete_reports", lambda *args, **kwargs: {"candidates": 0, "scanned": 0})
+    monkeypatch.setattr(
+        history_guardian,
+        "cleanup_incomplete_reports_until_clean",
+        lambda *args, **kwargs: {"total_soft_deleted": 0, "remaining_candidates": 0},
+    )
+    monkeypatch.setattr(
+        history_guardian,
+        "generate_reports_batch",
+        lambda **kwargs: generated_batches.append(
+            {
+                "stock_codes": list(kwargs["stock_codes"]),
+                "max_concurrent_override": kwargs.get("max_concurrent_override"),
+                "one_per_strategy_type": kwargs.get("one_per_strategy_type"),
+            }
+        ) or {
+            "total": 3,
+            "preselected_count": 3,
+            "succeeded": 3,
+            "failed": 0,
+            "strategy_distribution": {
+                "A": ["000001.SZ"],
+                "B": ["600999.SH"],
+                "C": ["002000.SZ"],
+            },
+        },
+    )
+    monkeypatch.setattr(
+        history_guardian,
+        "rebuild_fr07_snapshot",
+        lambda db, trade_day, window_days, purge_invalid: {"window_days": window_days, "purge_invalid": purge_invalid},
+    )
+    monkeypatch.setattr(history_guardian, "_published_non_ok_count", lambda: 0)
+
+    result = history_guardian._run_one_cycle(batch_size=3)
+
+    assert generated_batches == [
+        {
+            "stock_codes": [
+                "600999.SH",
+                "000001.SZ",
+                "300001.SZ",
+                "002000.SZ",
+            ],
+            "max_concurrent_override": 3,
+            "one_per_strategy_type": True,
+        }
+    ]
+    assert result["generation"]["strategy_distribution"] == {
+        "A": ["000001.SZ"],
+        "B": ["600999.SH"],
+        "C": ["002000.SZ"],
+    }

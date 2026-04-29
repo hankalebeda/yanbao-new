@@ -91,6 +91,13 @@ def test_tracked_changes_preserves_unicode_paths(monkeypatch, tmp_path):
     ]
 
 
+def test_targeted_pytest_args_cover_runtime_history_canaries():
+    assert "tests/test_ralph_compile.py" in ralph_cycle.TARGETED_PYTEST_ARGS
+    assert "tests/test_ralph_cycle.py" in ralph_cycle.TARGETED_PYTEST_ARGS
+    assert "tests/test_history_guardian.py" in ralph_cycle.TARGETED_PYTEST_ARGS
+    assert "tests/test_repair_runtime_history.py" in ralph_cycle.TARGETED_PYTEST_ARGS
+
+
 def test_run_cycles_core_completes_when_second_rebuild_is_green(monkeypatch, tmp_path):
     rebuilds = iter(
         [

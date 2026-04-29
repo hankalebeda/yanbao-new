@@ -774,6 +774,15 @@ def test_repair_runtime_history_caps_generation_to_three_reports_one_per_strateg
 
     def _fake_generate_report(db, *, stock_code, trade_date, force_same_day_rebuild, forced_strategy_type=None):
         generate_calls.append((stock_code, forced_strategy_type))
+        insert_report_bundle_ssot(
+            db,
+            stock_code=stock_code,
+            stock_name=f"样例{stock_code}",
+            trade_date=trade_date,
+            strategy_type=forced_strategy_type or "A",
+            quality_flag="ok",
+            published=True,
+        )
         return {
             "published": True,
             "strategy_type": forced_strategy_type,
@@ -863,3 +872,69 @@ def test_repair_runtime_history_treats_published_stale_ok_as_missing(db_session,
     assert summary["scheduled_reports"] == 0
     assert summary["remaining_missing_reports"] == 200
     assert stale_code in captured["missing_codes"]
+
+
+def test_repair_runtime_history_recounts_remaining_missing_reports_from_final_truth(db_session, monkeypatch):
+    stock_codes = [f"{600000 + idx:06d}.SH" for idx in range(200)]
+    stock_code = stock_codes[0]
+
+    monkeypatch.setattr("scripts.rebuild_runtime_db.count_kline_coverage", lambda db, trade_date_value: 200)
+    monkeypatch.setattr(
+        "scripts.rebuild_runtime_db.ensure_bootstrap_market_state_ready",
+        lambda db, trade_date_value: None,
+    )
+    monkeypatch.setattr(
+        "scripts.rebuild_runtime_db.ensure_report_usage_rows",
+        lambda db, trade_date_value, stock_codes: None,
+    )
+    monkeypatch.setattr("app.services.stock_pool.refresh_stock_pool", lambda db, trade_date, force_rebuild=True: None)
+    monkeypatch.setattr(
+        "app.services.market_state.compute_and_persist_market_state",
+        lambda db, trade_date: None,
+    )
+    monkeypatch.setattr(
+        "scripts.repair_runtime_history._repair_exact_pool_codes",
+        lambda db, trade_date_value: stock_codes,
+    )
+    monkeypatch.setattr(
+        "scripts.repair_runtime_history._materialize_t_minus_1_klines",
+        lambda db, trade_date_value, stock_codes: set(stock_codes),
+    )
+    monkeypatch.setattr(
+        "scripts.repair_runtime_history._select_repair_generation_targets",
+        lambda *, trade_date_value, missing_codes: ([stock_code], {stock_code: "A"}),
+    )
+    monkeypatch.setattr(
+        "scripts.repair_runtime_history._stabilize_complete_public_batch_trace",
+        lambda db, trade_date_value, max_attempts=3, sleep_seconds=0.2: False,
+    )
+
+    generation_attempts = {"count": 0}
+
+    def _fake_generate_report(db, *, stock_code, trade_date, force_same_day_rebuild, forced_strategy_type=None):
+        generation_attempts["count"] += 1
+        insert_report_bundle_ssot(
+            db,
+            stock_code=stock_code,
+            stock_name="并发补齐样例",
+            trade_date=trade_date,
+            quality_flag="ok",
+            published=True,
+        )
+        from app.services.report_generation_ssot import ReportGenerationServiceError
+
+        raise ReportGenerationServiceError(409, "CONCURRENT_CONFLICT")
+
+    monkeypatch.setattr(
+        "app.services.report_generation_ssot.generate_report_ssot",
+        _fake_generate_report,
+    )
+
+    summary = _repair_trade_date(db_session, trade_date_value="2026-03-19")
+
+    assert generation_attempts["count"] == 1
+    assert summary["requested_missing_reports"] == 200
+    assert summary["scheduled_reports"] == 1
+    assert summary["generated_reports"] == 0
+    assert summary["published_generated_reports"] == 0
+    assert summary["remaining_missing_reports"] == 199
