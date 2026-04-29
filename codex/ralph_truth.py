@@ -327,12 +327,16 @@ def derive_runtime_sentinels(
             "report_published": sqlite_truth.get("report_published"),
         },
     )
+    missing_complete_public_batch_anchor = not bool(anchors.get("latest_complete_public_batch_trade_date"))
+    runtime_history_warnings = ["missing_complete_public_batch_anchor"] if missing_complete_public_batch_anchor else []
     sentinels["runtime_history_repair_consistent"] = RuntimeSentinelState(
         name="runtime_history_repair_consistent",
         ok=int(sqlite_truth.get("report_published") or 0) > 0
         and int(sqlite_truth.get("published_ok_nonterminal_task_count") or 0) == 0,
         details={
             "latest_complete_public_batch_trade_date": anchors.get("latest_complete_public_batch_trade_date"),
+            "missing_complete_public_batch_anchor": missing_complete_public_batch_anchor,
+            "warnings": runtime_history_warnings,
             "report_published": sqlite_truth.get("report_published"),
             "published_ok_nonterminal_task_count": sqlite_truth.get("published_ok_nonterminal_task_count"),
         },

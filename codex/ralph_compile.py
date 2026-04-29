@@ -24,6 +24,9 @@ from codex.ralph_truth import TruthSnapshot, collect_truth_snapshot
 
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
+STORY_ID_RE = re.compile(r"^US-(?P<number>\d{3,})$")
+PINNED_RUNTIME_STORY_IDS = tuple(f"US-{number:03d}" for number in range(101, 109))
+APPEND_RUNTIME_STORY_START = 109
 DOC27_PATH = REPO_ROOT / "docs" / "core" / "27_PRD_研报平台增强与整体验收基线.md"
 DOC28_PATH = REPO_ROOT / "docs" / "core" / "28_严格验收与上线门禁.md"
 DOC29_PATH = REPO_ROOT / "docs" / "core" / "29_Ralph_PRD字段映射说明.md"
@@ -117,6 +120,37 @@ def _extract_json_array(text: str) -> list[dict[str, Any]]:
     if not isinstance(payload, list):
         raise RuntimeError("round2_json_not_array")
     return [dict(item) for item in payload if isinstance(item, dict)]
+
+
+def _story_number(story_id: str) -> int:
+    match = STORY_ID_RE.fullmatch(story_id)
+    if not match:
+        raise RuntimeError(f"invalid_story_id:{story_id}")
+    return int(match.group("number"))
+
+
+def _verify_runtime_story_structure(stories: list[dict[str, Any]]) -> None:
+    seen: set[str] = set()
+    story_numbers: list[int] = []
+    for story in stories:
+        story_id = str(story.get("id") or "")
+        if story_id in seen:
+            raise RuntimeError(f"duplicate_story_id:{story_id}")
+        seen.add(story_id)
+        story_numbers.append(_story_number(story_id))
+
+    missing_pinned = [story_id for story_id in PINNED_RUNTIME_STORY_IDS if story_id not in seen]
+    if missing_pinned:
+        raise RuntimeError(f"missing_pinned_runtime_story:{','.join(missing_pinned)}")
+
+    appended_runtime_numbers = sorted(number for number in story_numbers if number >= APPEND_RUNTIME_STORY_START)
+    if not appended_runtime_numbers:
+        return
+    expected = set(range(APPEND_RUNTIME_STORY_START, max(appended_runtime_numbers) + 1))
+    missing_appended = sorted(expected - set(appended_runtime_numbers))
+    if missing_appended:
+        missing_ids = ",".join(f"US-{number:03d}" for number in missing_appended)
+        raise RuntimeError(f"non_append_runtime_story_ids:missing={missing_ids}")
 
 
 def _resolve_claude_executable(repo_root: Path) -> str:
@@ -311,7 +345,8 @@ def verify_repo(*, repo_root: Path = REPO_ROOT) -> CompileSummary:
     named_prd = _load_prd(repo_root / ".claude" / "ralph" / "prd" / "yanbao-platform-enhancement.json")
     if loop_prd != named_prd:
         raise RuntimeError("dual_prd_mismatch")
-    for story in loop_prd.get("userStories") or []:
+    stories = list(loop_prd.get("userStories") or [])
+    for story in stories:
         story_id = str(story.get("id") or "")
         notes = parse_notes_payload(story.get("notes"))
         missing = [key for key in NOTE_KEYS if key not in notes]
@@ -319,11 +354,12 @@ def verify_repo(*, repo_root: Path = REPO_ROOT) -> CompileSummary:
             raise RuntimeError(f"missing_note_keys:{story.get('id')}:{','.join(missing)}")
         if story.get("passes") and not list(notes.get("writeScope") or []):
             raise RuntimeError(f"empty_write_scope:{story_id}")
-        story_number = int(story_id.split("-", 1)[1]) if story_id.startswith("US-") and story_id.split("-", 1)[1].isdigit() else 0
+        story_number = _story_number(story_id)
         group = str(notes.get("group") or "")
         is_runtime_story = story_number >= 101 or group.endswith("_RUNTIME")
         if story.get("passes") and is_runtime_story and not list(notes.get("runtimeChecks") or []):
             raise RuntimeError(f"empty_runtime_checks:{story_id}")
+    _verify_runtime_story_structure(stories)
     subprocess.run(
         [
             "powershell",

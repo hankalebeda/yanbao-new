@@ -123,6 +123,88 @@ def _write_min_repo(root: Path) -> None:
     (root / ".claude" / "ralph" / "prd" / "yanbao-platform-enhancement.json").write_text(json.dumps(existing_prd, ensure_ascii=False, indent=2), encoding="utf-8")
 
 
+def _verify_note_payload(
+    *,
+    group: str = "G1",
+    write_scope: list[str] | None = None,
+    runtime_checks: list[str] | None = None,
+) -> dict[str, object]:
+    return {
+        "group": group,
+        "dependsOn": [],
+        "endpoints": [],
+        "models": [],
+        "permissions": [],
+        "errorCodes": [],
+        "idempotency": "",
+        "enums": [],
+        "thresholds": "",
+        "degradation": "",
+        "exampleAssert": "",
+        "pytest": "python -m pytest tests/test_example.py -q --tb=short",
+        "writeScope": write_scope if write_scope is not None else ["tests/test_example.py"],
+        "readScope": [],
+        "runtimeChecks": runtime_checks if runtime_checks is not None else [],
+        "dbTables": [],
+        "envDeps": [],
+        "hardBlockers": [],
+    }
+
+
+def _verify_story(
+    story_id: str,
+    *,
+    group: str = "G1",
+    write_scope: list[str] | None = None,
+    runtime_checks: list[str] | None = None,
+    passes: bool = True,
+) -> dict[str, object]:
+    return {
+        "id": story_id,
+        "title": f"Story {story_id}",
+        "description": "demo",
+        "acceptanceCriteria": ["Typecheck passes"],
+        "priority": int(story_id.split("-")[1]),
+        "passes": passes,
+        "notes": json.dumps(
+            _verify_note_payload(group=group, write_scope=write_scope, runtime_checks=runtime_checks),
+            ensure_ascii=False,
+        ),
+    }
+
+
+def _write_verify_prd_pair(root: Path, stories: list[dict[str, object]]) -> None:
+    (root / ".claude" / "ralph" / "loop").mkdir(parents=True)
+    (root / ".claude" / "ralph" / "prd").mkdir(parents=True)
+    prd = {
+        "project": "demo",
+        "branchName": "main",
+        "description": "demo",
+        "userStories": stories,
+    }
+    for rel in [
+        ".claude/ralph/loop/prd.json",
+        ".claude/ralph/prd/yanbao-platform-enhancement.json",
+    ]:
+        (root / rel).write_text(json.dumps(prd, ensure_ascii=False, indent=2), encoding="utf-8")
+
+
+def _pinned_runtime_stories(*, omit: str | None = None) -> list[dict[str, object]]:
+    stories: list[dict[str, object]] = []
+    for number in range(101, 109):
+        story_id = f"US-{number:03d}"
+        if story_id == omit:
+            continue
+        stories.append(
+            _verify_story(
+                story_id,
+                group=f"FR{number}_RUNTIME",
+                runtime_checks=[f"runtime_check_{number}"],
+            )
+        )
+    return stories
+
+
 def test_rebuild_repo_enriches_notes_and_appends_new_story(monkeypatch, tmp_path):
     _write_min_repo(tmp_path)
     monkeypatch.setattr(ralph_compile, "collect_truth_snapshot", lambda **_: _fake_truth_snapshot())
@@ -337,6 +419,30 @@ def test_verify_repo_rejects_runtime_story_without_runtime_checks(monkeypatch, t
         ralph_compile.verify_repo(repo_root=tmp_path)
 
 
+def test_verify_repo_rejects_missing_pinned_runtime_story(monkeypatch, tmp_path):
+    _write_verify_prd_pair(tmp_path, _pinned_runtime_stories(omit="US-103"))
+    monkeypatch.setattr(ralph_compile.subprocess, "run", lambda *args, **kwargs: None)
+
+    with pytest.raises(RuntimeError, match="missing_pinned_runtime_story:US-103"):
+        ralph_compile.verify_repo(repo_root=tmp_path)
+
+
+def test_verify_repo_rejects_non_append_runtime_story_ids(monkeypatch, tmp_path):
+    stories = [
+        *_pinned_runtime_stories(),
+        _verify_story(
+            "US-110",
+            group="RUNTIME_HISTORY_RUNTIME",
+            runtime_checks=["runtime_history_repair_consistent"],
+        ),
+    ]
+    _write_verify_prd_pair(tmp_path, stories)
+    monkeypatch.setattr(ralph_compile.subprocess, "run", lambda *args, **kwargs: None)
+
+    with pytest.raises(RuntimeError, match="non_append_runtime_story_ids:missing=US-109"):
+        ralph_compile.verify_repo(repo_root=tmp_path)
+
+
 def test_runtime_history_repair_sentinel_requires_strict_ok_clean_tasks():
     probes = {
         "/api/v1/home": ProbeSummary("/api/v1/home", 200, True, payload={"data": {"pool_size": 1}}),
@@ -379,6 +485,8 @@ def test_runtime_history_repair_sentinel_requires_strict_ok_clean_tasks():
     assert sentinels["runtime_history_repair_consistent"].ok is True
     assert sentinels["runtime_history_repair_consistent"].details == {
         "latest_complete_public_batch_trade_date": "2026-03-21",
+        "missing_complete_public_batch_anchor": False,
+        "warnings": [],
         "report_published": 1,
         "published_ok_nonterminal_task_count": 0,
     }
@@ -386,6 +494,46 @@ def test_runtime_history_repair_sentinel_requires_strict_ok_clean_tasks():
     sqlite_truth["published_ok_nonterminal_task_count"] = 1
     sentinels = derive_runtime_sentinels(sqlite_truth=sqlite_truth, probes=probes, anchors=anchors)
     assert sentinels["runtime_history_repair_consistent"].ok is False
+
+
+def test_runtime_history_repair_sentinel_warns_without_complete_batch_anchor():
+    probes = {
+        "/api/v1/home": ProbeSummary("/api/v1/home", 200, True, payload={"data": {"pool_size": 1}}),
+        "/api/v1/market/state": ProbeSummary(
+            "/api/v1/market/state",
+            200,
+            True,
+            payload={"data": {"trade_date": "2026-03-21", "market_state": "BULL"}},
+        ),
+        "/api/v1/reports?limit=3": ProbeSummary(
+            "/api/v1/reports?limit=3",
+            200,
+            True,
+            payload={"data": {"total": 1}},
+        ),
+    }
+    anchors = {
+        "runtime_trade_date": "2026-03-21",
+        "latest_published_report_trade_date": "2026-03-21",
+        "latest_complete_public_batch_trade_date": None,
+        "public_pool_trade_date": "2026-03-21",
+        "public_pool_size": 1,
+    }
+    sqlite_truth = {
+        "report_data_usage_count": 1,
+        "report_published": 1,
+        "settlement_total": 1,
+        "sim_position_open": 1,
+        "published_ok_nonterminal_task_count": 0,
+    }
+
+    sentinels = derive_runtime_sentinels(sqlite_truth=sqlite_truth, probes=probes, anchors=anchors)
+
+    sentinel = sentinels["runtime_history_repair_consistent"]
+    assert sentinel.ok is True
+    assert sentinel.details["latest_complete_public_batch_trade_date"] is None
+    assert sentinel.details["missing_complete_public_batch_anchor"] is True
+    assert sentinel.details["warnings"] == ["missing_complete_public_batch_anchor"]
 
 
 def test_resolve_claude_executable_prefers_repo_wrapper_on_windows(monkeypatch, tmp_path):
