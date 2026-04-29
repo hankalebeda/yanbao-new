@@ -270,12 +270,14 @@ def get_runtime_anchor_dates_ssot(db: Session) -> dict[str, str | None]:
 
     _service = RuntimeAnchorService(db)
     pool_snapshot = get_public_pool_snapshot_ssot(db)
+    runtime_trade_date = _service.runtime_trade_date()
     return {
-        "runtime_trade_date": _service.runtime_trade_date(),
+        "runtime_trade_date": runtime_trade_date,
         "latest_published_report_trade_date": _latest_published_report_trade_date(db),
         "public_pool_trade_date": pool_snapshot["public_pool_trade_date"],
         "latest_complete_public_batch_trade_date": _latest_complete_public_batch_trade_date(db),
-        "stats_snapshot_date": _latest_complete_stats_trade_date(db) or _latest_stats_snapshot_trade_date(db, window_days=30),
+        "stats_snapshot_date": _service.latest_complete_stats_trade_date(max_trade_date=runtime_trade_date)
+        or _service.latest_stats_snapshot_trade_date(window_days=30, max_trade_date=runtime_trade_date),
         "sim_snapshot_date": _latest_sim_snapshot_trade_date(db),
     }
 
@@ -3657,9 +3659,11 @@ def get_dashboard_stats_payload_ssot(
             "display_hint": None,
         }
 
-    stats_snapshot_date = _latest_complete_stats_trade_date(db) or _latest_stats_snapshot_trade_date(
-        db,
+    stats_snapshot_date = _service.latest_complete_stats_trade_date(
+        max_trade_date=runtime_trade_date,
+    ) or _service.latest_stats_snapshot_trade_date(
         window_days=window_days,
+        max_trade_date=runtime_trade_date,
     )
     anchor_trade_date = date.fromisoformat(runtime_trade_date)
     window_start, window_end = _dashboard_window_bounds(anchor_trade_date, window_days)

@@ -162,6 +162,23 @@ def _invalid_write_scope_entries(repo_root: Path, entries: list[Any]) -> list[st
     return invalid
 
 
+def _expected_branch_from_config(repo_root: Path) -> str | None:
+    config_path = repo_root / ".claude" / "ralph" / "config.json"
+    if not config_path.exists():
+        return None
+    try:
+        payload = json.loads(config_path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError:
+        return None
+    if not isinstance(payload, dict):
+        return None
+    branch_policy = payload.get("branchNamePolicy")
+    if not isinstance(branch_policy, dict):
+        return None
+    expected = str(branch_policy.get("currentValue") or "").strip()
+    return expected or None
+
+
 def _verify_runtime_story_structure(stories: list[dict[str, Any]]) -> None:
     seen: set[str] = set()
     story_numbers: list[int] = []
@@ -378,6 +395,10 @@ def verify_repo(*, repo_root: Path = REPO_ROOT) -> CompileSummary:
     named_prd = _load_prd(repo_root / ".claude" / "ralph" / "prd" / "yanbao-platform-enhancement.json")
     if loop_prd != named_prd:
         raise RuntimeError("dual_prd_mismatch")
+    expected_branch = _expected_branch_from_config(repo_root)
+    prd_branch = str(loop_prd.get("branchName") or "").strip()
+    if expected_branch and prd_branch != expected_branch:
+        raise RuntimeError(f"branch_name_policy_mismatch:prd={prd_branch or '<empty>'}:expected={expected_branch}")
     stories = list(loop_prd.get("userStories") or [])
     for story in stories:
         story_id = str(story.get("id") or "")

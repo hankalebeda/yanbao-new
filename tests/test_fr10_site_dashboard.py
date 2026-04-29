@@ -2729,6 +2729,48 @@ def test_fr10_future_dated_public_rows_do_not_advance_runtime_anchor(client, db_
     assert home_data["public_performance"]["snapshot_date"] != "2026-04-01"
 
 
+def test_fr10_future_stats_snapshot_rows_are_capped_to_runtime_anchor(client, db_session, monkeypatch):
+    import app.services.ssot_read_model as read_model
+    import app.services.trade_calendar as trade_calendar_mod
+
+    monkeypatch.setattr(read_model, "latest_trade_date_str", lambda dt=None: "2026-03-20")
+    monkeypatch.setattr(trade_calendar_mod, "latest_trade_date_str", lambda dt=None: "2026-03-20")
+
+    insert_report_bundle_ssot(
+        db_session,
+        stock_code="600519.SH",
+        stock_name="MOUTAI",
+        trade_date="2026-03-20",
+        strategy_type="B",
+        recommendation="BUY",
+    )
+    insert_strategy_metric_snapshot(
+        db_session,
+        snapshot_date="2026-04-01",
+        strategy_type="B",
+        window_days=30,
+        sample_size=30,
+    )
+    insert_baseline_metric_snapshot(
+        db_session,
+        snapshot_date="2026-04-01",
+        baseline_type="baseline_random",
+        window_days=30,
+        sample_size=30,
+    )
+
+    anchors = read_model.get_runtime_anchor_dates_ssot(db_session)
+    dashboard = client.get("/api/v1/dashboard/stats?window_days=30")
+
+    assert anchors["runtime_trade_date"] == "2026-03-20"
+    assert anchors["stats_snapshot_date"] is None
+    assert dashboard.status_code == 200
+    dashboard_data = dashboard.json()["data"]
+    assert dashboard_data["runtime_trade_date"] == "2026-03-20"
+    assert dashboard_data["stats_snapshot_date"] is None
+    assert dashboard_data["data_status"] == "COMPUTING"
+
+
 def test_fr10_public_pool_fail_closes_when_only_future_snapshot_exists(db_session, monkeypatch):
     import app.services.trade_calendar as trade_calendar
     from app.services.stock_pool import get_public_pool_view

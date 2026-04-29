@@ -429,6 +429,27 @@ def test_verify_repo_rejects_runtime_story_without_runtime_checks(monkeypatch, t
         ralph_compile.verify_repo(repo_root=tmp_path)
 
 
+def test_verify_repo_rejects_prd_branch_name_policy_mismatch(monkeypatch, tmp_path):
+    (tmp_path / ".claude" / "ralph").mkdir(parents=True, exist_ok=True)
+    (tmp_path / ".claude" / "ralph" / "config.json").write_text(
+        json.dumps({"branchNamePolicy": {"currentValue": "main"}}, ensure_ascii=False, indent=2),
+        encoding="utf-8",
+    )
+    _write_verify_prd_pair(tmp_path, [_verify_story("US-001")])
+    for rel in [
+        ".claude/ralph/loop/prd.json",
+        ".claude/ralph/prd/yanbao-platform-enhancement.json",
+    ]:
+        prd_path = tmp_path / rel
+        prd = json.loads(prd_path.read_text(encoding="utf-8"))
+        prd["branchName"] = "feature/foo"
+        prd_path.write_text(json.dumps(prd, ensure_ascii=False, indent=2), encoding="utf-8")
+    monkeypatch.setattr(ralph_compile.subprocess, "run", lambda *args, **kwargs: None)
+
+    with pytest.raises(RuntimeError, match=r"branch_name_policy_mismatch:prd=feature/foo:expected=main"):
+        ralph_compile.verify_repo(repo_root=tmp_path)
+
+
 def test_verify_repo_rejects_passed_story_with_missing_write_scope_path(monkeypatch, tmp_path):
     stories = [
         *_pinned_runtime_stories(),
