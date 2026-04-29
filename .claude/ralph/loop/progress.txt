@@ -112,3 +112,10 @@ report_citation=5, report_data_usage_link=13, instruction_card=1 for the publish
   - RUN_SETTLEMENT is the cleanest admin repair path to prove governance/audit closure in this environment because it returns 202/COMPLETED and writes both admin_operation and audit_log evidence on the same runtime anchor.
 ---
 <promise>COMPLETE</promise>
+
+## 2026-04-29 13:49 +08:00 - US-109
+- Story: Harden runtime-history strict-ok closure and Ralph ownership canary.
+- Files changed: app/services/history_guardian.py, app/services/runtime_anchor_service.py, app/services/ssot_read_model.py, scripts/repair_runtime_history.py, codex/ralph_cycle.py, codex/ralph_compile.py, codex/ralph_story_normalize.py, codex/ralph_truth.py, tests/test_history_guardian.py, tests/test_repair_runtime_history.py, tests/test_ralph_cycle.py, tests/test_ralph_compile.py, .claude/ralph/loop/prd.json, .claude/ralph/prd/yanbao-platform-enhancement.json, docs/core/30_Ralph双步自举运行手册.md.
+- Evidence: python -m pytest tests/test_ralph_compile.py tests/test_ralph_adjudicate.py tests/test_ralph_cycle.py tests/test_history_guardian.py tests/test_repair_runtime_history.py tests/test_fr10_site_dashboard.py::test_fr10_complete_public_batch_ignores_low_coverage_completed_task -q --tb=short => 52 passed.
+- Evidence: python -m codex.ralph_compile adjudicate => 109/109 passes; python -m codex.ralph_compile verify => 109/109 passes.
+- Result: <promise>COMPLETE</promise>

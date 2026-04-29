@@ -146,7 +146,7 @@ python -m codex.ralph_compile rebuild --tool claude
 python -m codex.ralph_compile verify
 ```
 
-若 `verify` 报 `missing_note_keys`、`dual_prd_mismatch` 或 runner dry-run 失败，不得进入 Step 2；先重新执行 `rebuild` 并保留错误输出，直到 `verify` 返回 0。
+若 `verify` 报 `missing_note_keys`、`empty_write_scope`、`empty_runtime_checks`、`dual_prd_mismatch` 或 runner dry-run 失败，不得进入 Step 2；先重新执行 `rebuild`/`adjudicate` 并保留错误输出，直到 `verify` 返回 0。
 
 ### 6.2 作用说明
 
@@ -159,7 +159,7 @@ python -m codex.ralph_compile verify
 
 - `verify` 返回 exit code 0
 - 双份 PRD 完全一致
-- `notes` 可解析且包含 18 键
+- `notes` 可解析且包含 18 键；所有 `passes=true` story 必须具备非空 `writeScope`；`US-101+`/`*_RUNTIME` story 必须具备非空 `runtimeChecks`
 - runner `-DryRun` 通过
 
 ## 7. Step 2：单独执行 runtime stories
@@ -300,7 +300,7 @@ raise SystemExit(1)
 截至 2026-04-29，本仓库当前稳态已观测到：
 
 - `.claude/ralph/config.json` 的 `branchNamePolicy.currentValue`、`.claude/ralph/loop/.last-branch` 与当前运行分支都对齐为 `main`
-- `python -m codex.ralph_compile verify` 为 108/108 passes
+- `python -m codex.ralph_compile verify` 为全部 story passes（当前 runtime gap 追加后应为 109/109）
 - `powershell -ExecutionPolicy Bypass -File .\.claude\ralph\run-ralph.ps1 -Tool claude -MaxIterations 1 -DryRun` 可通过
 - `python .\check_state.py` 可返回真实运行态，且当前 `Active tasks: 0`、`Total published: 116`
 - `python -m codex.ralph_cycle run --tool claude --max-cycles 5` 在 clean `main` 上可进入真实 Outer Loop，并返回 `final_status=complete`、`cycles_run>=1`

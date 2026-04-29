@@ -3453,6 +3453,7 @@ def _has_complete_public_batch_trace(db: Session, *, trade_date: str) -> bool:
             WHERE trade_date = :trade_date
               AND published = 1
               AND is_deleted = 0
+              AND COALESCE(LOWER(quality_flag), 'ok') = 'ok'
             """,
             {"trade_date": trade_date},
         )
@@ -3523,7 +3524,11 @@ def _latest_complete_public_batch_trade_date(db: Session) -> str | None:
     candidate_dates = _distinct_date_values(
         db,
         """
-        SELECT trade_date FROM report WHERE published = 1 AND is_deleted = 0
+        SELECT trade_date
+        FROM report
+        WHERE published = 1
+          AND is_deleted = 0
+          AND COALESCE(LOWER(quality_flag), 'ok') = 'ok'
         UNION
         SELECT trade_date FROM report_generation_task
         UNION

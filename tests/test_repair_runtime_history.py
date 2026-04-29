@@ -395,6 +395,47 @@ def test_repair_runtime_history_stabilizes_complete_public_batch_trace_by_expiri
     ) is True
 
 
+def test_complete_public_batch_trace_requires_published_ok_reports(db_session):
+    import app.services.ssot_read_model as read_model
+    from app.services.runtime_anchor_service import RuntimeAnchorService
+
+    report_table = Base.metadata.tables["report"]
+    trade_date_value = "2026-03-21"
+
+    insert_pool_snapshot(
+        db_session,
+        trade_date=trade_date_value,
+        stock_codes=["600519.SH"],
+    )
+    insert_report_bundle_ssot(
+        db_session,
+        stock_code="600519.SH",
+        stock_name="贵州茅台",
+        trade_date=trade_date_value,
+        quality_flag="stale_ok",
+        published=True,
+        ensure_pool_snapshot=False,
+    )
+
+    assert read_model._has_complete_public_batch_trace(db_session, trade_date=trade_date_value) is False
+    assert RuntimeAnchorService(db_session).has_complete_public_batch_trace(trade_date=trade_date_value) is False
+    assert read_model._latest_complete_public_batch_trade_date(db_session) is None
+
+    db_session.execute(
+        report_table.update()
+        .where(
+            report_table.c.trade_date == date.fromisoformat(trade_date_value),
+            report_table.c.stock_code == "600519.SH",
+        )
+        .values(quality_flag="ok")
+    )
+    db_session.commit()
+
+    assert read_model._has_complete_public_batch_trace(db_session, trade_date=trade_date_value) is True
+    assert RuntimeAnchorService(db_session).has_complete_public_batch_trace(trade_date=trade_date_value) is True
+    assert read_model._latest_complete_public_batch_trade_date(db_session) == trade_date_value
+
+
 def test_repair_runtime_history_backfills_fallback_batch_lineage_and_usage(db_session):
     now = utc_now()
     insert_stock_master(db_session, stock_code="600519.SH", stock_name="贵州茅台")

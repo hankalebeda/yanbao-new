@@ -312,10 +312,18 @@ def verify_repo(*, repo_root: Path = REPO_ROOT) -> CompileSummary:
     if loop_prd != named_prd:
         raise RuntimeError("dual_prd_mismatch")
     for story in loop_prd.get("userStories") or []:
+        story_id = str(story.get("id") or "")
         notes = parse_notes_payload(story.get("notes"))
         missing = [key for key in NOTE_KEYS if key not in notes]
         if missing:
             raise RuntimeError(f"missing_note_keys:{story.get('id')}:{','.join(missing)}")
+        if story.get("passes") and not list(notes.get("writeScope") or []):
+            raise RuntimeError(f"empty_write_scope:{story_id}")
+        story_number = int(story_id.split("-", 1)[1]) if story_id.startswith("US-") and story_id.split("-", 1)[1].isdigit() else 0
+        group = str(notes.get("group") or "")
+        is_runtime_story = story_number >= 101 or group.endswith("_RUNTIME")
+        if story.get("passes") and is_runtime_story and not list(notes.get("runtimeChecks") or []):
+            raise RuntimeError(f"empty_runtime_checks:{story_id}")
     subprocess.run(
         [
             "powershell",

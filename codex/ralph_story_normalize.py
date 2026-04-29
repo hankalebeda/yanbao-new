@@ -33,6 +33,9 @@ DEFAULT_PROJECT = "A股研报平台整体验收与增强"
 DEFAULT_BRANCH = "main"
 ENDPOINT_RE = re.compile(r"\b(?:GET|POST|PUT|PATCH|DELETE)\s+/[^\s`'\"，。；;)]*")
 PYTEST_RE = re.compile(r"python\s+-m\s+pytest[^\n]+")
+PYTEST_PATH_RE = re.compile(r"(?P<path>(?:[A-Za-z0-9_.-]+[\\/])*tests[\\/][A-Za-z0-9_.\\/ -]+?\.py)")
+PROGRESS_STORY_RE = re.compile(r"^##\s+.+?-\s+(US-\d{3})\s*$")
+PROGRESS_FILES_RE = re.compile(r"^-\s+Files changed:\s*(?P<files>.+)$")
 
 
 @dataclass(slots=True)
@@ -78,6 +81,44 @@ def extract_pytest_commands(*texts: str) -> str:
     return " && ".join(commands)
 
 
+def extract_pytest_paths(*texts: str) -> list[str]:
+    paths: list[str] = []
+    for text in texts:
+        for match in PYTEST_PATH_RE.finditer(text or ""):
+            cleaned = match.group("path").strip().strip("`'\".,;:)")
+            cleaned = cleaned.replace("\\", "/")
+            if cleaned and cleaned not in paths:
+                paths.append(cleaned)
+    return paths
+
+
+def extract_progress_write_scopes(progress_text: str) -> dict[str, list[str]]:
+    scopes: dict[str, list[str]] = {}
+    current_story_id: str | None = None
+    for raw_line in (progress_text or "").splitlines():
+        line = raw_line.strip()
+        story_match = PROGRESS_STORY_RE.match(line)
+        if story_match:
+            current_story_id = story_match.group(1)
+            scopes.setdefault(current_story_id, [])
+            continue
+        files_match = PROGRESS_FILES_RE.match(line)
+        if not files_match or not current_story_id:
+            continue
+        for raw_item in files_match.group("files").split(","):
+            item = raw_item.strip().strip("`'\". ")
+            item = item.replace("\\", "/")
+            if not item:
+                continue
+            # PRD/progress files are Step-1/runner metadata, not the business/test
+            # code surface whose drift should invalidate an implemented story.
+            if item.startswith(".claude/ralph/"):
+                continue
+            if item.startswith(("app/", "codex/", "scripts/", "tests/")) and item not in scopes[current_story_id]:
+                scopes[current_story_id].append(item)
+    return {story_id: values for story_id, values in scopes.items() if values}
+
+
 def extract_endpoints(*texts: str) -> list[str]:
     endpoints: list[str] = []
     for text in texts:
@@ -121,11 +162,24 @@ def _default_runtime_checks(story_id: str, title: str) -> list[str]:
     return []
 
 
-def _default_note_payload(story_id: str, title: str, acceptance_criteria: list[str], existing: Mapping[str, Any] | None) -> dict[str, Any]:
+def _default_note_payload(
+    story_id: str,
+    title: str,
+    acceptance_criteria: list[str],
+    existing: Mapping[str, Any] | None,
+    *,
+    progress_write_scopes: Mapping[str, list[str]] | None = None,
+) -> dict[str, Any]:
     existing_payload = parse_notes_payload(existing.get("notes")) if existing else {}
     text_blob = "\n".join([title, *acceptance_criteria])
     endpoints = existing_payload.get("endpoints") or extract_endpoints(text_blob)
     pytest_command = existing_payload.get("pytest") or extract_pytest_commands(text_blob)
+    explicit_write_scope = list(existing_payload.get("writeScope") or [])
+    inferred_write_scope = (
+        explicit_write_scope
+        or list((progress_write_scopes or {}).get(story_id) or [])
+        or extract_pytest_paths(str(pytest_command or ""), text_blob)
+    )
     group = existing_payload.get("group")
     if not group:
         numeric = int(story_id.split("-")[1])
@@ -143,7 +197,7 @@ def _default_note_payload(story_id: str, title: str, acceptance_criteria: list[s
         "degradation": str(existing_payload.get("degradation") or ""),
         "exampleAssert": str(existing_payload.get("exampleAssert") or ""),
         "pytest": str(pytest_command or ""),
-        "writeScope": list(existing_payload.get("writeScope") or []),
+        "writeScope": inferred_write_scope,
         "readScope": list(existing_payload.get("readScope") or []),
         "runtimeChecks": list(existing_payload.get("runtimeChecks") or _default_runtime_checks(story_id, title)),
         "dbTables": list(existing_payload.get("dbTables") or []),
@@ -230,6 +284,10 @@ def normalize_story_list(
     by_id, by_title = _existing_story_maps(existing_stories)
     normalized_stories: list[dict[str, Any]] = []
     used_ids: set[str] = set()
+    progress_path = repo_root / ".claude" / "ralph" / "loop" / "progress.txt"
+    progress_write_scopes = extract_progress_write_scopes(
+        progress_path.read_text(encoding="utf-8") if progress_path.exists() else ""
+    )
 
     for index, raw_story in enumerate(raw_stories, start=1):
         title = str(raw_story.get("title") or "").strip() or f"Untitled Story {index}"
@@ -251,7 +309,13 @@ def normalize_story_list(
         if not any("Typecheck passes" in item for item in acceptance_criteria):
             acceptance_criteria.append("Typecheck passes")
 
-        note_payload = _default_note_payload(story_id, title, acceptance_criteria, existing_story)
+        note_payload = _default_note_payload(
+            story_id,
+            title,
+            acceptance_criteria,
+            existing_story,
+            progress_write_scopes=progress_write_scopes,
+        )
         story = {
             "id": story_id,
             "title": title,

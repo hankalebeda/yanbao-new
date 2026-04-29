@@ -142,6 +142,23 @@ def query_sqlite_truth(database_path: Path = DEFAULT_DB_PATH) -> dict[str, Any]:
             ),
             "report_data_usage_count": _sqlite_scalar(cur, "SELECT COUNT(*) FROM report_data_usage"),
             "report_citation_count": _sqlite_scalar(cur, "SELECT COUNT(*) FROM report_citation"),
+            "published_ok_nonterminal_task_count": _sqlite_scalar(
+                cur,
+                """
+                SELECT COUNT(*)
+                FROM report_generation_task AS task
+                WHERE task.status IN ('Pending', 'Processing', 'Suspended')
+                  AND EXISTS (
+                      SELECT 1
+                      FROM report
+                      WHERE report.trade_date = task.trade_date
+                        AND report.stock_code = task.stock_code
+                        AND report.published = 1
+                        AND COALESCE(report.is_deleted, 0) = 0
+                        AND COALESCE(LOWER(report.quality_flag), 'ok') = 'ok'
+                  )
+                """,
+            ),
         }
     finally:
         conn.close()
@@ -310,6 +327,16 @@ def derive_runtime_sentinels(
             "report_published": sqlite_truth.get("report_published"),
         },
     )
+    sentinels["runtime_history_repair_consistent"] = RuntimeSentinelState(
+        name="runtime_history_repair_consistent",
+        ok=int(sqlite_truth.get("report_published") or 0) > 0
+        and int(sqlite_truth.get("published_ok_nonterminal_task_count") or 0) == 0,
+        details={
+            "latest_complete_public_batch_trade_date": anchors.get("latest_complete_public_batch_trade_date"),
+            "report_published": sqlite_truth.get("report_published"),
+            "published_ok_nonterminal_task_count": sqlite_truth.get("published_ok_nonterminal_task_count"),
+        },
+    )
     return sentinels
 
 
@@ -341,4 +368,3 @@ def collect_truth_snapshot(
 
 def truth_snapshot_json(snapshot: TruthSnapshot) -> str:
     return json.dumps(snapshot.to_dict(), ensure_ascii=False, indent=2)
-

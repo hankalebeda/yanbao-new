@@ -171,6 +171,7 @@ class RuntimeAnchorService:
                     WHERE trade_date = :trade_date
                       AND published = 1
                       AND is_deleted = 0
+                      AND COALESCE(LOWER(quality_flag), 'ok') = 'ok'
                     """,
                     {"trade_date": trade_date},
                 )
@@ -201,7 +202,11 @@ class RuntimeAnchorService:
         def factory():
             candidate_dates = self._distinct_date_values(
                 """
-                SELECT trade_date FROM report WHERE published = 1 AND is_deleted = 0
+                SELECT trade_date
+                FROM report
+                WHERE published = 1
+                  AND is_deleted = 0
+                  AND COALESCE(LOWER(quality_flag), 'ok') = 'ok'
                 UNION
                 SELECT trade_date FROM report_generation_task
                 UNION

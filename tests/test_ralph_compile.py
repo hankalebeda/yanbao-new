@@ -8,7 +8,8 @@ import pytest
 
 from codex import ralph_compile
 from codex import ralph_prompts
-from codex.ralph_truth import ProbeSummary, RuntimeSentinelState, TruthSnapshot
+from codex.ralph_story_normalize import normalize_story_list, parse_notes_payload
+from codex.ralph_truth import ProbeSummary, RuntimeSentinelState, TruthSnapshot, derive_runtime_sentinels
 
 
 def _fake_truth_snapshot() -> TruthSnapshot:
@@ -170,6 +171,221 @@ def test_rebuild_repo_enriches_notes_and_appends_new_story(monkeypatch, tmp_path
     assert compile_manifest["story_set_hash"] == summary.story_set_hash
     compile_report = json.loads((tmp_path / ".claude" / "ralph" / "loop" / "compile_report.json").read_text(encoding="utf-8"))
     assert compile_report["mode"] == "rebuild"
+
+
+def test_normalize_story_list_infers_write_scope_from_progress_before_pytest(tmp_path):
+    progress_path = tmp_path / ".claude" / "ralph" / "loop" / "progress.txt"
+    progress_path.parent.mkdir(parents=True, exist_ok=True)
+    progress_path.write_text(
+        "\n".join(
+            [
+                "## 2026-04-27 19:42 - US-104",
+                "- Files changed: app/services/llm_router.py, app/services/report_generation_ssot.py, tests/test_fr06_report_generate.py, .claude/ralph/loop/prd.json, .claude/ralph/loop/progress.txt.",
+            ]
+        ),
+        encoding="utf-8",
+    )
+    existing_prd = {
+        "userStories": [
+            {
+                "id": "US-104",
+                "title": "恢复 FR-06 运行态正式发布链",
+                "description": "existing",
+                "acceptanceCriteria": ["python -m pytest tests/test_fr06_quality_pipeline.py -q --tb=short"],
+                "priority": 104,
+                "passes": True,
+                "notes": json.dumps(
+                    {
+                        "group": "FR06",
+                        "dependsOn": [],
+                        "endpoints": [],
+                        "models": ["report"],
+                        "permissions": [],
+                        "errorCodes": [],
+                        "idempotency": "",
+                        "enums": [],
+                        "thresholds": "",
+                        "degradation": "",
+                        "exampleAssert": "",
+                        "pytest": "python -m pytest tests/test_fr06_quality_pipeline.py -q --tb=short",
+                        "writeScope": [],
+                        "readScope": [],
+                        "runtimeChecks": ["published_reports_nonzero"],
+                        "dbTables": [],
+                        "envDeps": [],
+                        "hardBlockers": [],
+                    },
+                    ensure_ascii=False,
+                ),
+            }
+        ]
+    }
+
+    normalized = normalize_story_list(
+        list(existing_prd["userStories"]),
+        existing_prd=existing_prd,
+        repo_root=tmp_path,
+    )
+
+    notes = parse_notes_payload(normalized["userStories"][0]["notes"])
+    assert notes["writeScope"] == [
+        "app/services/llm_router.py",
+        "app/services/report_generation_ssot.py",
+        "tests/test_fr06_report_generate.py",
+    ]
+
+
+def test_verify_repo_rejects_passed_story_without_write_scope(monkeypatch, tmp_path):
+    (tmp_path / ".claude" / "ralph" / "loop").mkdir(parents=True)
+    (tmp_path / ".claude" / "ralph" / "prd").mkdir(parents=True)
+    notes = {
+        "group": "G1",
+        "dependsOn": [],
+        "endpoints": [],
+        "models": [],
+        "permissions": [],
+        "errorCodes": [],
+        "idempotency": "",
+        "enums": [],
+        "thresholds": "",
+        "degradation": "",
+        "exampleAssert": "",
+        "pytest": "python -m pytest tests/test_example.py -q --tb=short",
+        "writeScope": [],
+        "readScope": [],
+        "runtimeChecks": [],
+        "dbTables": [],
+        "envDeps": [],
+        "hardBlockers": [],
+    }
+    prd = {
+        "project": "demo",
+        "branchName": "main",
+        "description": "demo",
+        "userStories": [
+            {
+                "id": "US-001",
+                "title": "demo story",
+                "description": "demo",
+                "acceptanceCriteria": ["Typecheck passes"],
+                "priority": 1,
+                "passes": True,
+                "notes": json.dumps(notes, ensure_ascii=False),
+            }
+        ],
+    }
+    for rel in [
+        ".claude/ralph/loop/prd.json",
+        ".claude/ralph/prd/yanbao-platform-enhancement.json",
+    ]:
+        (tmp_path / rel).write_text(json.dumps(prd, ensure_ascii=False, indent=2), encoding="utf-8")
+
+    monkeypatch.setattr(ralph_compile.subprocess, "run", lambda *args, **kwargs: None)
+
+    with pytest.raises(RuntimeError, match="empty_write_scope:US-001"):
+        ralph_compile.verify_repo(repo_root=tmp_path)
+
+
+def test_verify_repo_rejects_runtime_story_without_runtime_checks(monkeypatch, tmp_path):
+    (tmp_path / ".claude" / "ralph" / "loop").mkdir(parents=True)
+    (tmp_path / ".claude" / "ralph" / "prd").mkdir(parents=True)
+    notes = {
+        "group": "RUNTIME_HISTORY_RUNTIME",
+        "dependsOn": [],
+        "endpoints": [],
+        "models": [],
+        "permissions": [],
+        "errorCodes": [],
+        "idempotency": "",
+        "enums": [],
+        "thresholds": "",
+        "degradation": "",
+        "exampleAssert": "",
+        "pytest": "python -m pytest tests/test_example.py -q --tb=short",
+        "writeScope": ["tests/test_example.py"],
+        "readScope": [],
+        "runtimeChecks": [],
+        "dbTables": [],
+        "envDeps": [],
+        "hardBlockers": [],
+    }
+    prd = {
+        "project": "demo",
+        "branchName": "main",
+        "description": "demo",
+        "userStories": [
+            {
+                "id": "US-109",
+                "title": "runtime story",
+                "description": "demo",
+                "acceptanceCriteria": ["Typecheck passes"],
+                "priority": 109,
+                "passes": True,
+                "notes": json.dumps(notes, ensure_ascii=False),
+            }
+        ],
+    }
+    for rel in [
+        ".claude/ralph/loop/prd.json",
+        ".claude/ralph/prd/yanbao-platform-enhancement.json",
+    ]:
+        (tmp_path / rel).write_text(json.dumps(prd, ensure_ascii=False, indent=2), encoding="utf-8")
+
+    monkeypatch.setattr(ralph_compile.subprocess, "run", lambda *args, **kwargs: None)
+
+    with pytest.raises(RuntimeError, match="empty_runtime_checks:US-109"):
+        ralph_compile.verify_repo(repo_root=tmp_path)
+
+
+def test_runtime_history_repair_sentinel_requires_strict_ok_clean_tasks():
+    probes = {
+        "/api/v1/home": ProbeSummary("/api/v1/home", 200, True, payload={"data": {"pool_size": 1}}),
+        "/api/v1/market/state": ProbeSummary(
+            "/api/v1/market/state",
+            200,
+            True,
+            payload={"data": {"trade_date": "2026-03-21", "market_state": "BULL"}},
+        ),
+        "/api/v1/reports?limit=3": ProbeSummary(
+            "/api/v1/reports?limit=3",
+            200,
+            True,
+            payload={"data": {"total": 1}},
+        ),
+        "/api/v1/dashboard/stats?window_days=7": ProbeSummary(
+            "/api/v1/dashboard/stats?window_days=7",
+            200,
+            True,
+            payload={"data": {"data_status": "READY"}},
+        ),
+    }
+    anchors = {
+        "runtime_trade_date": "2026-03-21",
+        "latest_published_report_trade_date": "2026-03-21",
+        "latest_complete_public_batch_trade_date": "2026-03-21",
+        "public_pool_trade_date": "2026-03-21",
+        "public_pool_size": 1,
+    }
+    sqlite_truth = {
+        "report_data_usage_count": 1,
+        "report_published": 1,
+        "settlement_total": 1,
+        "sim_position_open": 1,
+        "published_ok_nonterminal_task_count": 0,
+    }
+
+    sentinels = derive_runtime_sentinels(sqlite_truth=sqlite_truth, probes=probes, anchors=anchors)
+
+    assert sentinels["runtime_history_repair_consistent"].ok is True
+    assert sentinels["runtime_history_repair_consistent"].details == {
+        "latest_complete_public_batch_trade_date": "2026-03-21",
+        "report_published": 1,
+        "published_ok_nonterminal_task_count": 0,
+    }
+
+    sqlite_truth["published_ok_nonterminal_task_count"] = 1
+    sentinels = derive_runtime_sentinels(sqlite_truth=sqlite_truth, probes=probes, anchors=anchors)
+    assert sentinels["runtime_history_repair_consistent"].ok is False
 
 
 def test_resolve_claude_executable_prefers_repo_wrapper_on_windows(monkeypatch, tmp_path):
