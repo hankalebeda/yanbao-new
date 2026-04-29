@@ -28,7 +28,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--mock-llm",
         action="store_true",
-        help="Force MOCK_LLM=true during missing report generation.",
+        help="Rejected: runtime-history repair must not generate mock LLM reports.",
     )
     parser.add_argument(
         "--request-timeout-seconds",
@@ -1156,6 +1156,8 @@ def _rebuild_runtime_sim_history(
 
 def main() -> int:
     args = parse_args()
+    if args.mock_llm:
+        raise RuntimeError("runtime_history_repair_mock_llm_forbidden")
 
     from app.core.config import settings
     from app.core.db import SessionLocal, engine
@@ -1171,7 +1173,7 @@ def main() -> int:
             args.request_timeout_seconds,
             router_primary=getattr(settings, "router_primary", None),
         )
-        settings.mock_llm = bool(args.mock_llm)
+        settings.mock_llm = False
         settings.llm_audit_enabled = False
         settings.max_llm_retries = 0
         settings.request_timeout_seconds = effective_request_timeout_seconds

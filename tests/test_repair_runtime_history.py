@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import argparse
 from datetime import date
 
 import pytest
@@ -43,6 +44,24 @@ def test_repair_runtime_history_timeout_keeps_explicit_override():
     assert _effective_request_timeout_seconds(60, router_primary="claude_cli") == 60
     assert _effective_request_timeout_seconds(None, router_primary="codex_api") == 20
     assert _effective_request_timeout_seconds(1, router_primary="codex_api") == 5
+
+
+def test_repair_runtime_history_rejects_mock_llm_before_runtime_setup(monkeypatch):
+    from scripts import repair_runtime_history as repair_history
+
+    monkeypatch.setattr(
+        repair_history,
+        "parse_args",
+        lambda: argparse.Namespace(
+            trade_date=None,
+            history_days=60,
+            mock_llm=True,
+            request_timeout_seconds=None,
+        ),
+    )
+
+    with pytest.raises(RuntimeError, match="runtime_history_repair_mock_llm_forbidden"):
+        repair_history.main()
 
 
 def test_repair_runtime_history_partial_summary_requires_capped_published_progress():
