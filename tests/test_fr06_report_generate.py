@@ -364,6 +364,48 @@ def test_fr06_optional_usage_failures_do_not_trigger_input_gate(monkeypatch):
 
 
 @pytest.mark.feature('FR06-LLM-01')
+def test_fr06_strategy_b_allows_missing_hotspot_when_core_inputs_are_ready():
+    from app.services import report_generation_ssot
+
+    used_data = [
+        {"dataset_name": "kline_daily", "status": "ok", "status_reason": None},
+        {"dataset_name": "market_state_input", "status": "ok", "status_reason": None},
+        {"dataset_name": "hotspot_top50", "status": "missing", "status_reason": "no_hotspot_link"},
+    ]
+
+    issues = report_generation_ssot._collect_generation_input_issues(
+        used_data=used_data,
+        market_state_row={"market_state_degraded": False, "state_reason": None},
+        strategy_type="B",
+    )
+    quality_flag, quality_reason = report_generation_ssot._derive_quality_flag(
+        used_data,
+        {"market_state_degraded": False, "state_reason": None},
+        strategy_type="B",
+    )
+
+    assert issues == []
+    assert quality_flag == "ok"
+    assert quality_reason is None
+
+
+@pytest.mark.feature('FR06-LLM-01')
+def test_fr06_strategy_a_still_requires_hotspot_usage():
+    from app.services import report_generation_ssot
+
+    issues = report_generation_ssot._collect_generation_input_issues(
+        used_data=[
+            {"dataset_name": "kline_daily", "status": "ok", "status_reason": None},
+            {"dataset_name": "market_state_input", "status": "ok", "status_reason": None},
+        ],
+        market_state_row={"market_state_degraded": False, "state_reason": None},
+        strategy_type="A",
+    )
+
+    assert issues == ["hotspot_top50:missing_required_usage"]
+
+
+@pytest.mark.feature('FR06-LLM-01')
 def test_fr06_missing_required_dataset_usage_fails_closed(client, db_session):
     trade_date = "2026-03-06"
     trade_day = date.fromisoformat(trade_date)
@@ -407,6 +449,215 @@ def test_fr06_missing_required_dataset_usage_fails_closed(client, db_session):
     assert latest_task is not None
     assert latest_task["status"] == "Failed"
     assert latest_task["status_reason"] == "REPORT_DATA_INCOMPLETE"
+
+
+@pytest.mark.feature('FR06-LLM-01')
+def test_fr06_runtime_error_after_report_insert_rolls_back_partial_report(db_session, monkeypatch):
+    from app.services import report_generation_ssot
+
+    trade_date = "2026-03-06"
+    trade_day = date.fromisoformat(trade_date)
+    seed_generation_context(db_session, trade_date=trade_date)
+
+    monkeypatch.setattr(
+        report_generation_ssot,
+        "_determine_strategy_type",
+        lambda db, stock_code, trade_day, kline_row: "B",
+    )
+    monkeypatch.setattr(
+        report_generation_ssot,
+        "run_generation_model",
+        lambda **kwargs: {
+            "recommendation": "HOLD",
+            "confidence": 0.60,
+            "llm_fallback_level": "cli",
+            "risk_audit_status": "not_triggered",
+            "risk_audit_skip_reason": None,
+            "conclusion_text": "收盘价与趋势锚点已引用，当前更适合先观望等待均线补齐后再决定。",
+            "reasoning_chain_md": (
+                "## 技术面分析\n收盘价与趋势锚点已引用。\n"
+                "## 资金面分析\n本轮不额外引用资金因子。\n"
+                "## 多空矛盾判断\n均线缺失导致趋势确认保守。\n"
+                "## 风险因素\n若价格转弱则需要继续降级。\n"
+                "## 综合结论\n当前维持HOLD。"
+            ),
+            "strategy_specific_evidence": {
+                "strategy_type": "B",
+                "key_signal": "close 锚点已引用，但 ma20 暂缺",
+                "validation_check": "趋势策略B仅在收盘价锚点基础上维持HOLD。",
+            },
+            "signal_entry_price": kwargs.get("signal_entry_price", 10.0),
+        },
+    )
+    monkeypatch.setattr(
+        report_generation_ssot,
+        "_load_public_report_output_issues",
+        lambda *args, **kwargs: (_ for _ in ()).throw(RuntimeError("payload explode")),
+    )
+
+    with pytest.raises(ReportGenerationServiceError) as exc_info:
+        generate_report_ssot(db_session, stock_code="600519.SH", trade_date=trade_date)
+
+    assert exc_info.value.status_code == 500
+    assert exc_info.value.error_code == "LLM_ALL_FAILED"
+
+    report_rows = db_session.execute(
+        Base.metadata.tables["report"].select().where(
+            Base.metadata.tables["report"].c.stock_code == "600519.SH",
+            Base.metadata.tables["report"].c.trade_date == trade_day,
+        )
+    ).mappings().all()
+    latest_task = db_session.execute(
+        Base.metadata.tables["report_generation_task"].select()
+        .where(Base.metadata.tables["report_generation_task"].c.idempotency_key == f"daily:600519.SH:{trade_date}")
+        .order_by(Base.metadata.tables["report_generation_task"].c.created_at.desc())
+    ).mappings().first()
+
+    assert report_rows == []
+    assert latest_task is not None
+    assert latest_task["status"] == "Failed"
+    assert latest_task["status_reason"] == "llm_all_failed"
+
+
+@pytest.mark.feature('FR06-LLM-01')
+def test_fr06_post_commit_result_load_failure_keeps_completed_task(db_session, monkeypatch):
+    from app.services import report_generation_ssot
+
+    trade_date = "2026-03-07"
+    trade_day = date.fromisoformat(trade_date)
+    seed_generation_context(db_session, trade_date=trade_date)
+
+    monkeypatch.setattr(
+        report_generation_ssot,
+        "_determine_strategy_type",
+        lambda db, stock_code, trade_day, kline_row: "B",
+    )
+    monkeypatch.setattr(
+        report_generation_ssot,
+        "run_generation_model",
+        lambda **kwargs: {
+            "recommendation": "HOLD",
+            "confidence": 0.60,
+            "llm_fallback_level": "cli",
+            "risk_audit_status": "not_triggered",
+            "risk_audit_skip_reason": None,
+            "conclusion_text": "收盘价、趋势与风险约束均已引用，当前先保持观望。",
+            "reasoning_chain_md": (
+                "## 技术面分析\n收盘价仍是核心锚点。\n"
+                "## 资金面分析\n本轮不额外引用资金因子。\n"
+                "## 多空矛盾判断\n趋势未完全确认但证据真实。\n"
+                "## 风险因素\n若价格回落则需要降级。\n"
+                "## 综合结论\n当前维持HOLD。"
+            ),
+            "strategy_specific_evidence": {
+                "strategy_type": "B",
+                "key_signal": "close 锚点已引用，趋势策略B保持HOLD",
+                "validation_check": "收盘价锚点已真实引用，MA/ATR缺失已披露。",
+            },
+            "signal_entry_price": kwargs.get("signal_entry_price", 10.0),
+        },
+    )
+    monkeypatch.setattr(
+        report_generation_ssot,
+        "_load_report_result",
+        lambda *args, **kwargs: (_ for _ in ()).throw(RuntimeError("result load explode")),
+    )
+
+    with pytest.raises(ReportGenerationServiceError) as exc_info:
+        generate_report_ssot(db_session, stock_code="600519.SH", trade_date=trade_date)
+
+    assert exc_info.value.status_code == 500
+    assert exc_info.value.error_code == "VALIDATION_FAILED"
+
+    latest_report = db_session.execute(
+        Base.metadata.tables["report"].select().where(
+            Base.metadata.tables["report"].c.stock_code == "600519.SH",
+            Base.metadata.tables["report"].c.trade_date == trade_day,
+        )
+    ).mappings().one()
+    latest_task = db_session.execute(
+        Base.metadata.tables["report_generation_task"].select()
+        .where(Base.metadata.tables["report_generation_task"].c.task_id == latest_report["generation_task_id"])
+    ).mappings().one()
+
+    assert latest_report["published"] is True
+    assert latest_report["is_deleted"] is False
+    assert latest_report["publish_status"] == "PUBLISHED"
+    assert latest_task["status"] == "Completed"
+    assert latest_task["status_reason"] is None
+
+
+@pytest.mark.feature('FR06-LLM-01')
+def test_fr06_purge_report_bundle_marks_task_failed_instead_of_deleting_it(db_session):
+    from app.services import report_generation_ssot
+
+    report = insert_report_bundle_ssot(
+        db_session,
+        stock_code="600519.SH",
+        trade_date="2026-03-06",
+        strategy_type="B",
+        published=True,
+    )
+    task_table = Base.metadata.tables["report_generation_task"]
+    task_id = report.generation_task_id
+
+    report_generation_ssot._purge_report_generation_bundle(
+        db_session,
+        report_id=report.report_id,
+        purge_reason="REPORT_DATA_INCOMPLETE",
+    )
+    db_session.commit()
+
+    task_row = db_session.execute(
+        task_table.select().where(task_table.c.task_id == task_id)
+    ).mappings().first()
+    report_row = db_session.execute(
+        Base.metadata.tables["report"].select().where(Base.metadata.tables["report"].c.report_id == report.report_id)
+    ).mappings().first()
+
+    assert task_row is not None
+    assert task_row["status"] == "Failed"
+    assert task_row["status_reason"] == "REPORT_DATA_INCOMPLETE"
+    assert report_row is not None
+    assert report_row["is_deleted"] == 1
+    assert report_row["published"] == 0
+
+
+@pytest.mark.feature('FR06-LLM-01')
+def test_fr06_public_payload_gate_allows_missing_industry_when_other_core_fields_exist(db_session, monkeypatch):
+    from app.services import report_generation_ssot
+
+    report = insert_report_bundle_ssot(
+        db_session,
+        stock_code="600519.SH",
+        trade_date="2026-03-06",
+        strategy_type="B",
+        published=True,
+    )
+
+    monkeypatch.setattr(
+        "app.services.ssot_read_model.get_report_view_payload_ssot",
+        lambda *args, **kwargs: {
+            "indicators": {"close": 10.5, "ma5": 10.2, "ma20": 9.8, "total_mv": 123456789.0},
+            "market_snapshot": {"trade_date": "2026-03-06", "last_price": 10.5},
+            "company_overview": {"company_name": "贵州茅台", "industry": None},
+            "financial_analysis": {"total_market_cap": 123456789.0},
+            "industry_competition": {"industry_name": None},
+            "capital_game_summary": {"completeness_level": "minimal"},
+            "price_forecast": {"windows": [{"horizon_days": 7, "llm_pct_range": "+1.0% / -0.8%"}]},
+            "direction_forecast": {"horizons": [{"horizon_day": 1}, {"horizon_day": 7}]},
+            "report_data_usage": [{"dataset_name": "kline_daily", "source_name": "tdx_local", "status": "ok"}],
+            "citations": [{"source_name": "tdx_local", "source_url": "https://example.com", "fetch_time": "2026-03-06T10:00:00"}],
+        },
+    )
+
+    issues = report_generation_ssot._load_public_report_output_issues(
+        db_session,
+        report_id=report.report_id,
+    )
+
+    assert "public_field_missing:company_overview.industry" not in issues
+    assert "public_field_missing:industry_competition.industry_name" not in issues
 
 
 @pytest.mark.feature('FR06-LLM-01')
@@ -971,6 +1222,97 @@ def test_fr06_route_and_call_supports_claude_cli(monkeypatch):
 
     assert captured["timeout_sec"] == 180
     assert result.model_used == "claude_cli"
+
+
+@pytest.mark.feature('FR06-LLM-02')
+def test_fr06_claude_cli_direct_subprocess_uses_utf8_bytes(monkeypatch):
+    from app.services import llm_router
+
+    captured: dict[str, object] = {}
+
+    class _Result:
+        returncode = 0
+        stdout = b'{"recommendation":"BUY","confidence":0.66}'
+        stderr = b""
+
+    def _fake_run(args, **kwargs):
+        captured["args"] = args
+        captured["kwargs"] = kwargs
+        return _Result()
+
+    monkeypatch.setattr(
+        llm_router,
+        "_resolve_claude_cli_command",
+        lambda: r"D:\\yanbao-new\\claude.cmd",
+    )
+    monkeypatch.setattr(llm_router.subprocess, "run", _fake_run)
+
+    result = asyncio.run(
+        llm_router._call_claude_cli(
+            "含有¥符号",
+            0.3,
+            False,
+            timeout_sec=45,
+        )
+    )
+
+    assert captured["args"] == [r"D:\\yanbao-new\\claude.cmd", "--bare", "--print"]
+    assert captured["kwargs"]["input"] == "含有¥符号".encode("utf-8")
+    assert captured["kwargs"]["timeout"] == 45
+    assert result["source"] == "claude_cli"
+    assert result["endpoint"] == r"D:\\yanbao-new\\claude.cmd"
+
+
+@pytest.mark.feature('FR06-LLM-02')
+def test_fr06_claude_cli_direct_subprocess_surfaces_timeout(monkeypatch):
+    from app.services import llm_router
+
+    def _fake_run(args, **kwargs):
+        raise llm_router.subprocess.TimeoutExpired(cmd=args, timeout=kwargs["timeout"])
+
+    monkeypatch.setattr(
+        llm_router,
+        "_resolve_claude_cli_command",
+        lambda: r"D:\\yanbao-new\\claude.cmd",
+    )
+    monkeypatch.setattr(llm_router.subprocess, "run", _fake_run)
+
+    with pytest.raises(RuntimeError, match="claude_cli_timeout_after_45s"):
+        asyncio.run(
+            llm_router._call_claude_cli(
+                "timeout probe",
+                0.3,
+                False,
+                timeout_sec=45,
+            )
+        )
+
+
+@pytest.mark.feature('FR06-LLM-02')
+def test_fr06_claude_cli_direct_subprocess_surfaces_nonzero_exit(monkeypatch):
+    from app.services import llm_router
+
+    class _Result:
+        returncode = 9
+        stdout = b""
+        stderr = b"fatal: cli unavailable"
+
+    monkeypatch.setattr(
+        llm_router,
+        "_resolve_claude_cli_command",
+        lambda: r"D:\\yanbao-new\\claude.cmd",
+    )
+    monkeypatch.setattr(llm_router.subprocess, "run", lambda *args, **kwargs: _Result())
+
+    with pytest.raises(RuntimeError, match="claude_cli_failed:fatal: cli unavailable"):
+        asyncio.run(
+            llm_router._call_claude_cli(
+                "failure probe",
+                0.3,
+                False,
+                timeout_sec=45,
+            )
+        )
 
 
 @pytest.mark.feature('FR06-LLM-02')
@@ -2635,6 +2977,138 @@ def test_fr06_llm_validation_falls_back_when_text_is_not_grounded(monkeypatch):
 
 
 @pytest.mark.feature('FR06-LLM-05')
+def test_fr06_llm_validation_accepts_single_available_metric_binding(monkeypatch):
+    from app.services import report_generation_ssot
+    from app.core.config import settings
+
+    class DummyResult:
+        response = json.dumps(
+            {
+                "recommendation": "HOLD",
+                "confidence": 0.60,
+                "conclusion_text": (
+                    "\u4e2d\u5174\u901a\u8baf\u5f53\u524d\u6536\u76d8\u4ef7 37.12 \u5143\uff0cMA20 \u4ecd\u7f3a\u5931\uff0c\u8d8b\u52bf\u7b56\u7565B\u4ecd\u4ee5\u7b49\u5f85\u786e\u8ba4\u4e3a\u4e3b\u3002"
+                    "\u867d\u7136 MA5\u3001MA20 \u4e0e ATR \u6682\u7f3a\uff0c\u65e0\u6cd5\u505a\u51fa\u591a\u5934\u6392\u5217\u786e\u8ba4\uff0c\u4f46\u8fd15\u65e5\u7d2f\u8ba1\u6da8\u5e45\u7ea6 8.5%\uff0c"
+                    "\u8bf4\u660e\u4ef7\u683c\u4ecd\u5728\u5c1d\u8bd5\u7ef4\u6301\u5f3a\u52bf\uff0c\u73b0\u9636\u6bb5\u66f4\u9002\u5408\u5148\u89c2\u671b\u5e76\u7b49\u5f85\u5747\u7ebf\u6570\u636e\u8865\u9f50\u540e\u518d\u51b3\u5b9a\u662f\u5426\u8f6c\u5411 BUY\u3002"
+                ),
+                "reasoning_chain_md": (
+                    "## \u6280\u672f\u9762\u5206\u6790\\n"
+                    "\u6536\u76d8\u4ef7 37.12 \u5143\u4ecd\u662f\u672c\u8f6e\u5224\u65ad\u7684\u6838\u5fc3\u951a\u70b9\uff0c\u4f46 MA5\u3001MA20 \u4e0e ATR \u6682\u7f3a\uff0c\u56e0\u6b64\u8d8b\u52bf\u786e\u8ba4\u53ea\u80fd\u7ef4\u6301\u4e2d\u6027\u504f\u8c28\u614e\u3002\\n"
+                    "## \u8d44\u91d1\u9762\u5206\u6790\\n"
+                    "\u672c\u8f6e\u4e3b\u8981\u4f9d\u8d56\u4ef7\u683c\u4e0e\u8d8b\u52bf\u4fe1\u606f\uff0c\u6682\u672a\u5f15\u5165\u989d\u5916\u8d44\u91d1\u9762\u56e0\u5b50\u3002\\n"
+                    "## \u591a\u7a7a\u77db\u76fe\u5224\u65ad\\n"
+                    "\u4ef7\u683c\u4ecd\u4fdd\u6301\u76f8\u5bf9\u5f3a\u52bf\uff0c\u4f46\u5747\u7ebf\u7f3a\u53e3\u8ba9\u8d8b\u52bf\u5ef6\u7eed\u6027\u65e0\u6cd5\u88ab\u5145\u5206\u9a8c\u8bc1\uff0c\u56e0\u6b64\u9700\u8981\u4fdd\u7559\u89c2\u671b\u5224\u65ad\u3002\\n"
+                    "## \u98ce\u9669\u56e0\u7d20\\n"
+                    "\u82e5\u540e\u7eed\u6536\u76d8\u4ef7\u91cd\u65b0\u8dcc\u7834 37.12 \u5143\u9644\u8fd1\u652f\u6491\uff0c\u6216\u8865\u9f50\u540e\u7684\u5747\u7ebf\u4fe1\u53f7\u7ee7\u7eed\u8d70\u5f31\uff0c\u5219\u5f53\u524d\u5224\u65ad\u5e94\u8fdb\u4e00\u6b65\u8f6c\u4fdd\u5b88\u3002\\n"
+                    "## \u7efc\u5408\u7ed3\u8bba\\n"
+                    "\u8d8b\u52bf\u7b56\u7565B\u5f53\u524d\u66f4\u9002\u5408 HOLD\uff0c\u5148\u7b49\u5f85\u540e\u7eed\u5747\u7ebf\u8865\u9f50\u4e0e\u8d8b\u52bf\u786e\u8ba4\u3002"
+                ),
+                "strategy_specific_evidence": {
+                    "strategy_type": "B",
+                    "key_signal": "\u6536\u76d8\u4ef7 37.12 \u5143\uff0c\u8fd15\u65e5\u7d2f\u8ba1\u6da8\u5e45 8.5%\uff0c\u4f46\u5747\u7ebf\u6570\u636e\u6682\u7f3a",
+                    "validation_check": "MA20 \u4e0e ATR \u6682\u7f3a\u5df2\u88ab\u663e\u5f0f\u62ab\u9732\uff0c\u5f53\u524d\u53ea\u4ee5\u6536\u76d8\u4ef7\u951a\u70b9\u4fdd\u6301 HOLD \u5224\u65ad\u3002"
+                },
+            },
+            ensure_ascii=False,
+        )
+        model_used = "claude_cli"
+        degraded = False
+        elapsed_s = 0.5
+        extra = {"endpoint": r"D:\\yanbao-new\\claude.cmd"}
+
+    monkeypatch.setattr(report_generation_ssot, "_run_llm_coro", lambda *args, **kwargs: DummyResult())
+    monkeypatch.setattr(settings, "mock_llm", False)
+
+    data = report_generation_ssot.run_generation_model(
+        stock_code="000063.SZ",
+        stock_name="ZTE",
+        strategy_type="B",
+        market_state="NEUTRAL",
+        quality_flag="ok",
+        prior_stats=None,
+        signal_entry_price=37.12,
+        used_data=[{"dataset_name": "kline_daily", "status": "ok"}],
+        kline_row={"close": 37.12, "ma5": None, "ma20": None, "atr_pct": None, "volatility_20d": None},
+    )
+
+    assert data["llm_fallback_level"] == "cli"
+    assert "_grounding_hard_fail" not in (data.get("strategy_specific_evidence") or {})
+
+
+@pytest.mark.feature('FR06-LLM-05')
+def test_fr06_generate_reports_batch_forces_preselected_strategy_types(monkeypatch):
+    from app.services import report_generation_ssot
+
+    forced_calls: list[tuple[str, str | None]] = []
+    natural_types = {
+        "000001.SZ": "A",
+        "000002.SZ": "B",
+        "000003.SZ": "C",
+        "000004.SZ": "B",
+    }
+
+    class DummySession:
+        def close(self):
+            return None
+
+    monkeypatch.setattr(
+        report_generation_ssot,
+        "_query_one",
+        lambda db, query, params: {
+            "stock_code": params["stock_code"],
+            "trade_date": date.fromisoformat("2026-03-06"),
+            "close": 10.0,
+            "ma5": 10.0,
+            "ma20": 10.0,
+            "atr_pct": 1.0,
+            "volatility_20d": 0.02,
+            "is_suspended": 0,
+        },
+    )
+    monkeypatch.setattr(
+        report_generation_ssot,
+        "_determine_strategy_type",
+        lambda db, stock_code, trade_day, kline_row: natural_types[stock_code],
+    )
+
+    def _fake_gen_one_sync(
+        db_factory,
+        stock_code,
+        trade_date,
+        skip_pool_check,
+        force_same_day_rebuild,
+        forced_strategy_type=None,
+    ):
+        forced_calls.append((stock_code, forced_strategy_type))
+        return {
+            "stock_code": stock_code,
+            "published": True,
+            "strategy_type": forced_strategy_type or "B",
+        }
+
+    monkeypatch.setattr(report_generation_ssot, "_gen_one_sync", _fake_gen_one_sync)
+
+    result = report_generation_ssot.generate_reports_batch(
+        lambda: DummySession(),
+        stock_codes=["000001.SZ", "000002.SZ", "000003.SZ", "000004.SZ"],
+        trade_date="2026-03-06",
+        one_per_strategy_type=True,
+    )
+
+    assert forced_calls == [
+        ("000001.SZ", "A"),
+        ("000002.SZ", "B"),
+        ("000003.SZ", "C"),
+    ]
+    assert result["total"] == 3
+    assert result["preselected_count"] == 3
+    assert result["strategy_distribution"] == {
+        "A": ["000001.SZ"],
+        "B": ["000002.SZ"],
+        "C": ["000003.SZ"],
+    }
+
+@pytest.mark.feature('FR06-LLM-05')
 def test_fr06_llm_validation_soft_caps_confidence_when_available_evidence_is_unused(monkeypatch):
     from app.services import report_generation_ssot
     from app.core.config import settings
@@ -2740,6 +3214,65 @@ def test_fr06_report_payload_surfaces_generation_process_for_grounding_soft_gap(
     assert validation_plan["soft_gaps"] == ["capital_data_not_used", "valuation_data_not_used"]
     assert payload["reasoning_trace"]["raw_inputs"]["strategy_type"] == "B"
     assert any(source.startswith("main_force_flow/") for source in payload["reasoning_trace"]["data_sources"])
+
+
+@pytest.mark.feature('FR06-LLM-05')
+def test_fr06_report_payload_tolerates_missing_ma_and_atr_values(monkeypatch, db_session):
+    from app.services import report_generation_ssot
+    from app.services.ssot_read_model import get_report_view_payload_ssot
+
+    trade_date = "2026-03-06"
+    seed_generation_context(db_session, trade_date=trade_date)
+    db_session.execute(
+        Base.metadata.tables["kline_daily"].update()
+        .where(
+            Base.metadata.tables["kline_daily"].c.stock_code == "600519.SH",
+            Base.metadata.tables["kline_daily"].c.trade_date == date.fromisoformat(trade_date),
+        )
+        .values(ma5=None, ma20=None, atr_pct=None)
+    )
+    db_session.commit()
+
+    monkeypatch.setattr(
+        report_generation_ssot,
+        "run_generation_model",
+        lambda **kwargs: {
+            "recommendation": "HOLD",
+            "confidence": 0.58,
+            "llm_fallback_level": "cli",
+            "risk_audit_status": "not_triggered",
+            "risk_audit_skip_reason": None,
+            "conclusion_text": "均线与 ATR 暂缺，但收盘价锚点仍可支撑谨慎观望结论。",
+            "reasoning_chain_md": (
+                "## 技术面分析\nMA5、MA20 与 ATR 暂缺，仅保留收盘价锚点。\n"
+                "## 资金面分析\n本轮未补充额外资金因子。\n"
+                "## 多空矛盾判断\n趋势证据未补齐，因此维持观望。\n"
+                "## 风险因素\n若后续价格转弱则需要继续降级。\n"
+                "## 综合结论\n当前维持 HOLD。"
+            ),
+            "strategy_specific_evidence": {
+                "strategy_type": "B",
+                "key_signal": "close=120.0，MA5/MA20/ATR 暂缺",
+                "validation_check": "缺失指标已显式披露，仅保留收盘价锚点。",
+            },
+            "signal_entry_price": kwargs.get("signal_entry_price", 120.0),
+        },
+    )
+
+    generated = report_generation_ssot.generate_report_ssot(
+        db_session,
+        stock_code="600519.SH",
+        trade_date=trade_date,
+        forced_strategy_type="B",
+    )
+    payload = get_report_view_payload_ssot(db_session, generated["report_id"], viewer_role="admin")
+
+    assert generated["published"] is True
+    assert payload["plain_report"]["stock_specific_note"] == (
+        f"MOUTAI（600519.SH·{payload['company_overview']['industry']}），最新收盘 120.00 元，MA5 —，MA20 —，ATR%=—。"
+    )
+    assert payload["plain_report"]["evidence_backing_points"][0]["basis"] == "技术指标数据正在加载"
+    assert payload["plain_report"]["evidence_backing_points"][0]["nums"] == ["atr_pct=—", "volatility_20d=0.02"]
 
 
 @pytest.mark.feature('FR06-LLM-07')
@@ -2953,4 +3486,3 @@ def test_fr06_ensure_test_generation_context_idempotent_no_unique_constraint(db_
         "second call should not insert extra rows; got "
         f"{len(rows_after_second)} vs {len(rows_after_first)}"
     )
-

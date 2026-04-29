@@ -16,6 +16,7 @@ import logging
 import math
 import re
 import shutil
+import subprocess
 import time
 from dataclasses import dataclass, field
 from enum import Enum
@@ -491,31 +492,23 @@ async def _call_claude_cli(
     started = time.time()
     command = _resolve_claude_cli_command()
     effective_timeout = max(30.0, float(timeout_sec or 120.0))
-    proc = await asyncio.create_subprocess_exec(
-        "cmd.exe",
-        "/d",
-        "/c",
-        command,
-        "--bare",
-        "--print",
-        stdin=asyncio.subprocess.PIPE,
-        stdout=asyncio.subprocess.PIPE,
-        stderr=asyncio.subprocess.PIPE,
-    )
     try:
-        stdout, stderr = await asyncio.wait_for(
-            proc.communicate(prompt.encode("utf-8")),
+        result = await asyncio.to_thread(
+            subprocess.run,
+            [command, "--bare", "--print"],
+            input=prompt.encode("utf-8"),
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
             timeout=effective_timeout,
+            check=False,
         )
-    except asyncio.TimeoutError as exc:
-        proc.kill()
-        await proc.wait()
+    except subprocess.TimeoutExpired as exc:
         raise RuntimeError(f"claude_cli_timeout_after_{int(effective_timeout)}s") from exc
 
-    output = stdout.decode("utf-8", errors="replace").strip()
-    err_output = stderr.decode("utf-8", errors="replace").strip()
-    if proc.returncode != 0:
-        detail = err_output or output or f"exit={proc.returncode}"
+    output = result.stdout.decode("utf-8", errors="replace").strip()
+    err_output = result.stderr.decode("utf-8", errors="replace").strip()
+    if result.returncode != 0:
+        detail = err_output or output or f"exit={result.returncode}"
         raise RuntimeError(f"claude_cli_failed:{detail[:300]}")
     if not output:
         raise RuntimeError("claude_cli_empty_response")

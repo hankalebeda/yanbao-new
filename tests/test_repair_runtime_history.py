@@ -12,6 +12,7 @@ from scripts.repair_runtime_history import (
     _rebuild_dashboard_window_snapshots,
     _rebuild_runtime_sim_history,
     _repair_fallback_lineage_and_usage,
+    _repair_summary_is_expected_partial,
     _repair_trade_date,
     _stabilize_complete_public_batch_trace,
 )
@@ -26,6 +27,49 @@ from tests.helpers_ssot import (
     insert_stock_master,
     utc_now,
 )
+
+
+def test_repair_runtime_history_timeout_defaults_to_45s_for_claude_cli():
+    from scripts.repair_runtime_history import _effective_request_timeout_seconds
+
+    assert _effective_request_timeout_seconds(None, router_primary="claude_cli") == 45
+    assert _effective_request_timeout_seconds(None, router_primary="CLAUDE_CLI") == 45
+
+
+def test_repair_runtime_history_timeout_keeps_explicit_override():
+    from scripts.repair_runtime_history import _effective_request_timeout_seconds
+
+    assert _effective_request_timeout_seconds(20, router_primary="claude_cli") == 20
+    assert _effective_request_timeout_seconds(60, router_primary="claude_cli") == 60
+    assert _effective_request_timeout_seconds(None, router_primary="codex_api") == 20
+    assert _effective_request_timeout_seconds(1, router_primary="codex_api") == 5
+
+
+def test_repair_runtime_history_partial_summary_requires_capped_published_progress():
+    assert _repair_summary_is_expected_partial(
+        {
+            "complete_public_batch": False,
+            "round_limit_hit": True,
+            "remaining_missing_reports": 197,
+            "published_generated_reports": 3,
+        }
+    ) is True
+    assert _repair_summary_is_expected_partial(
+        {
+            "complete_public_batch": False,
+            "round_limit_hit": True,
+            "remaining_missing_reports": 197,
+            "published_generated_reports": 0,
+        }
+    ) is False
+    assert _repair_summary_is_expected_partial(
+        {
+            "complete_public_batch": True,
+            "round_limit_hit": True,
+            "remaining_missing_reports": 0,
+            "published_generated_reports": 3,
+        }
+    ) is False
 
 
 def test_repair_runtime_history_expires_blocking_nonterminal_tasks(db_session):
@@ -127,6 +171,30 @@ def test_repair_runtime_history_exact_pool_codes_fall_back_to_latest_snapshot_ta
     )
 
     assert pool_codes == ["600519.SH", "000001.SZ", "000002.SZ"]
+
+
+def test_repair_runtime_history_exact_pool_codes_prefer_snapshot_over_config_fallback(db_session, monkeypatch):
+    from scripts.repair_runtime_history import _repair_exact_pool_codes
+
+    stock_codes = [f"{600000 + idx:06d}.SH" for idx in range(200)]
+    insert_pool_snapshot(
+        db_session,
+        trade_date="2026-03-18",
+        stock_codes=stock_codes,
+        status="COMPLETED",
+        pool_version=1,
+    )
+    monkeypatch.setattr(
+        "app.services.stock_pool.get_daily_stock_pool",
+        lambda *args, **kwargs: ["600519.SH", "000001.SZ", "300750.SZ"],
+    )
+
+    pool_codes = _repair_exact_pool_codes(
+        db_session,
+        trade_date_value="2026-03-18",
+    )
+
+    assert pool_codes == stock_codes
 
 
 def test_repair_runtime_history_expires_published_report_nonterminal_tasks(db_session):
@@ -637,7 +705,7 @@ def test_repair_runtime_history_expires_lingering_processing_tasks_left_by_gener
         lambda db, trade_date_value, stock_codes: set(stock_codes),
     )
 
-    def _fake_generate_report(db, *, stock_code, trade_date, force_same_day_rebuild):
+    def _fake_generate_report(db, *, stock_code, trade_date, force_same_day_rebuild, forced_strategy_type=None):
         if stock_code != target_code or inserted_processing_task_id["task_id"] is not None:
             return None
         inserted_processing_task_id["task_id"] = age_report_generation_task(
@@ -671,3 +739,69 @@ def test_repair_runtime_history_expires_lingering_processing_tasks_left_by_gener
     assert task_row["status"] == "Expired"
     assert task_row["status_reason"] == "repair_history_preempted_stale_task"
     assert task_row["finished_at"] is not None
+
+
+def test_repair_runtime_history_caps_generation_to_three_reports_one_per_strategy(db_session, monkeypatch):
+    stock_codes = [f"{600000 + idx:06d}.SH" for idx in range(200)]
+    generate_calls: list[tuple[str, str | None]] = []
+
+    monkeypatch.setattr("scripts.rebuild_runtime_db.count_kline_coverage", lambda db, trade_date_value: 200)
+    monkeypatch.setattr(
+        "scripts.rebuild_runtime_db.ensure_bootstrap_market_state_ready",
+        lambda db, trade_date_value: None,
+    )
+    monkeypatch.setattr(
+        "scripts.rebuild_runtime_db.ensure_report_usage_rows",
+        lambda db, trade_date_value, stock_codes: None,
+    )
+    monkeypatch.setattr("app.services.stock_pool.refresh_stock_pool", lambda db, trade_date, force_rebuild=True: None)
+    monkeypatch.setattr(
+        "app.services.market_state.compute_and_persist_market_state",
+        lambda db, trade_date: None,
+    )
+    monkeypatch.setattr(
+        "scripts.repair_runtime_history._repair_exact_pool_codes",
+        lambda db, trade_date_value: stock_codes,
+    )
+    monkeypatch.setattr(
+        "scripts.repair_runtime_history._materialize_t_minus_1_klines",
+        lambda db, trade_date_value, stock_codes: set(stock_codes),
+    )
+    monkeypatch.setattr(
+        "scripts.repair_runtime_history._stabilize_complete_public_batch_trace",
+        lambda db, trade_date_value, max_attempts=3, sleep_seconds=0.2: False,
+    )
+
+    def _fake_generate_report(db, *, stock_code, trade_date, force_same_day_rebuild, forced_strategy_type=None):
+        generate_calls.append((stock_code, forced_strategy_type))
+        return {
+            "published": True,
+            "strategy_type": forced_strategy_type,
+        }
+
+    monkeypatch.setattr(
+        "app.services.report_generation_ssot.generate_report_ssot",
+        _fake_generate_report,
+    )
+
+    summary = _repair_trade_date(db_session, trade_date_value="2026-03-19")
+
+    assert summary["generated_reports"] == 3
+    assert summary["published_generated_reports"] == 3
+    assert summary["requested_missing_reports"] == 200
+    assert summary["scheduled_reports"] == 3
+    assert summary["deferred_reports"] == 197
+    assert summary["remaining_missing_reports"] == 197
+    assert summary["round_limit"] == 3
+    assert summary["round_limit_hit"] is True
+    assert summary["complete_public_batch"] is False
+    assert summary["strategy_distribution"] == {
+        "A": [stock_codes[0]],
+        "B": [stock_codes[1]],
+        "C": [stock_codes[2]],
+    }
+    assert generate_calls == [
+        (stock_codes[0], "A"),
+        (stock_codes[1], "B"),
+        (stock_codes[2], "C"),
+    ]

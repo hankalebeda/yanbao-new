@@ -4,6 +4,7 @@ import os
 from pathlib import Path
 import sys
 import time
+from typing import Any
 from uuid import uuid4
 
 from sqlalchemy import text
@@ -32,10 +33,25 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--request-timeout-seconds",
         type=int,
-        default=20,
-        help="Per-report LLM timeout used during gap repair.",
+        default=None,
+        help="Per-report LLM timeout used during gap repair. Defaults to 45s when router_primary=claude_cli, otherwise 20s.",
     )
     return parser.parse_args()
+
+
+def _effective_request_timeout_seconds(
+    requested_seconds: int | None,
+    *,
+    router_primary: str | None,
+) -> int:
+    base_seconds = 20 if requested_seconds is None else int(requested_seconds)
+    if str(router_primary or "").strip().lower() == "claude_cli" and requested_seconds is None:
+        base_seconds = max(base_seconds, 45)
+    return max(base_seconds, 5)
+
+
+REPAIR_REPORT_ROUND_LIMIT = 3
+REPAIR_STRATEGY_TYPES = ("A", "B", "C")
 
 
 _RUNTIME_SIM_DELETE_ORDER = (
@@ -299,6 +315,46 @@ def _repair_fallback_lineage_and_usage(
     }
 
 
+def _select_repair_generation_targets(
+    *,
+    trade_date_value: str,
+    missing_codes: list[str],
+) -> tuple[list[str], dict[str, str]]:
+    from app.core.db import SessionLocal
+    from app.services.report_generation_ssot import _preselect_one_per_strategy_type
+
+    normalized_codes = list(dict.fromkeys(str(code).strip().upper() for code in missing_codes if str(code).strip()))
+    if not normalized_codes:
+        return [], {}
+
+    selected_codes, strategy_type_override_map = _preselect_one_per_strategy_type(
+        SessionLocal,
+        stock_codes=normalized_codes,
+        trade_date=trade_date_value,
+    )
+    if not selected_codes:
+        selected_codes = normalized_codes[:REPAIR_REPORT_ROUND_LIMIT]
+        strategy_type_override_map = {}
+
+    capped_codes = list(dict.fromkeys(selected_codes))[:REPAIR_REPORT_ROUND_LIMIT]
+    capped_override_map = {
+        stock_code: str(strategy_type).strip().upper()
+        for stock_code, strategy_type in (strategy_type_override_map or {}).items()
+        if stock_code in capped_codes and str(strategy_type).strip().upper() in REPAIR_STRATEGY_TYPES
+    }
+    return capped_codes, capped_override_map
+
+
+def _repair_summary_is_expected_partial(summary: dict[str, Any]) -> bool:
+    if bool(summary.get("complete_public_batch")):
+        return False
+    return (
+        bool(summary.get("round_limit_hit"))
+        and int(summary.get("remaining_missing_reports") or 0) > 0
+        and int(summary.get("published_generated_reports") or 0) > 0
+    )
+
+
 def _repair_exact_pool_codes(
     db,
     *,
@@ -306,9 +362,9 @@ def _repair_exact_pool_codes(
 ) -> list[str]:
     from app.services.stock_pool import get_daily_stock_pool
 
-    pool_codes = list(get_daily_stock_pool(trade_date=trade_date_value, exact_trade_date=True))
-    if pool_codes:
-        return list(dict.fromkeys(pool_codes))
+    fallback_pool_codes = list(
+        dict.fromkeys(get_daily_stock_pool(trade_date=trade_date_value, exact_trade_date=True))
+    )
 
     latest_refresh = db.execute(
         text(
@@ -328,7 +384,7 @@ def _repair_exact_pool_codes(
         {"trade_date": trade_date_value},
     ).mappings().first()
     if latest_refresh is None:
-        return []
+        return fallback_pool_codes
 
     snapshot_rows = db.execute(
         text(
@@ -346,13 +402,17 @@ def _repair_exact_pool_codes(
             "trade_date": trade_date_value,
         },
     ).fetchall()
-    return list(
+    snapshot_codes = list(
         dict.fromkeys(
             str(row[0])
             for row in snapshot_rows
             if row[0]
         )
     )
+    if snapshot_codes:
+        return snapshot_codes
+
+    return fallback_pool_codes
 
 
 def _materialize_t_minus_1_klines(
@@ -705,7 +765,7 @@ def _repair_trade_date(
     db,
     *,
     trade_date_value: str,
-) -> dict[str, int]:
+) -> dict[str, Any]:
     from app.services.market_state import compute_and_persist_market_state
     from app.services.report_generation_ssot import ReportGenerationServiceError, generate_report_ssot
     from app.services.stock_pool import refresh_stock_pool
@@ -861,21 +921,47 @@ def _repair_trade_date(
         ).fetchall()
     }
     missing_codes = [stock_code for stock_code in pool_codes if stock_code not in existing_codes]
+    generation_targets, strategy_type_override_map = _select_repair_generation_targets(
+        trade_date_value=trade_date_value,
+        missing_codes=missing_codes,
+    )
+    requested_missing_reports = len(missing_codes)
+    scheduled_reports = len(generation_targets)
+    round_limit_hit = requested_missing_reports > scheduled_reports
+    deferred_reports = max(requested_missing_reports - scheduled_reports, 0)
     generated = 0
-    for stock_code in missing_codes:
+    published_generated = 0
+    strategy_distribution: dict[str, list[str]] = {strategy_type: [] for strategy_type in REPAIR_STRATEGY_TYPES}
+
+    def _record_result(stock_code: str, result: Any, *, forced_strategy_type: str | None) -> None:
+        nonlocal generated, published_generated
+        generated += 1
+        resolved_strategy_type = ""
+        if isinstance(result, dict):
+            if bool(result.get("published")):
+                published_generated += 1
+            resolved_strategy_type = str(result.get("strategy_type") or forced_strategy_type or "").strip().upper()
+        else:
+            resolved_strategy_type = str(forced_strategy_type or "").strip().upper()
+        if resolved_strategy_type in strategy_distribution:
+            strategy_distribution[resolved_strategy_type].append(stock_code)
+
+    for stock_code in generation_targets:
+        forced_strategy_type = strategy_type_override_map.get(stock_code)
         _expire_repair_blocking_tasks(
             db,
             trade_date_value=trade_date_value,
             stock_code=stock_code,
         )
         try:
-            generate_report_ssot(
+            result = generate_report_ssot(
                 db,
                 stock_code=stock_code,
                 trade_date=trade_date_value,
                 force_same_day_rebuild=True,
+                forced_strategy_type=forced_strategy_type,
             )
-            generated += 1
+            _record_result(stock_code, result, forced_strategy_type=forced_strategy_type)
         except ReportGenerationServiceError as exc:
             if exc.error_code != "CONCURRENT_CONFLICT":
                 raise
@@ -900,21 +986,36 @@ def _repair_trade_date(
             ).first()
             if existing_row:
                 continue
-            generate_report_ssot(
+            result = generate_report_ssot(
                 db,
                 stock_code=stock_code,
                 trade_date=trade_date_value,
                 force_same_day_rebuild=True,
+                forced_strategy_type=forced_strategy_type,
             )
-            generated += 1
+            _record_result(stock_code, result, forced_strategy_type=forced_strategy_type)
     _expire_repair_blocking_tasks(db, trade_date_value=trade_date_value)
     _expire_published_report_nonterminal_tasks(db, trade_date_value=trade_date_value)
     db.commit()
+    remaining_missing_reports = max(requested_missing_reports - published_generated, 0)
+    complete_public_batch = _stabilize_complete_public_batch_trace(
+        db,
+        trade_date_value=trade_date_value,
+    )
     return {
         "kline_coverage": coverage,
         "pool_size": len(pool_codes),
         "deleted_reports": deleted_reports,
         "generated_reports": generated,
+        "published_generated_reports": published_generated,
+        "requested_missing_reports": requested_missing_reports,
+        "scheduled_reports": scheduled_reports,
+        "deferred_reports": deferred_reports,
+        "remaining_missing_reports": remaining_missing_reports,
+        "round_limit": REPAIR_REPORT_ROUND_LIMIT,
+        "round_limit_hit": round_limit_hit,
+        "complete_public_batch": complete_public_batch,
+        "strategy_distribution": strategy_distribution,
     }
 
 
@@ -1045,11 +1146,15 @@ def main() -> int:
 
     db = SessionLocal()
     try:
+        effective_request_timeout_seconds = _effective_request_timeout_seconds(
+            args.request_timeout_seconds,
+            router_primary=getattr(settings, "router_primary", None),
+        )
         settings.mock_llm = bool(args.mock_llm)
         settings.llm_audit_enabled = False
         settings.max_llm_retries = 0
-        settings.request_timeout_seconds = max(int(args.request_timeout_seconds), 5)
-        settings.report_generation_llm_timeout_seconds = max(int(args.request_timeout_seconds), 5)
+        settings.request_timeout_seconds = effective_request_timeout_seconds
+        settings.report_generation_llm_timeout_seconds = effective_request_timeout_seconds
         os.environ["SETTLEMENT_INLINE_EXECUTION"] = "1"
 
         runtime_trade_date = args.trade_date or RuntimeAnchorService(db).latest_runtime_trade_date()
@@ -1067,6 +1172,7 @@ def main() -> int:
 
         print(f"runtime_trade_date={runtime_trade_date}")
         print(f"history_days={args.history_days}")
+        print(f"request_timeout_seconds={effective_request_timeout_seconds}")
         print(f"gap_dates={gap_dates}")
         if not gap_dates:
             print("no_missing_public_batches=true")
@@ -1083,12 +1189,21 @@ def main() -> int:
                 f"kline_coverage={summary['kline_coverage']} "
                 f"pool_size={summary['pool_size']} "
                 f"deleted_reports={summary['deleted_reports']} "
-                f"generated_reports={summary['generated_reports']}"
+                f"generated_reports={summary['generated_reports']} "
+                f"published_generated_reports={summary['published_generated_reports']} "
+                f"scheduled_reports={summary['scheduled_reports']} "
+                f"deferred_reports={summary['deferred_reports']} "
+                f"complete_public_batch={summary['complete_public_batch']}"
             )
-            if not _stabilize_complete_public_batch_trace(
-                db,
-                trade_date_value=trade_date_value,
-            ):
+            if not summary["complete_public_batch"] and _repair_summary_is_expected_partial(summary):
+                print(
+                    f"repair_pending_trade_date={trade_date_value} "
+                    f"remaining_missing_reports={summary['remaining_missing_reports']} "
+                    f"round_limit={summary['round_limit']} "
+                    f"strategy_distribution={summary['strategy_distribution']}"
+                )
+                continue
+            if not summary["complete_public_batch"]:
                 raise RuntimeError(f"trade_date={trade_date_value} still lacks a complete public batch after repair")
 
         fallback_repair_summary = _repair_fallback_lineage_and_usage(db)

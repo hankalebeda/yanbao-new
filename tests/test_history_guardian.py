@@ -39,7 +39,7 @@ def test_history_guardian_published_non_ok_count_includes_stale_ok(db_session, m
 
 def test_history_guardian_run_one_cycle_treats_stale_ok_as_missing_and_enables_non_ok_cleanup(monkeypatch):
     cleanup_calls: list[dict] = []
-    generated_batches: list[list[str]] = []
+    generated_batches: list[dict] = []
 
     class DummySession:
         def commit(self):
@@ -86,7 +86,19 @@ def test_history_guardian_run_one_cycle_treats_stale_ok_as_missing_and_enables_n
     monkeypatch.setattr(
         history_guardian,
         "generate_reports_batch",
-        lambda **kwargs: generated_batches.append(list(kwargs["stock_codes"])) or {"succeeded": 1, "failed": 0},
+        lambda **kwargs: generated_batches.append(
+            {
+                "stock_codes": list(kwargs["stock_codes"]),
+                "max_concurrent_override": kwargs.get("max_concurrent_override"),
+                "one_per_strategy_type": kwargs.get("one_per_strategy_type"),
+            }
+        ) or {
+            "total": 1,
+            "preselected_count": 1,
+            "succeeded": 1,
+            "failed": 0,
+            "strategy_distribution": {"A": [], "B": [], "C": []},
+        },
     )
     monkeypatch.setattr(
         history_guardian,
@@ -113,7 +125,13 @@ def test_history_guardian_run_one_cycle_treats_stale_ok_as_missing_and_enables_n
         "dry_run": False,
         "include_non_ok": True,
     }
-    assert generated_batches == [["000001.SZ"]]
+    assert generated_batches == [
+        {
+            "stock_codes": ["000001.SZ"],
+            "max_concurrent_override": 3,
+            "one_per_strategy_type": True,
+        }
+    ]
     assert result["fr07_snapshots"] == [
         {"window_days": 1, "purge_invalid": True},
         {"window_days": 7, "purge_invalid": True},
@@ -123,8 +141,8 @@ def test_history_guardian_run_one_cycle_treats_stale_ok_as_missing_and_enables_n
     ]
 
 
-def test_history_guardian_run_one_cycle_caps_generation_to_five_per_round(monkeypatch):
-    generated_batches: list[list[str]] = []
+def test_history_guardian_run_one_cycle_caps_generation_to_three_per_round(monkeypatch):
+    generated_batches: list[dict] = []
 
     class DummySession:
         def commit(self):
@@ -161,7 +179,23 @@ def test_history_guardian_run_one_cycle_caps_generation_to_five_per_round(monkey
     monkeypatch.setattr(
         history_guardian,
         "generate_reports_batch",
-        lambda **kwargs: generated_batches.append(list(kwargs["stock_codes"])) or {"succeeded": len(kwargs["stock_codes"]), "failed": 0},
+        lambda **kwargs: generated_batches.append(
+            {
+                "stock_codes": list(kwargs["stock_codes"]),
+                "max_concurrent_override": kwargs.get("max_concurrent_override"),
+                "one_per_strategy_type": kwargs.get("one_per_strategy_type"),
+            }
+        ) or {
+            "total": 3,
+            "preselected_count": 3,
+            "succeeded": 3,
+            "failed": 0,
+            "strategy_distribution": {
+                "A": ["000001.SZ"],
+                "B": ["000002.SZ"],
+                "C": ["000003.SZ"],
+            },
+        },
     )
     monkeypatch.setattr(
         history_guardian,
@@ -172,8 +206,115 @@ def test_history_guardian_run_one_cycle_caps_generation_to_five_per_round(monkey
 
     result = history_guardian._run_one_cycle(batch_size=20)
 
-    assert generated_batches == [["000001.SZ", "000002.SZ", "000003.SZ", "000004.SZ", "000005.SZ"]]
+    assert generated_batches == [
+        {
+            "stock_codes": [
+                "000001.SZ",
+                "000002.SZ",
+                "000003.SZ",
+                "000004.SZ",
+                "000005.SZ",
+                "000006.SZ",
+                "000007.SZ",
+            ],
+            "max_concurrent_override": 3,
+            "one_per_strategy_type": True,
+        }
+    ]
     assert result["generation"]["requested"] == 7
-    assert result["generation"]["scheduled_this_cycle"] == 5
-    assert result["generation"]["deferred_due_to_round_limit"] == 2
-    assert result["generation"]["round_limit"] == 5
+    assert result["generation"]["scheduled_this_cycle"] == 3
+    assert result["generation"]["deferred_due_to_round_limit"] == 4
+    assert result["generation"]["round_limit"] == 3
+    assert result["generation"]["one_per_strategy_type"] is True
+    assert result["generation"]["strategy_distribution"] == {
+        "A": ["000001.SZ"],
+        "B": ["000002.SZ"],
+        "C": ["000003.SZ"],
+    }
+
+
+def test_history_guardian_run_one_cycle_preselects_from_full_missing_pool(monkeypatch):
+    generated_batches: list[dict] = []
+
+    class DummySession:
+        def commit(self):
+            return None
+
+        def rollback(self):
+            return None
+
+        def close(self):
+            return None
+
+    monkeypatch.setattr(history_guardian, "SessionLocal", lambda: DummySession())
+    monkeypatch.setattr(history_guardian, "_resolve_target_trade_date", lambda: ("2026-03-06", "2026-03-06", "latest_complete_public_batch"))
+    monkeypatch.setattr(
+        history_guardian,
+        "get_daily_stock_pool",
+        lambda **kwargs: [
+            "000001.SZ",
+            "000002.SZ",
+            "000003.SZ",
+            "000004.SZ",
+            "000005.SZ",
+            "000006.SZ",
+        ],
+    )
+    monkeypatch.setattr(history_guardian, "_ok_report_codes_for_trade_date", lambda trade_date, stock_codes: set())
+    monkeypatch.setattr(history_guardian, "cleanup_incomplete_reports", lambda *args, **kwargs: {"candidates": 0, "scanned": 0})
+    monkeypatch.setattr(
+        history_guardian,
+        "cleanup_incomplete_reports_until_clean",
+        lambda *args, **kwargs: {"total_soft_deleted": 0, "remaining_candidates": 0},
+    )
+    monkeypatch.setattr(
+        history_guardian,
+        "generate_reports_batch",
+        lambda **kwargs: generated_batches.append(
+            {
+                "stock_codes": list(kwargs["stock_codes"]),
+                "max_concurrent_override": kwargs.get("max_concurrent_override"),
+                "one_per_strategy_type": kwargs.get("one_per_strategy_type"),
+            }
+        ) or {
+            "total": 3,
+            "preselected_count": 3,
+            "succeeded": 3,
+            "failed": 0,
+            "strategy_distribution": {
+                "A": ["000004.SZ"],
+                "B": ["000002.SZ"],
+                "C": ["000005.SZ"],
+            },
+        },
+    )
+    monkeypatch.setattr(
+        history_guardian,
+        "rebuild_fr07_snapshot",
+        lambda db, trade_day, window_days, purge_invalid: {"window_days": window_days, "purge_invalid": purge_invalid},
+    )
+    monkeypatch.setattr(history_guardian, "_published_non_ok_count", lambda: 0)
+
+    result = history_guardian._run_one_cycle(batch_size=2)
+
+    assert generated_batches == [
+        {
+            "stock_codes": [
+                "000001.SZ",
+                "000002.SZ",
+                "000003.SZ",
+                "000004.SZ",
+                "000005.SZ",
+                "000006.SZ",
+            ],
+            "max_concurrent_override": 2,
+            "one_per_strategy_type": True,
+        }
+    ]
+    assert result["generation"]["scheduled_this_cycle"] == 3
+    assert result["generation"]["deferred_due_to_round_limit"] == 3
+    assert result["generation"]["strategy_distribution"] == {
+        "A": ["000004.SZ"],
+        "B": ["000002.SZ"],
+        "C": ["000005.SZ"],
+    }

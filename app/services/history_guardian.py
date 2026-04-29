@@ -21,15 +21,11 @@ from app.services.settlement_ssot import rebuild_fr07_snapshot
 from app.services.stock_pool import get_daily_stock_pool
 from app.services.trade_calendar import latest_trade_date_str
 
+HISTORY_GUARDIAN_REPORT_ROUND_LIMIT = min(REPORT_GENERATION_ROUND_LIMIT, 3)
+
 
 def _utc_now_iso() -> str:
     return datetime.now(timezone.utc).isoformat()
-
-
-def _chunks(items: list[str], size: int) -> list[list[str]]:
-    if size <= 0:
-        return [items]
-    return [items[i : i + size] for i in range(0, len(items), size)]
 
 
 def _ensure_dir(path: Path) -> None:
@@ -110,8 +106,6 @@ def _run_one_cycle(batch_size: int) -> dict[str, Any]:
     pool_codes = get_daily_stock_pool(trade_date=trade_date, exact_trade_date=True, allow_same_day_fallback=True)
     ok_codes = _ok_report_codes_for_trade_date(trade_date, pool_codes)
     missing_codes = sorted(set(pool_codes) - set(ok_codes))
-    generation_targets = missing_codes[:REPORT_GENERATION_ROUND_LIMIT]
-    deferred_codes = missing_codes[REPORT_GENERATION_ROUND_LIMIT:]
 
     # Only strictly ok reports are considered publicly acceptable.
     # stale_ok/degraded/missing must be cleaned and regenerated.
@@ -154,26 +148,39 @@ def _run_one_cycle(batch_size: int) -> dict[str, Any]:
 
     generation_summary = {
         "requested": len(missing_codes),
-        "scheduled_this_cycle": len(generation_targets),
-        "deferred_due_to_round_limit": len(deferred_codes),
+        "scheduled_this_cycle": 0,
+        "deferred_due_to_round_limit": 0,
         "succeeded": 0,
         "failed": 0,
         "batches": 0,
-        "round_limit": REPORT_GENERATION_ROUND_LIMIT,
+        "round_limit": HISTORY_GUARDIAN_REPORT_ROUND_LIMIT,
+        "one_per_strategy_type": True,
+        "strategy_distribution": {"A": [], "B": [], "C": []},
     }
-    effective_batch_size = max(1, min(int(batch_size), REPORT_GENERATION_ROUND_LIMIT))
-    if generation_targets:
-        for chunk in _chunks(generation_targets, effective_batch_size):
-            result = generate_reports_batch(
-                db_factory=SessionLocal,
-                stock_codes=chunk,
-                trade_date=trade_date,
-                skip_pool_check=False,
-                force_same_day_rebuild=True,
-            )
-            generation_summary["batches"] += 1
-            generation_summary["succeeded"] += int(result.get("succeeded") or 0)
-            generation_summary["failed"] += int(result.get("failed") or 0)
+    effective_batch_size = max(1, min(int(batch_size), HISTORY_GUARDIAN_REPORT_ROUND_LIMIT))
+    if missing_codes:
+        result = generate_reports_batch(
+            db_factory=SessionLocal,
+            stock_codes=missing_codes,
+            trade_date=trade_date,
+            skip_pool_check=False,
+            force_same_day_rebuild=True,
+            max_concurrent_override=effective_batch_size,
+            one_per_strategy_type=True,
+        )
+        scheduled_this_cycle = int(result.get("preselected_count") or result.get("total") or 0)
+        generation_summary["scheduled_this_cycle"] = scheduled_this_cycle
+        generation_summary["deferred_due_to_round_limit"] = max(len(missing_codes) - scheduled_this_cycle, 0)
+        generation_summary["batches"] = 1
+        generation_summary["succeeded"] = int(result.get("succeeded") or 0)
+        generation_summary["failed"] = int(result.get("failed") or 0)
+        for strategy_type, codes in (result.get("strategy_distribution") or {}).items():
+            if strategy_type in generation_summary["strategy_distribution"]:
+                generation_summary["strategy_distribution"][strategy_type].extend(
+                    str(code).strip().upper()
+                    for code in (codes or [])
+                    if str(code).strip()
+                )
 
     snapshot_results: list[dict[str, Any]] = []
     db2 = SessionLocal()

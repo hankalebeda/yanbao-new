@@ -64,6 +64,14 @@ _NON_REPORT_USAGE_DATASETS = frozenset(
 )
 _NON_REPORT_USAGE_READY_STATUSES = {"ok", "stale_ok", "proxy_ok", "realtime_only"}
 
+
+def _required_input_datasets_for_strategy(strategy_type: str | None) -> set[str]:
+    strategy = str(strategy_type or "").strip().upper()
+    required = {"kline_daily", "market_state_input"}
+    if strategy in {"", "A"}:
+        required.add("hotspot_top50")
+    return required
+
 # Persistent event loop for sync→async LLM calls.
 # Never closed — avoids httpx "Event loop is closed" errors when the
 # singleton CodexAPIClient / DeepSeekAPIClient are reused across calls.
@@ -241,6 +249,8 @@ def _evaluate_llm_grounding(
     }
 
     return {
+        "available_metric_groups": len(metric_groups),
+        "required_metric_hits": min(2, len(metric_groups)),
         "metric_hits": _count_group_hits(text, metric_groups),
         "strategy_keywords_ok": _text_contains_any(text, strategy_keywords.get(str(strategy_type or "").upper(), set())),
         "capital_keywords_expected": bool(ready_datasets & {"main_force_flow", "dragon_tiger_list", "margin_financing"}),
@@ -1244,7 +1254,8 @@ def _validate_llm_result(
         used_data=used_data,
     )
     hard_grounding_reasons: list[str] = []
-    if grounding["metric_hits"] < 2:
+    required_metric_hits = int(grounding.get("required_metric_hits") or 0)
+    if grounding["metric_hits"] < required_metric_hits:
         hard_grounding_reasons.append("missing_metric_binding")
     if not grounding["strategy_keywords_ok"]:
         hard_grounding_reasons.append("missing_strategy_binding")
@@ -1661,11 +1672,12 @@ def _collect_generation_input_issues(
     *,
     used_data: list[dict[str, Any]],
     market_state_row: dict[str, Any] | None,
+    strategy_type: str | None = None,
 ) -> list[str]:
     issues: list[str] = []
     if not used_data:
         issues.append("used_data_missing")
-    required_datasets = set(_REPORT_REQUIRED_INPUT_DATASETS)
+    required_datasets = _required_input_datasets_for_strategy(strategy_type)
     present_datasets = {
         str(item.get("dataset_name") or "").strip()
         for item in used_data
@@ -2125,17 +2137,30 @@ def _build_content_json_and_quality_issues(
     else:
         main_badge_type = "flat"
 
+    _close_value = _coerce_float(kline_row.get("close"))
+    _ma5_value = _coerce_float(kline_row.get("ma5"))
+    _ma20_value = _coerce_float(kline_row.get("ma20"))
+    _atr_pct_value = _coerce_float(kline_row.get("atr_pct"))
+    _volatility_20d_value = _coerce_float(kline_row.get("volatility_20d"))
+    _close_text = f"{_close_value:.2f}" if _close_value is not None else "—"
+    _ma5_text = f"{_ma5_value:.2f}" if _ma5_value is not None else "—"
+    _ma20_text = f"{_ma20_value:.2f}" if _ma20_value is not None else "—"
+    _atr_pct_text = str(_atr_pct_value) if _atr_pct_value is not None else "—"
+    _volatility_20d_text = str(_volatility_20d_value) if _volatility_20d_value is not None else "—"
+    _technical_basis = "技术指标数据正在加载"
+    if _close_value is not None and _ma20_value is not None:
+        _technical_basis = (
+            f"收盘价{_close_text}元，MA5={_ma5_text}，MA20={_ma20_text}，"
+            + ("价格站上均线，短线偏强。" if _close_value >= _ma20_value else "价格在均线下方，短线偏弱。")
+        )
+
     evidence_points = [
         {
             "title": "技术趋势",
             "badge": "MA结构",
             "badge_type": "up" if (kline_row.get("ma5") or 0) >= (kline_row.get("ma20") or 0) else "down",
-            "basis": (
-                f"收盘价{kline_row.get('close')}元，"
-                f"MA5={kline_row.get('ma5')}，MA20={kline_row.get('ma20')}，"
-                + ("价格站上均线，短线偏强。" if (kline_row.get("close") or 0) >= (kline_row.get("ma20") or 0) else "价格在均线下方，短线偏弱。")
-            ),
-            "nums": [f"atr_pct={kline_row.get('atr_pct')}", f"volatility_20d={kline_row.get('volatility_20d')}"],
+            "basis": _technical_basis,
+            "nums": [f"atr_pct={_atr_pct_text}", f"volatility_20d={_volatility_20d_text}"],
         },
         {
             "title": "主力资金",
@@ -2326,8 +2351,9 @@ def _build_content_json_and_quality_issues(
     }
 
     # 数据完整性自检
+    required_datasets = sorted(_required_input_datasets_for_strategy(strategy_type))
     _completeness_checks = []
-    for ds_name in sorted(_REPORT_REQUIRED_INPUT_DATASETS):
+    for ds_name in required_datasets:
         ds_item = usage_map.get(ds_name)
         _completeness_checks.append({
             "dataset": ds_name,
@@ -2337,7 +2363,7 @@ def _build_content_json_and_quality_issues(
         })
     _all_ok = all(c["has_data"] for c in _completeness_checks)
     data_completeness = {
-        "total_required": len(_REPORT_REQUIRED_INPUT_DATASETS),
+        "total_required": len(required_datasets),
         "total_ok": sum(1 for c in _completeness_checks if c["has_data"]),
         "all_complete": _all_ok,
         "checks": _completeness_checks,
@@ -2447,7 +2473,7 @@ def _load_report_input_issues(db: Session, *, report_id: str) -> list[str]:
     report_row = _query_one(
         db,
         """
-        SELECT content_json, market_state_degraded, market_state_reason_snapshot
+        SELECT content_json, market_state_degraded, market_state_reason_snapshot, strategy_type
         FROM report
         WHERE report_id = :report_id
         LIMIT 1
@@ -2473,6 +2499,7 @@ def _load_report_input_issues(db: Session, *, report_id: str) -> list[str]:
             "market_state_degraded": report_row.get("market_state_degraded"),
             "state_reason": report_row.get("market_state_reason_snapshot"),
         },
+        strategy_type=str(report_row.get("strategy_type") or ""),
     )
 
 
@@ -2523,20 +2550,20 @@ def _load_public_report_output_issues(db: Session, *, report_id: str) -> list[st
 
     critical_fields = {
         "indicators.close": indicators.get("close"),
-        "indicators.ma5": indicators.get("ma5"),
-        "indicators.ma20": indicators.get("ma20"),
+        # MA5/MA20 may truthfully remain empty on degraded trend snapshots;
+        # the payload builder now renders placeholders instead of failing.
         # pe_ttm/pb depend on external eastmoney API — not hard-blocking when externally unavailable
         # "indicators.pe_ttm": indicators.get("pe_ttm"),
         # "indicators.pb": indicators.get("pb"),
         "indicators.total_mv": indicators.get("total_mv"),
         "market_snapshot.trade_date": market_snapshot.get("trade_date"),
         "market_snapshot.last_price": market_snapshot.get("last_price"),
-        "company_overview.industry": company_overview.get("industry"),
+        # Industry fields can truthfully remain empty when external profile /
+        # peer providers are unavailable; do not fail-close public payload.
         # pe_ttm/pb from financial_analysis also depend on external API
         # "financial_analysis.pe_ttm": financial_analysis.get("pe_ttm"),
         # "financial_analysis.pb": financial_analysis.get("pb"),
         "financial_analysis.total_market_cap": financial_analysis.get("total_market_cap"),
-        "industry_competition.industry_name": industry_competition.get("industry_name"),
     }
     for field_name, value in critical_fields.items():
         if _is_missing_value(value):
@@ -2682,7 +2709,25 @@ def _purge_report_generation_bundle(db: Session, *, report_id: str, purge_reason
             {"task_id": task_id},
         )
         if int((sibling_row or {}).get("ref_count") or 0) == 0:
-            db.execute(text("DELETE FROM report_generation_task WHERE task_id = :task_id"), {"task_id": task_id})
+            db.execute(
+                text(
+                    """
+                    UPDATE report_generation_task
+                    SET status = 'Failed',
+                        quality_flag = 'degraded',
+                        status_reason = :status_reason,
+                        finished_at = COALESCE(finished_at, :finished_at),
+                        updated_at = :updated_at
+                    WHERE task_id = :task_id
+                    """
+                ),
+                {
+                    "task_id": task_id,
+                    "status_reason": purge_reason,
+                    "finished_at": now,
+                    "updated_at": now,
+                },
+            )
     db.flush()
     logger.warning("report_bundle_soft_deleted report_id=%s reason=%s", report_id, purge_reason)
 
@@ -2819,8 +2864,12 @@ def cleanup_incomplete_reports_until_clean(
     }
 
 
-def _derive_quality_flag(used_data: list[dict[str, Any]], market_state_row: dict[str, Any]) -> tuple[str, str | None]:
-    required_datasets = set(_REPORT_REQUIRED_INPUT_DATASETS)
+def _derive_quality_flag(
+    used_data: list[dict[str, Any]],
+    market_state_row: dict[str, Any],
+    strategy_type: str | None = None,
+) -> tuple[str, str | None]:
+    required_datasets = _required_input_datasets_for_strategy(strategy_type)
     required_items = [
         item
         for item in used_data
@@ -3283,6 +3332,7 @@ def generate_report_ssot(
     task_id = str(uuid4())
     task_inserted = False
     acquired = True
+    final_report_committed = False
     try:
         _expire_stale_tasks(db, current_trade_date=trade_day)
         superseded_report_id: str | None = None
@@ -3542,9 +3592,13 @@ def generate_report_ssot(
         # OPT-11: 优先使用强制策略类型（测试/演示用），否则自动判断
         strategy_type = _fst or _determine_strategy_type(db, stock_code=stock_code, trade_day=trade_day, kline_row=kline_row)
         prior_stats = _compute_prior_stats(db, strategy_type=strategy_type, trade_day=trade_day)
-        quality_flag, quality_reason = _derive_quality_flag(used_data, market_state_row)
+        quality_flag, quality_reason = _derive_quality_flag(used_data, market_state_row, strategy_type=strategy_type)
         signal_entry_price = float(kline_row["close"])
-        input_issues = _collect_generation_input_issues(used_data=used_data, market_state_row=market_state_row)
+        input_issues = _collect_generation_input_issues(
+            used_data=used_data,
+            market_state_row=market_state_row,
+            strategy_type=strategy_type,
+        )
         if input_issues:
             logger.warning(
                 "report_generation_failed_incomplete_data stock=%s trade_date=%s issues=%s",
@@ -3919,6 +3973,7 @@ def generate_report_ssot(
             )
         )
         db.commit()
+        final_report_committed = True
         return _load_report_result(db, report_id)
     except IntegrityError:
         db.rollback()
@@ -3956,7 +4011,10 @@ def generate_report_ssot(
             )
         raise
     except ReportGenerationServiceError as exc:
+        if final_report_committed:
+            raise
         if task_inserted:
+            db.rollback()
             db.execute(
                 task_table.update()
                 .where(task_table.c.task_id == task_id)
@@ -3972,7 +4030,10 @@ def generate_report_ssot(
             db.rollback()
         raise
     except Exception as exc:
+        if final_report_committed:
+            raise ReportGenerationServiceError(500, "VALIDATION_FAILED") from exc
         if task_inserted:
+            db.rollback()
             db.execute(
                 task_table.update()
                 .where(task_table.c.task_id == task_id)
@@ -4007,7 +4068,9 @@ def _preselect_one_per_strategy_type(
 
     Returns a tuple of:
     - list of at most 3 stock codes (each with a distinct strategy type)
-    - auto_override_map: {stock_code: strategy_type} for codes that needed forced assignment
+    - selected_strategy_type_map: {stock_code: strategy_type} for every selected code,
+      so the final generation step stays pinned to the same A/B/C split even if
+      generate_report_ssot() would naturally drift to a different strategy type
 
     Priority: first occurrence of each natural type wins.
 
@@ -4018,6 +4081,7 @@ def _preselect_one_per_strategy_type(
     """
     target, trade_day = _resolve_trade_date(trade_date)
     selected: dict[str, str] = {}  # strategy_type -> stock_code
+    selected_strategy_type_map: dict[str, str] = {}
     used_codes: set[str] = set()
 
     for stock_code in stock_codes:
@@ -4046,6 +4110,7 @@ def _preselect_one_per_strategy_type(
             )
             if strategy_type not in selected:
                 selected[strategy_type] = stock_code
+                selected_strategy_type_map[stock_code] = strategy_type
                 used_codes.add(stock_code)
         except Exception as exc:
             logger.debug("preselect_strategy_type_skip stock=%s err=%s", stock_code, exc)
@@ -4053,7 +4118,6 @@ def _preselect_one_per_strategy_type(
             db.close()
 
     # OPT-14: 兜底指派 — 若缺少某类型，从剩余候选股中补选并强制赋类型
-    auto_override_map: dict[str, str] = {}
     missing_types = [t for t in ("A", "B", "C") if t not in selected]
     if missing_types:
         remaining = [c for c in stock_codes if c not in used_codes]
@@ -4062,14 +4126,14 @@ def _preselect_one_per_strategy_type(
                 break
             fallback_code = remaining.pop(0)
             selected[missing_type] = fallback_code
-            auto_override_map[fallback_code] = missing_type
+            selected_strategy_type_map[fallback_code] = missing_type
             used_codes.add(fallback_code)
             logger.info(
                 "preselect_fallback_assign stock=%s forced_strategy_type=%s",
                 fallback_code, missing_type,
             )
 
-    return list(selected.values()), auto_override_map
+    return list(selected.values()), selected_strategy_type_map
 
 
 def generate_reports_batch(
@@ -4093,15 +4157,18 @@ def generate_reports_batch(
     """
     # 策略类型限制: 每次最多生成3个研报，每种类型（A/B/C）各一个
     original_candidate_count = len(stock_codes)
-    _auto_override_map: dict[str, str] = {}
+    _preselected_strategy_type_map: dict[str, str] = {}
     if one_per_strategy_type and stock_codes:
-        stock_codes, _auto_override_map = _preselect_one_per_strategy_type(
+        stock_codes, _preselected_strategy_type_map = _preselect_one_per_strategy_type(
             db_factory,
             stock_codes=stock_codes,
             trade_date=trade_date,
         )
     # OPT-14: 合并用户指定 override 与自动兜底 override（用户优先）
-    _merged_override_map: dict[str, str] = {**_auto_override_map, **(strategy_type_override_map or {})}
+    _merged_override_map: dict[str, str] = {
+        **_preselected_strategy_type_map,
+        **(strategy_type_override_map or {}),
+    }
 
     default_concurrency = max(1, int(getattr(settings, "report_batch_max_concurrent", 6)))
     if max_concurrent_override is None:

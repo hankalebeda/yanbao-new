@@ -1,6 +1,6 @@
 # 30_Ralph双步自举运行手册
 
-> 更新日期：2026-04-27
+> 更新日期：2026-04-28
 > 目标：以最小改动方式，让 Ralph 按仓库既有实现持续自动迭代，直到进入 **COMPLETE** 或 **BLOCKED** 终态。
 > 维护注意：本文不属于 Step 1 compiler-owned 输出；Step 1 只负责 docs 27/28/29 与双份 `prd.json`，本文按运行手册手工维护。
 
@@ -10,9 +10,10 @@
 - **Step 1** 必须走仓库内置编译器：`python -m codex.ralph_compile ...`
 - **Step 2** 必须走现有 runner：`powershell -ExecutionPolicy Bypass -File .claude/ralph/run-ralph.ps1 -Tool claude`
 - **Outer Loop** 必须用仓库内置控制器：`python -m codex.ralph_cycle run ...`
-- 自动化的正确终态只有两个：
-  - `COMPLETE`：全部 story 收敛完成
-  - `BLOCKED`：遇到真实硬阻塞并 fail-close 停止
+- 进入真实 Outer Loop 后的收敛终态只有两个：
+  - `complete` / `COMPLETE`：全部 story 收敛完成
+  - `blocked` / `BLOCKED`：遇到真实硬阻塞并 fail-close 停止
+- `branch_drift`、`workspace_dirty`、`preflight_failed` 或 `cycles_run=0` 只表示未进入 Step 1 / Step 2，不得记为 `COMPLETE` 或巡检完成。
 - **不能承诺无条件一定 COMPLETE**；外部依赖、浏览器验证、git 脏工作树、真实运行态证据不足，都可能触发 `BLOCKED`。
 
 ## 2. Step 1 / Step 2 固定边界
@@ -43,7 +44,7 @@
 - 命令：`python -m codex.ralph_cycle run --tool claude --max-cycles 5`
 - 职责：
   - `Step 1 rebuild -> Step 2 run -> Step 1 rebuild`
-  - 判断当前是 `complete`、`blocked` 还是 `continue`
+  - 判断当前是 `complete`、`blocked`、`incomplete` 还是 `continue`；预检失败会在进入 Step 1 / Step 2 前短路返回
 
 ## 3. 真相源
 
@@ -151,7 +152,7 @@ python -m codex.ralph_compile verify
 - 补齐 `notes` 的 18 个固定键
 - 同步双 PRD JSON
 - 依据真实 runtime truth 保留或回退 `passes`
-- 同步 27 / 28 / 29 / 30 文档
+- 同步 27 / 28 / 29 文档；本文不由 Step 1 同步
 
 ### 6.3 何时算通过
 
@@ -209,6 +210,9 @@ for outer in range(1, max_outer_rounds + 1):
     if summary.final_status == "blocked":
         raise SystemExit(2)
 
+    if summary.final_status in {"branch_drift", "workspace_dirty", "preflight_failed"} or summary.cycles_run == 0:
+        raise SystemExit(3)
+
     time.sleep(3)
 
 raise SystemExit(1)
@@ -220,8 +224,9 @@ raise SystemExit(1)
 - 使用 8.2 的 Python 包装器时：
   - `0`：收敛完成，终态为 `COMPLETE`
   - `2`：真实硬阻塞，终态为 `BLOCKED`
+  - `3`：branch gate / 只读预检短路，或 `cycles_run=0`，未进入 Step 1 / Step 2
   - `1`：达到外层轮数上限，或仍为 `incomplete`
-- 直接运行 `python -m codex.ralph_cycle run --tool claude --max-cycles 5` 时，当前 CLI 只对 `complete` 返回 `0`；`blocked` 与 `incomplete` 都返回 `1`，必须读取 JSON 输出中的 `final_status` 区分。
+- 直接运行 `python -m codex.ralph_cycle run --tool claude --max-cycles 5` 时，当前 CLI 只对 `complete` 返回 `0`；所有非 `complete` 都返回 `1`，必须读取 JSON 输出中的 `final_status` 与 `cycles_run` 区分。
 
 ### 8.4 小时级监控前置状态
 
@@ -229,6 +234,7 @@ raise SystemExit(1)
 - 若当前分支不是 `.claude/ralph/config.json` 的 `branchNamePolicy.currentValue`（当前基线为 `main`），或 `.claude/ralph/loop/.last-branch` / 目标分支 tip 不一致，必须直接返回 `final_status=branch_drift`，不得继续执行 Step 1 / Step 2。
 - 若存在 tracked git 脏改动，必须直接返回 `final_status=workspace_dirty`；`_archive/case_*` 这类权限告警只算环境噪音，不算 tracked 脏改动。
 - 若 `check_state.py`、`python -m codex.ralph_compile verify`、runner `-DryRun`、或 `tests/test_ralph_compile.py` + `tests/test_ralph_cycle.py` 的定向 pytest 失败，必须直接返回 `final_status=preflight_failed`。
+- 任何 `cycles_run=0` 的结果都只能记录为“未进入 Step 1 / Step 2”，必须先处理 `status_reason` 指向的原因后再重跑。
 
 ## 9. COMPLETE / BLOCKED 的判定标准
 
@@ -239,6 +245,7 @@ raise SystemExit(1)
 - `.claude/ralph/loop/prd.json` 中全部 story `passes=true`
 - Step 1 `verify` 通过
 - 所需 runtime/browser/sqlite/endpoint/check_state 证据真实成立
+- 本轮总控返回 `final_status=complete` 且 `cycles_run>=1`；只读预检绿灯或 `cycles_run=0` 不算 COMPLETE
 
 ### 9.2 BLOCKED
 

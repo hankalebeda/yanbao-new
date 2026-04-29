@@ -85,6 +85,25 @@ _INTERNAL_REASONING_MARKERS = (
 _MAX_REASONABLE_DASHBOARD_ALPHA_ANNUAL = 10.0
 
 
+def _coerce_finite_float(value: Any) -> float | None:
+    try:
+        if value is None:
+            return None
+        number = float(value)
+    except (TypeError, ValueError):
+        return None
+    if not math.isfinite(number):
+        return None
+    return number
+
+
+def _format_fixed_float(value: Any, *, digits: int = 2, missing: str = "—") -> str:
+    number = _coerce_finite_float(value)
+    if number is None:
+        return missing
+    return f"{number:.{digits}f}"
+
+
 def _table_columns(db: Session, table_name: str) -> set[str]:
     try:
         return {col["name"] for col in inspect(db.get_bind()).get_columns(table_name)}
@@ -1805,6 +1824,10 @@ def _build_report_payload(bundle: dict[str, Any], *, can_see_full: bool, for_vie
         "data_status": "ok" if peers else ("partial" if company_overview.get("industry") else "missing"),
         "status_reason": None if peers else ("peer_snapshot_not_in_report" if company_overview.get("industry") else "industry_missing"),
     }
+    market_snapshot_ma5 = _coerce_finite_float((market_snapshot or {}).get("ma5"))
+    market_snapshot_ma20 = _coerce_finite_float((market_snapshot or {}).get("ma20"))
+    market_snapshot_last_price = _coerce_finite_float((market_snapshot or {}).get("last_price"))
+    market_snapshot_atr_pct = _format_fixed_float((market_snapshot or {}).get("atr_pct"))
 
     return {
         **base_payload,
@@ -1882,22 +1905,22 @@ def _build_report_payload(bundle: dict[str, Any], *, can_see_full: bool, for_vie
                     "badge": None,
                     "badge_type": "flat",
                     "basis": (
-                        f"MA5={market_snapshot.get('ma5'):.2f}，MA20={market_snapshot.get('ma20'):.2f}"
-                        if market_snapshot.get("ma5") and market_snapshot.get("ma20")
+                        f"MA5={market_snapshot_ma5:.2f}，MA20={market_snapshot_ma20:.2f}"
+                        if market_snapshot_ma5 is not None and market_snapshot_ma20 is not None
                         else "技术指标数据正在加载"
                     ),
                     "nums": [
-                        f"MA5={market_snapshot.get('ma5'):.2f}" if market_snapshot.get("ma5") else "MA5=—",
-                        f"MA20={market_snapshot.get('ma20'):.2f}" if market_snapshot.get("ma20") else "MA20=—",
+                        f"MA5={_format_fixed_float((market_snapshot or {}).get('ma5'))}",
+                        f"MA20={_format_fixed_float((market_snapshot or {}).get('ma20'))}",
                     ],
                 }
             ] if market_snapshot else []),
             "accuracy_explain": content_accuracy or None,
             "stock_specific_note": (
                 f"{company_overview.get('company_name')}（{stock_code}·{company_overview.get('industry') or '—'}），"
-                f"最新收盘 {market_snapshot.get('last_price'):.2f} 元，MA5 {market_snapshot.get('ma5'):.2f}，"
-                f"MA20 {market_snapshot.get('ma20'):.2f}，ATR%={market_snapshot.get('atr_pct'):.2f}。"
-            ) if market_snapshot and market_snapshot.get("last_price") else None,
+                f"最新收盘 {market_snapshot_last_price:.2f} 元，MA5 {_format_fixed_float((market_snapshot or {}).get('ma5'))}，"
+                f"MA20 {_format_fixed_float((market_snapshot or {}).get('ma20'))}，ATR%={market_snapshot_atr_pct}。"
+            ) if market_snapshot and market_snapshot_last_price is not None else None,
         },
         "reasoning_trace": {
             "inference_summary": sanitized_conclusion or recommendation_cn,
