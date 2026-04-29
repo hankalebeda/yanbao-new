@@ -567,6 +567,31 @@ def _expire_published_report_nonterminal_tasks(
     return int(result.rowcount or 0)
 
 
+def _has_published_ok_report(
+    db,
+    *,
+    trade_date_value: str,
+    stock_code: str,
+) -> bool:
+    return bool(
+        db.execute(
+            text(
+                """
+                SELECT 1
+                FROM report
+                WHERE trade_date = :trade_date
+                  AND stock_code = :stock_code
+                  AND published = 1
+                  AND is_deleted = 0
+                  AND LOWER(COALESCE(quality_flag, 'ok')) = 'ok'
+                LIMIT 1
+                """
+            ),
+            {"trade_date": trade_date_value, "stock_code": stock_code},
+        ).first()
+    )
+
+
 def _stabilize_complete_public_batch_trace(
     db,
     *,
@@ -940,7 +965,11 @@ def _repair_trade_date(
         generated += 1
         resolved_strategy_type = ""
         if isinstance(result, dict):
-            if bool(result.get("published")):
+            if bool(result.get("published")) and _has_published_ok_report(
+                db,
+                trade_date_value=trade_date_value,
+                stock_code=stock_code,
+            ):
                 published_generated += 1
             resolved_strategy_type = str(result.get("strategy_type") or forced_strategy_type or "").strip().upper()
         else:
