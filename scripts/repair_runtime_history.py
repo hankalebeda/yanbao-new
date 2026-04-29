@@ -557,6 +557,7 @@ def _expire_published_report_nonterminal_tasks(
                       AND report.stock_code = report_generation_task.stock_code
                       AND report.published = 1
                       AND report.is_deleted = 0
+                      AND LOWER(COALESCE(report.quality_flag, 'ok')) = 'ok'
               )
             """
         ),

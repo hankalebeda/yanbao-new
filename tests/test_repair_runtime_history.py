@@ -268,6 +268,67 @@ def test_repair_runtime_history_expires_published_report_nonterminal_tasks(db_se
     assert rows[unrelated_task_id]["status"] == "Processing"
 
 
+def test_repair_runtime_history_does_not_expire_nonterminal_tasks_for_published_stale_ok_reports(db_session):
+    task_table = Base.metadata.tables["report_generation_task"]
+    insert_report_bundle_ssot(
+        db_session,
+        stock_code="600519.SH",
+        stock_name="贵州茅台",
+        trade_date="2026-03-19",
+        quality_flag="stale_ok",
+        published=True,
+    )
+    now = utc_now()
+    refresh_task_id = db_session.execute(
+        select(task_table.c.refresh_task_id).where(
+            task_table.c.trade_date == date.fromisoformat("2026-03-19"),
+            task_table.c.stock_code == "600519.SH",
+        )
+    ).scalar_one()
+    db_session.execute(
+        task_table.insert().values(
+            task_id="repair-stale-ok-processing-task",
+            trade_date=date.fromisoformat("2026-03-19"),
+            stock_code="600519.SH",
+            idempotency_key="repair-stale-ok:600519.SH:2026-03-19",
+            generation_seq=2,
+            status="Processing",
+            retry_count=0,
+            quality_flag="missing",
+            status_reason=None,
+            llm_fallback_level="primary",
+            risk_audit_status="completed",
+            risk_audit_skip_reason=None,
+            market_state_trade_date=date.fromisoformat("2026-03-19"),
+            refresh_task_id=refresh_task_id,
+            trigger_task_run_id=None,
+            request_id="repair-stale-ok-request",
+            superseded_by_task_id=None,
+            superseded_at=None,
+            queued_at=now,
+            started_at=now,
+            finished_at=None,
+            updated_at=now,
+            created_at=now,
+        )
+    )
+    db_session.commit()
+
+    expired = _expire_published_report_nonterminal_tasks(
+        db_session,
+        trade_date_value="2026-03-19",
+    )
+
+    assert expired == 0
+    row = db_session.execute(
+        select(task_table.c.status, task_table.c.status_reason).where(
+            task_table.c.task_id == "repair-stale-ok-processing-task"
+        )
+    ).mappings().one()
+    assert row["status"] == "Processing"
+    assert row["status_reason"] is None
+
+
 def test_repair_runtime_history_stabilizes_complete_public_batch_trace_by_expiring_published_tasks(db_session, monkeypatch):
     task_table = Base.metadata.tables["report_generation_task"]
     insert_report_bundle_ssot(
