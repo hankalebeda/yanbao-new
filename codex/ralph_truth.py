@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import re
+import shutil
 import sqlite3
 import subprocess
 import sys
@@ -353,7 +354,10 @@ def derive_runtime_sentinels(
 def _walkforward_empty_range_sentinel() -> RuntimeSentinelState:
     """Verify the walkforward CLI handles a no-trade-day range without fabricating rows."""
     script_path = REPO_ROOT / "scripts" / "walkforward_backtest.py"
-    with tempfile.TemporaryDirectory(prefix="ralph-walkforward-") as tmpdir:
+    temp_parent = Path(r"C:\tmp") if Path(r"C:\tmp").exists() else REPO_ROOT / ".tmp"
+    temp_parent.mkdir(parents=True, exist_ok=True)
+    tmpdir = tempfile.mkdtemp(prefix="ralph-walkforward-", dir=str(temp_parent))
+    try:
         output_path = Path(tmpdir) / "empty-range.json"
         result = subprocess.run(
             [
@@ -411,6 +415,8 @@ def _walkforward_empty_range_sentinel() -> RuntimeSentinelState:
             ok=ok,
             details=details,
         )
+    finally:
+        shutil.rmtree(tmpdir, ignore_errors=True)
 
 
 def collect_truth_snapshot(
